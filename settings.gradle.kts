@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "EnRutaTuAgua"
 
-include(":app", ":domain", ":data")
+include(":app", ":domain", ":data", ":designsystem")
