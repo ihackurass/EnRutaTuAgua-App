@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +35,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowRight
 import kotlin.math.roundToInt
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
@@ -126,7 +126,7 @@ fun DeslizadorConfirmar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                Icons.AutoMirrored.Rounded.ArrowForward,
+                TablerIcons.ArrowRight,
                 contentDescription = texto,
                 tint = paleta.hoja,
                 modifier = Modifier.size(DimensionesAgua.IconoPerilla),

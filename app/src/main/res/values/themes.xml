@@ -4,4 +4,12 @@
     <style name="Theme.EnRutaTuAgua" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">#D9E3E9</item>
     </style>
+
+    <!-- Splash nativo (Android 12+ API, compat vía core-splashscreen): gota propia
+         sobre `fondo`; cede el paso al tema real (postSplashScreenTheme). -->
+    <style name="Theme.EnRutaTuAgua.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#D9E3E9</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_droplet</item>
+        <item name="postSplashScreenTheme">@style/Theme.EnRutaTuAgua</item>
+    </style>
 </resources>

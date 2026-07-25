@@ -41,7 +41,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    api(libs.compose.material.icons.extended)   // el DS es dueño de la iconografía
+    api(libs.tabler.icons)   // el DS es dueño de la iconografía: un solo trazo, marca propia
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(platform(libs.compose.bom))

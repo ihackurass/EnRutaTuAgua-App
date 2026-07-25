@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.X
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
@@ -70,9 +70,9 @@ fun FichaParada(
             ) {
                 when (estado) {
                     EstadoFicha.Entregada ->
-                        Icon(Icons.Rounded.Check, null, tint = paleta.exito, modifier = Modifier.size(16.dp))
+                        Icon(TablerIcons.Check, null, tint = paleta.exito, modifier = Modifier.size(16.dp))
                     EstadoFicha.Omitida ->
-                        Icon(Icons.Rounded.Close, null, tint = paleta.alerta, modifier = Modifier.size(16.dp))
+                        Icon(TablerIcons.X, null, tint = paleta.alerta, modifier = Modifier.size(16.dp))
                     else -> Text(
                         "$numero",
                         style = EstilosAgua.ItemSub.copy(fontWeight = FontWeight.Bold),

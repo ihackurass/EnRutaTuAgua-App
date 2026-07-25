@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono de splash: gota en `marca` claro (#0D3B66), legible sobre `fondo` claro (#D9E3E9). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#0D3B66"
+        android:pathData="M54,20c0,0 -26,29 -26,48a26,26 0,0 0,52 0c0,-19 -26,-48 -26,-48z" />
+</vector>

@@ -4,4 +4,12 @@
     <style name="Theme.EnRutaTuAgua" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#061119</item>
     </style>
+
+    <!-- Splash en oscuro: mismo drawable (drawable-night/ic_splash_droplet.xml resuelve
+         la variante clara del icono), fondo oscuro. -->
+    <style name="Theme.EnRutaTuAgua.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#061119</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_droplet</item>
+        <item name="postSplashScreenTheme">@style/Theme.EnRutaTuAgua</item>
+    </style>
 </resources>

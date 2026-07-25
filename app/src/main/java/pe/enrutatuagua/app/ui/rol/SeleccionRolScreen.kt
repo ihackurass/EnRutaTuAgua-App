@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Droplet
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
@@ -31,7 +31,7 @@ fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(Icons.Rounded.WaterDrop, contentDescription = null,
+        Icon(TablerIcons.Droplet, contentDescription = null,
             tint = paleta.accion, modifier = Modifier.size(44.dp))
         Text(
             "EnRutaTuAgua",

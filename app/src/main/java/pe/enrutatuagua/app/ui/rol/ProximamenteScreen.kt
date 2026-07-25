@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.LocalShipping
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Truck
 import pe.enrutatuagua.designsystem.component.BotonSecundario
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
@@ -36,7 +36,7 @@ fun ProximamenteScreen(rol: Rol, onVolver: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(Icons.Rounded.LocalShipping, contentDescription = null,
+        Icon(TablerIcons.Truck, contentDescription = null,
             tint = paleta.texto2, modifier = Modifier.size(64.dp))
         Text("Hola, ${rol.etiqueta}", style = EstilosAgua.TituloParada,
             color = paleta.texto, textAlign = TextAlign.Center)
