@@ -13,15 +13,9 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import pe.enrutatuagua.designsystem.R
 
-// Fuentes variables (OFL): Archivo (ancho 125 = Expanded) para display/cifras,
-// Public Sans para el cuerpo. ANDROID-PLAN-07 §2.2.
-val ArchivoExpandida = FontFamily(
-    Font(R.font.archivo_variable, weight = FontWeight.Bold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(700), FontVariation.width(125f))),
-    Font(R.font.archivo_variable, weight = FontWeight.ExtraBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(800), FontVariation.width(125f))),
-)
-
+// Una sola familia en toda la app: Public Sans (variable, OFL), ancho normal.
+// El display/cifras se distingue por peso (ExtraBold) y tamaño, no por un eje
+// de ancho expandido — el usuario lo rechazó al verlo en pantalla.
 val PublicSans = FontFamily(
     Font(R.font.public_sans_variable, weight = FontWeight.Normal,
         variationSettings = FontVariation.Settings(FontVariation.weight(400))),
@@ -31,19 +25,21 @@ val PublicSans = FontFamily(
         variationSettings = FontVariation.Settings(FontVariation.weight(600))),
     Font(R.font.public_sans_variable, weight = FontWeight.Bold,
         variationSettings = FontVariation.Settings(FontVariation.weight(700))),
+    Font(R.font.public_sans_variable, weight = FontWeight.ExtraBold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(800))),
 )
 
 private const val TNUM = "tnum"   // numerales tabulares: los litros siempre alinean
 
 object EstilosAgua {
-    val CifraHero = TextStyle(fontFamily = ArchivoExpandida, fontWeight = FontWeight.ExtraBold,
-        fontSize = 58.sp, lineHeight = 58.sp, letterSpacing = (-0.05).em, fontFeatureSettings = TNUM)
-    val TituloParada = TextStyle(fontFamily = ArchivoExpandida, fontWeight = FontWeight.ExtraBold,
-        fontSize = 27.sp, lineHeight = 28.sp, letterSpacing = (-0.035).em)
-    val ColumnaCifra = TextStyle(fontFamily = ArchivoExpandida, fontWeight = FontWeight.ExtraBold,
-        fontSize = 26.sp, lineHeight = 26.sp, letterSpacing = (-0.045).em, fontFeatureSettings = TNUM)
-    val DatoResumen = TextStyle(fontFamily = ArchivoExpandida, fontWeight = FontWeight.ExtraBold,
-        fontSize = 24.sp, lineHeight = 24.sp, letterSpacing = (-0.04).em, fontFeatureSettings = TNUM)
+    val CifraHero = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.ExtraBold,
+        fontSize = 58.sp, lineHeight = 58.sp, letterSpacing = (-0.03).em, fontFeatureSettings = TNUM)
+    val TituloParada = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.ExtraBold,
+        fontSize = 27.sp, lineHeight = 32.sp, letterSpacing = (-0.02).em)
+    val ColumnaCifra = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.ExtraBold,
+        fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-0.02).em, fontFeatureSettings = TNUM)
+    val DatoResumen = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.ExtraBold,
+        fontSize = 24.sp, lineHeight = 28.sp, letterSpacing = (-0.02).em, fontFeatureSettings = TNUM)
     val TeclaDigito = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp, fontFeatureSettings = TNUM)
     val UnidadCifra = TextStyle(fontFamily = PublicSans, fontWeight = FontWeight.Bold, fontSize = 20.sp)
