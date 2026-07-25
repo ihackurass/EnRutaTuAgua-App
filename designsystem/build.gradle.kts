@@ -41,7 +41,7 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
-    implementation(libs.compose.material.icons.extended)
+    api(libs.compose.material.icons.extended)   // el DS es dueño de la iconografía
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(platform(libs.compose.bom))

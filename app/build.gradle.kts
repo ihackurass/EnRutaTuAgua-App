@@ -36,6 +36,12 @@ android {
     }
 }
 
+// Los tests de UI (createComposeRule) dependen de ui-test-manifest (solo debug):
+// la variante release no aporta cobertura extra y se desactiva (criterio NIA).
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) { it.enableUnitTest = false }
+}
+
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))

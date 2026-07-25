@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.EnRutaTuAgua" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Fondo de ventana = token `fondo` claro: sin flash blanco al arrancar. -->
+    <style name="Theme.EnRutaTuAgua" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#D9E3E9</item>
+    </style>
 </resources>
