@@ -1,0 +1,40 @@
+{
+  "version": 8,
+  "name": "EnRutaTuAgua claro",
+  "glyphs": "asset://mapa/glifos/{fontstack}/{range}.pbf",
+  "sources": {
+    "protomaps": {
+      "type": "vector",
+      "url": "__PMTILES__",
+      "attribution": "© OpenStreetMap · Protomaps"
+    }
+  },
+  "layers": [
+    { "id": "fondo", "type": "background", "paint": { "background-color": "#E7EEF1" } },
+    { "id": "tierra", "type": "fill", "source": "protomaps", "source-layer": "earth",
+      "paint": { "fill-color": "#E7EEF1" } },
+    { "id": "uso-suelo", "type": "fill", "source": "protomaps", "source-layer": "landuse",
+      "paint": { "fill-color": "#F7F9FA", "fill-opacity": 0.6 } },
+    { "id": "agua", "type": "fill", "source": "protomaps", "source-layer": "water",
+      "paint": { "fill-color": "#CDE0EA" } },
+    { "id": "edificios", "type": "fill", "source": "protomaps", "source-layer": "buildings",
+      "paint": { "fill-color": "#F7F9FA", "fill-outline-color": "#D3DDE3" } },
+    { "id": "vias-menores", "type": "line", "source": "protomaps", "source-layer": "roads",
+      "filter": ["in", "kind", "minor_road", "path"],
+      "paint": { "line-color": "#FFFFFF",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.5, 16, 4] } },
+    { "id": "vias-mayores", "type": "line", "source": "protomaps", "source-layer": "roads",
+      "filter": ["in", "kind", "highway", "major_road"],
+      "paint": { "line-color": "#FFFFFF",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 9] } },
+    { "id": "nombres-vias", "type": "symbol", "source": "protomaps", "source-layer": "roads",
+      "filter": ["==", "kind", "major_road"],
+      "layout": { "symbol-placement": "line", "text-field": ["get", "name"],
+        "text-font": ["Noto Sans Regular"], "text-size": 11 },
+      "paint": { "text-color": "#526B7C", "text-halo-color": "#FFFFFF", "text-halo-width": 1 } },
+    { "id": "nombres-lugares", "type": "symbol", "source": "protomaps", "source-layer": "places",
+      "layout": { "text-field": ["get", "name"],
+        "text-font": ["Noto Sans Medium"], "text-size": 12 },
+      "paint": { "text-color": "#526B7C", "text-halo-color": "#E7EEF1", "text-halo-width": 1.2 } }
+  ]
+}

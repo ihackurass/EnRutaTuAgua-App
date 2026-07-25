@@ -9,10 +9,20 @@ import pe.enrutatuagua.domain.usecase.RutaRepoFake
 
 @RunWith(RobolectricTestRunner::class)
 class GeoJsonRutaTest {
-    @Test fun `linea mas un punto por parada`() {
+    @Test
+    fun `linea mas un punto por parada`() {
         val ruta = RutaRepoFake.rutaDePrueba()
         val features = JSONObject(geoJsonDeRuta(ruta)).getJSONArray("features")
         assertEquals(1 + ruta.paradas.size, features.length())
         assertEquals("LineString", features.getJSONObject(0).getJSONObject("geometry").getString("type"))
+    }
+
+    @Test
+    fun `la primera parada pendiente lleva proxima=true`() {
+        val ruta = RutaRepoFake.rutaDePrueba()
+        val features = JSONObject(geoJsonDeRuta(ruta)).getJSONArray("features")
+        val props = features.getJSONObject(1).getJSONObject("properties")
+        assertEquals(true, props.getBoolean("proxima"))
+        assertEquals("1", props.getString("ordenTxt"))
     }
 }
