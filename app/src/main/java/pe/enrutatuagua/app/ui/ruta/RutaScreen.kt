@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pe.enrutatuagua.app.ui.mapa.MapaRuta
 import pe.enrutatuagua.domain.modelo.EstadoEntrega
 
 @Composable
@@ -22,6 +23,7 @@ fun RutaScreen(onParadaClick: (Long) -> Unit, vm: RutaViewModel = hiltViewModel(
         when {
             rc != null -> {
                 Text("Camión ${rc.ruta.vehiculo.placa} — Tanque: ${rc.litrosRestantes} / ${rc.ruta.vehiculo.capacidadTanqueLitros} L")
+                MapaRuta(rc.ruta, Modifier.fillMaxWidth().height(240.dp))
                 LazyColumn {
                     items(rc.ruta.paradas, key = { it.id }) { p ->
                         ListItem(
