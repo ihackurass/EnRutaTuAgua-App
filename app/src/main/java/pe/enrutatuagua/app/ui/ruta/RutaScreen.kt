@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -97,6 +98,7 @@ private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
                     1f to Color.Transparent,
                 ),
             )
+            .statusBarsPadding()
             .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 26.dp),
     ) {
         Text("Mi ruta de hoy", style = EstilosAgua.Zona, color = paleta.texto)
