@@ -33,10 +33,18 @@ fun Navegacion() {
                 ?.let { n -> Rol.entries.firstOrNull { it.name == n } } ?: Rol.VECINO
             ProximamenteScreen(rol = rol, onVolver = { nav.popBackStack() })
         }
-        composable("ruta") { RutaScreen(onParadaClick = { id -> nav.navigate("parada/$id") }) }
+        composable("ruta") {
+            RutaScreen(
+                onParadaClick = { id -> nav.navigate("parada/$id") },
+                onOmitirClick = { id -> nav.navigate("parada/$id?omitir=true") },
+            )
+        }
         composable(
-            "parada/{paradaId}",
-            arguments = listOf(navArgument("paradaId") { type = NavType.LongType }),
+            "parada/{paradaId}?omitir={omitir}",
+            arguments = listOf(
+                navArgument("paradaId") { type = NavType.LongType },
+                navArgument("omitir") { type = NavType.BoolType; defaultValue = false },
+            ),
         ) { ParadaScreen(onHecho = { nav.popBackStack() }) }
     }
 }
