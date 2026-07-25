@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.CifraLitros
 import pe.enrutatuagua.designsystem.component.DeslizadorConfirmar
@@ -78,17 +79,11 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
-        Text(
-            "← Volver a la ruta",
-            style = EstilosAgua.Cuerpo,
-            color = paleta.texto2,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clickable {
-                    if (enOmision && !vm.iniciaEnOmision) enOmision = false else onHecho()
-                }
-                .padding(vertical = 12.dp),
-        )
+        Spacer(Modifier.height(8.dp))
+        BotonAtras(onClick = {
+            if (enOmision && !vm.iniciaEnOmision) enOmision = false else onHecho()
+        })
+        Spacer(Modifier.height(24.dp))
 
         if (!enOmision) {
             VistaEntrega(
@@ -160,13 +155,13 @@ private fun VistaEntrega(
             style = EstilosAgua.Cuerpo, color = paleta.texto2,
         )
     }
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(28.dp))   // fin del bloque "qué vas a entregar"
 
     val mensajeError = errorDominio
         ?: if (excede) "Quedan ${formatearLitros(restante)} L en el tanque. Baja la cantidad o recarga antes de entregar." else null
     mensajeError?.let {
         TarjetaError(it)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
     }
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -186,17 +181,17 @@ private fun VistaEntrega(
             }
         }
     }
-    Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(10.dp))   // presets + teclado: mismo bloque, tacto ajustado
 
     TecladoLitros(valor = litros, onCambio = onLitros)
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(28.dp))   // fin del bloque "cómo lo ajustas"
 
     DeslizadorConfirmar(
         texto = if (invalido) "Corrige la cantidad" else "Desliza para confirmar ${formatearLitros(valor)} L",
         alerta = invalido,
         onConfirmar = { if (!invalido) onConfirmar(valor) },
     )
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(12.dp))
 
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
