@@ -13,6 +13,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import pe.enrutatuagua.domain.modelo.MotivoOmision
+import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.OmitirParadaUseCase
 import pe.enrutatuagua.domain.usecase.RegistrarEntregaUseCase
 import pe.enrutatuagua.domain.usecase.RutaRepoFake
@@ -28,6 +29,7 @@ class ParadaViewModelTest {
         vm = ParadaViewModel(
             RegistrarEntregaUseCase(repo, generarId = { "uuid-1" }, ahora = { 0L }),
             OmitirParadaUseCase(repo),
+            ObtenerRutaAbiertaUseCase(repo),
             SavedStateHandle(mapOf("paradaId" to 10L)),
         )
     }
@@ -49,5 +51,12 @@ class ParadaViewModelTest {
         vm.omitir(MotivoOmision.CALLE_CERRADA, null); advanceUntilIdle()
         assertEquals(true, vm.hecho.value)
         assertEquals(MotivoOmision.CALLE_CERRADA, repo.omitida?.second)
+    }
+
+    @Test fun `expone la parada con pedido y tanque restante`() = runTest {
+        advanceUntilIdle()
+        assertEquals("Comité 12 — Loma Alta", vm.parada.value?.titulo)
+        assertEquals(4000, vm.parada.value?.pedidoLitros)
+        assertEquals(12000, vm.parada.value?.litrosRestantes)
     }
 }
