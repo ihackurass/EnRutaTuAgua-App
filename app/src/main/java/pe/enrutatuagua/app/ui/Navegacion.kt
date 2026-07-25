@@ -2,9 +2,12 @@ package pe.enrutatuagua.app.ui
 
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import pe.enrutatuagua.app.ui.parada.ParadaScreen
 import pe.enrutatuagua.app.ui.rol.ProximamenteScreen
 import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
@@ -31,6 +34,9 @@ fun Navegacion() {
             ProximamenteScreen(rol = rol, onVolver = { nav.popBackStack() })
         }
         composable("ruta") { RutaScreen(onParadaClick = { id -> nav.navigate("parada/$id") }) }
-        // "parada/{paradaId}" se agrega en T7
+        composable(
+            "parada/{paradaId}",
+            arguments = listOf(navArgument("paradaId") { type = NavType.LongType }),
+        ) { ParadaScreen(onHecho = { nav.popBackStack() }) }
     }
 }
