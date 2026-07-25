@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import pe.enrutatuagua.app.ui.rol.ProximamenteScreen
 import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
+import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.domain.modelo.Rol
 
 @Composable
@@ -29,6 +30,7 @@ fun Navegacion() {
                 ?.let { n -> Rol.entries.firstOrNull { it.name == n } } ?: Rol.VECINO
             ProximamenteScreen(rol = rol, onVolver = { nav.popBackStack() })
         }
-        // "ruta" y "parada/{paradaId}" se agregan en T5 y T7
+        composable("ruta") { RutaScreen(onParadaClick = { id -> nav.navigate("parada/$id") }) }
+        // "parada/{paradaId}" se agrega en T7
     }
 }
