@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +31,6 @@ import pe.enrutatuagua.designsystem.component.TecladoLitros
 import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
-import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 
 /**
  * Nuevo pedido (RP-01). Selector de punto validado + cifra/teclado de litros,
@@ -66,19 +63,32 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         BotonAtras(onClick = onHecho)
         Spacer(Modifier.height(24.dp))
 
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            RotuloSeccion("Nuevo pedido")
-            Spacer(Modifier.height(10.dp))
+        RotuloSeccion("Nuevo pedido")
+        Spacer(Modifier.height(10.dp))
+        Text("Elige el punto de tu zona", style = EstilosAgua.ItemTitulo, color = paleta.texto)
+        Spacer(Modifier.height(6.dp))
 
-            SelectorPuntos(puntos, seleccionado = puntoId, onSeleccionar = { puntoId = it })
-            Spacer(Modifier.height(20.dp))
-
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                CifraLitros(valor)
-            }
-            Spacer(Modifier.height(16.dp))
-            TecladoLitros(valor = litros, onCambio = { litros = it })
+        // Lista simple (no lazy, no scroll propio): igual que el resto de la
+        // pantalla, todo el contenido vive en el mismo Column no-scrolleable
+        // que `ParadaScreen` — la cifra y el teclado quedan siempre al
+        // alcance del pulgar, sin depender de que el usuario haga scroll.
+        puntos.forEach { punto ->
+            FichaParada(
+                numero = punto.id.toInt(),
+                titulo = punto.nombre,
+                subtitulo = "${formatearLitros(punto.capacidadLitros)} L de capacidad",
+                textoDerecha = if (puntoId == punto.id) "Elegido" else "",
+                estado = if (puntoId == punto.id) EstadoFicha.Proxima else EstadoFicha.Pendiente,
+                onClick = { puntoId = punto.id },
+            )
         }
+        Spacer(Modifier.height(16.dp))
+
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            CifraLitros(valor)
+        }
+        Spacer(Modifier.height(16.dp))
+        TecladoLitros(valor = litros, onCambio = { litros = it })
 
         error?.let {
             Spacer(Modifier.height(12.dp))
@@ -90,28 +100,5 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
             habilitado = !invalido,
             onClick = { puntoId?.let { id -> vm.crear(id, valor) } },
         )
-    }
-}
-
-@Composable
-private fun SelectorPuntos(
-    puntos: List<PuntoAbastecimiento>,
-    seleccionado: Long?,
-    onSeleccionar: (Long) -> Unit,
-) {
-    val paleta = LocalPaletaAgua.current
-    Column {
-        Text("Elige el punto de tu zona", style = EstilosAgua.ItemTitulo, color = paleta.texto)
-        Spacer(Modifier.height(6.dp))
-        puntos.forEach { punto ->
-            FichaParada(
-                numero = punto.id.toInt(),
-                titulo = punto.nombre,
-                subtitulo = "${formatearLitros(punto.capacidadLitros)} L de capacidad",
-                textoDerecha = if (seleccionado == punto.id) "Elegido" else "",
-                estado = if (seleccionado == punto.id) EstadoFicha.Proxima else EstadoFicha.Pendiente,
-                onClick = { onSeleccionar(punto.id) },
-            )
-        }
     }
 }
