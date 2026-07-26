@@ -76,7 +76,6 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
             .background(paleta.hoja)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
         Spacer(Modifier.height(8.dp))
@@ -95,6 +94,7 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
                 onLitros = { litros = it },
                 onConfirmar = { vm.confirmarEntrega(it) },
                 onNoPude = { enOmision = true },
+                modifier = Modifier.weight(1f),
             )
         } else {
             VistaOmision(
@@ -107,6 +107,7 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
                 onRegistrar = { motivo ->
                     vm.omitir(motivo, comentario.takeIf { it.isNotBlank() })
                 },
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -138,71 +139,78 @@ private fun VistaEntrega(
     onLitros: (String) -> Unit,
     onConfirmar: (Int) -> Unit,
     onNoPude: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val paleta = LocalPaletaAgua.current
     val valor = litros.toIntOrNull() ?: 0
     val excede = valor > restante
     val invalido = excede || valor <= 0
 
-    RotuloSeccion("Entrega en", acento = titulo)
-    Spacer(Modifier.height(10.dp))
+    // El teclado y el deslizador van al alcance del pulgar, no pegados arriba
+    // (patrón Cash App): un Spacer con peso empuja todo el bloque de acción
+    // hacia el borde inferior.
+    Column(modifier.fillMaxWidth()) {
+        RotuloSeccion("Entrega en", acento = titulo)
+        Spacer(Modifier.height(10.dp))
 
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        CifraLitros(valor, enAlerta = excede)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "pidió ${formatearLitros(pedido)} L · quedan ${formatearLitros(restante)} L",
-            style = EstilosAgua.Cuerpo, color = paleta.texto2,
-        )
-    }
-    Spacer(Modifier.height(28.dp))   // fin del bloque "qué vas a entregar"
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            CifraLitros(valor, enAlerta = excede)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "pidió ${formatearLitros(pedido)} L · quedan ${formatearLitros(restante)} L",
+                style = EstilosAgua.Cuerpo, color = paleta.texto2,
+            )
+        }
 
-    val mensajeError = errorDominio
-        ?: if (excede) "Quedan ${formatearLitros(restante)} L en el tanque. Baja la cantidad o recarga antes de entregar." else null
-    mensajeError?.let {
-        TarjetaError(it)
-        Spacer(Modifier.height(16.dp))
-    }
+        Spacer(Modifier.weight(1f))
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(1000, 2000, pedido).distinct().forEach { preset ->
-            val forma = RoundedCornerShape(RadiosAgua.Preset)
-            Box(
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = 48.dp)
-                    .clip(forma)
-                    .border(1.dp, paleta.linea, forma)
-                    .clickable { onLitros(preset.toString()) }
-                    .padding(vertical = 13.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("${formatearLitros(preset)} L", style = EstilosAgua.Preset, color = paleta.texto)
+        val mensajeError = errorDominio
+            ?: if (excede) "Quedan ${formatearLitros(restante)} L en el tanque. Baja la cantidad o recarga antes de entregar." else null
+        mensajeError?.let {
+            TarjetaError(it)
+            Spacer(Modifier.height(16.dp))
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(1000, 2000, pedido).distinct().forEach { preset ->
+                val forma = RoundedCornerShape(RadiosAgua.Preset)
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .clip(forma)
+                        .border(1.dp, paleta.linea, forma)
+                        .clickable { onLitros(preset.toString()) }
+                        .padding(vertical = 13.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("${formatearLitros(preset)} L", style = EstilosAgua.Preset, color = paleta.texto)
+                }
             }
         }
-    }
-    Spacer(Modifier.height(10.dp))   // presets + teclado: mismo bloque, tacto ajustado
+        Spacer(Modifier.height(10.dp))   // presets + teclado: mismo bloque, tacto ajustado
 
-    TecladoLitros(valor = litros, onCambio = onLitros)
-    Spacer(Modifier.height(28.dp))   // fin del bloque "cómo lo ajustas"
+        TecladoLitros(valor = litros, onCambio = onLitros)
+        Spacer(Modifier.height(20.dp))
 
-    DeslizadorConfirmar(
-        texto = if (invalido) "Corrige la cantidad" else "Desliza para confirmar ${formatearLitros(valor)} L",
-        alerta = invalido,
-        onConfirmar = { if (!invalido) onConfirmar(valor) },
-    )
-    Spacer(Modifier.height(12.dp))
-
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Text(
-            "No pude entregar",
-            style = EstilosAgua.ItemTitulo,
-            color = paleta.texto2,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clickable(onClick = onNoPude)
-                .padding(12.dp),
+        DeslizadorConfirmar(
+            texto = if (invalido) "Corrige la cantidad" else "Desliza para confirmar ${formatearLitros(valor)} L",
+            alerta = invalido,
+            onConfirmar = { if (!invalido) onConfirmar(valor) },
         )
+        Spacer(Modifier.height(12.dp))
+
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Text(
+                "No pude entregar",
+                style = EstilosAgua.ItemTitulo,
+                color = paleta.texto2,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clickable(onClick = onNoPude)
+                    .padding(12.dp),
+            )
+        }
     }
 }
 
@@ -215,69 +223,72 @@ private fun VistaOmision(
     onMotivo: (Int) -> Unit,
     onComentario: (String) -> Unit,
     onRegistrar: (MotivoOmision) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val paleta = LocalPaletaAgua.current
     val motivos = MotivoOmision.entries
     val motivo = motivoIndice?.let { motivos[it] }
     val faltaComentario = motivo == MotivoOmision.OTRO && comentario.isBlank()
 
-    RotuloSeccion("Omitir", acento = titulo)
-    Spacer(Modifier.height(6.dp))
-    Text("¿Qué pasó?", style = EstilosAgua.TituloParada, color = paleta.texto)
-    Spacer(Modifier.height(4.dp))
-    Text(
-        "La parada queda registrada como no entregada, con su motivo.",
-        style = EstilosAgua.Cuerpo, color = paleta.texto2,
-    )
-    Spacer(Modifier.height(14.dp))
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        RotuloSeccion("Omitir", acento = titulo)
+        Spacer(Modifier.height(6.dp))
+        Text("¿Qué pasó?", style = EstilosAgua.TituloParada, color = paleta.texto)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "La parada queda registrada como no entregada, con su motivo.",
+            style = EstilosAgua.Cuerpo, color = paleta.texto2,
+        )
+        Spacer(Modifier.height(14.dp))
 
-    GridMotivos(
-        motivos = motivos.map { it.etiqueta },
-        seleccionado = motivoIndice,
-        onSeleccionar = onMotivo,
-    )
-    Spacer(Modifier.height(12.dp))
-
-    if (motivo == MotivoOmision.OTRO) {
-        val forma = RoundedCornerShape(RadiosAgua.Comentario)
-        BasicTextField(
-            value = comentario,
-            onValueChange = onComentario,
-            textStyle = EstilosAgua.Cuerpo.copy(color = paleta.texto),
-            cursorBrush = SolidColor(paleta.accion),
-            decorationBox = { interior ->
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 84.dp)
-                        .clip(forma)
-                        .background(paleta.tenue)
-                        .border(1.dp, paleta.linea, forma)
-                        .padding(12.dp),
-                ) {
-                    if (comentario.isEmpty()) {
-                        Text("Cuenta qué pasó, en una línea", style = EstilosAgua.Cuerpo, color = paleta.texto2)
-                    }
-                    interior()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
+        GridMotivos(
+            motivos = motivos.map { it.etiqueta },
+            seleccionado = motivoIndice,
+            onSeleccionar = onMotivo,
         )
         Spacer(Modifier.height(12.dp))
-    }
 
-    val mensajeError = errorDominio
-        ?: if (faltaComentario) "Escribe qué pasó para poder registrar la omisión." else null
-    mensajeError?.let {
-        TarjetaError(it)
-        Spacer(Modifier.height(12.dp))
-    }
+        if (motivo == MotivoOmision.OTRO) {
+            val forma = RoundedCornerShape(RadiosAgua.Comentario)
+            BasicTextField(
+                value = comentario,
+                onValueChange = onComentario,
+                textStyle = EstilosAgua.Cuerpo.copy(color = paleta.texto),
+                cursorBrush = SolidColor(paleta.accion),
+                decorationBox = { interior ->
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 84.dp)
+                            .clip(forma)
+                            .background(paleta.tenue)
+                            .border(1.dp, paleta.linea, forma)
+                            .padding(12.dp),
+                    ) {
+                        if (comentario.isEmpty()) {
+                            Text("Cuenta qué pasó, en una línea", style = EstilosAgua.Cuerpo, color = paleta.texto2)
+                        }
+                        interior()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+        }
 
-    BotonPrimario(
-        texto = "Registrar omisión",
-        peligro = true,
-        habilitado = motivo != null && !faltaComentario,
-        onClick = { motivo?.let(onRegistrar) },
-    )
-    Spacer(Modifier.height(24.dp))
+        val mensajeError = errorDominio
+            ?: if (faltaComentario) "Escribe qué pasó para poder registrar la omisión." else null
+        mensajeError?.let {
+            TarjetaError(it)
+            Spacer(Modifier.height(12.dp))
+        }
+
+        BotonPrimario(
+            texto = "Registrar omisión",
+            peligro = true,
+            habilitado = motivo != null && !faltaComentario,
+            onClick = { motivo?.let(onRegistrar) },
+        )
+        Spacer(Modifier.height(24.dp))
+    }
 }
