@@ -15,6 +15,16 @@ enum class MotivoOmision(val codigo: Int, val etiqueta: String) {
 }
 enum class TipoEntrega(val codigo: Int) { ENTREGA(1), AJUSTE(2) }
 
+// Códigos idénticos a sql/01-esquema.sql (catalogo_valor)
+enum class EstadoValidacionPunto(val codigo: Int, val etiqueta: String) {
+    PROPUESTO(1, "Propuesto"), VALIDADO(2, "Validado"),
+    RECHAZADO(3, "Rechazado"), SUSPENDIDO(4, "Suspendido")
+}
+enum class EstadoPedido(val codigo: Int, val etiqueta: String) {
+    PENDIENTE(1, "Pendiente"), EN_RUTA(2, "En ruta"), ATENDIDO(3, "Atendido"),
+    CANCELADO(4, "Cancelado"), RETENIDO(5, "Retenido")
+}
+
 data class Vehiculo(val id: Long, val placa: String, val capacidadTanqueLitros: Int)
 data class Punto(val id: Long, val nombre: String, val lat: Double, val lng: Double, val capacidadLitros: Int)
 data class Parada(
@@ -30,6 +40,22 @@ data class Entrega(
     val litros: Int, val gpsLat: Double?, val gpsLng: Double?, val registradaEn: Long,
 )
 
+data class PuntoAbastecimiento(
+    val id: Long, val nombre: String, val lat: Double, val lng: Double,
+    val capacidadLitros: Int, val estado: EstadoValidacionPunto,
+)
+data class PedidoItem(val puntoId: Long, val litros: Int)
+data class Pedido(
+    val id: Long, val items: List<PedidoItem>, val estado: EstadoPedido,
+    val creadoEn: Long,
+)
+// Vecino (plan 05): no existe tabla — en el backend real vive en Redis.
+// Aquí es un value object puro para la UI, siempre en estado "última conocida".
+data class PosicionCisterna(
+    val lat: Double, val lng: Double, val litrosRestantes: Int,
+    val capacidadLitros: Int, val timestampMs: Long,
+)
+
 // ER §5: el tanque restante es SIEMPRE derivado (ajustes restan con su signo)
 fun litrosRestantes(vehiculo: Vehiculo, entregas: List<Entrega>): Int =
     vehiculo.capacidadTanqueLitros - entregas.sumOf { it.litros }
@@ -40,4 +66,7 @@ sealed class ErrorDominio(mensaje: String) : Exception(mensaje) {
     class MotivoRequerido : ErrorDominio("Omitir una parada exige motivo (RA-05)")
     class ComentarioRequerido : ErrorDominio("El motivo OTRO exige comentario de sustento")
     class SinRutaAbierta : ErrorDominio("No hay ruta abierta")
+    class PedidoInvalido : ErrorDominio("Los litros deben ser mayores a cero")
+    class PedidoNoCancelable : ErrorDominio("Este pedido ya no se puede cancelar")
+    class PuntoNoValidable : ErrorDominio("Este punto no está pendiente de aprobación")
 }

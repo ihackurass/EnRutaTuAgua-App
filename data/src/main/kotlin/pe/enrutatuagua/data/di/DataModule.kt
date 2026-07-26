@@ -8,11 +8,15 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import pe.enrutatuagua.data.PedidoRepositoryMemoria
 import pe.enrutatuagua.data.RutaRepositoryRoom
 import pe.enrutatuagua.data.SesionRepositoryMemoria
+import pe.enrutatuagua.data.TrackingRepositoryMemoria
 import pe.enrutatuagua.data.local.EnRutaTuAguaDb
+import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.repositorio.RutaRepository
 import pe.enrutatuagua.domain.repositorio.SesionRepository
+import pe.enrutatuagua.domain.repositorio.TrackingRepository
 import javax.inject.Singleton
 
 @Module @InstallIn(SingletonComponent::class)
@@ -26,4 +30,6 @@ object DbModule {
 abstract class RepositoriosModule {
     @Binds abstract fun rutaRepository(impl: RutaRepositoryRoom): RutaRepository
     @Binds abstract fun sesionRepository(impl: SesionRepositoryMemoria): SesionRepository
+    @Binds abstract fun pedidoRepository(impl: PedidoRepositoryMemoria): PedidoRepository
+    @Binds abstract fun trackingRepository(impl: TrackingRepositoryMemoria): TrackingRepository
 }
