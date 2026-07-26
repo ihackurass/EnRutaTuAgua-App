@@ -13,10 +13,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pe.enrutatuagua.app.ui.parada.ParadaScreen
+import pe.enrutatuagua.app.ui.presidente.PresidenteNav
 import pe.enrutatuagua.app.ui.rol.ProximamenteScreen
 import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
 import pe.enrutatuagua.app.ui.ruta.RutaScreen
+import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
 import pe.enrutatuagua.designsystem.tokens.MovimientoAgua
 import pe.enrutatuagua.domain.modelo.Rol
 
@@ -43,15 +45,17 @@ fun Navegacion() {
                 vm.seleccionarRol(rol)
                 when (rol) {
                     Rol.AGUATERO -> nav.navigate("ruta")
-                    else -> nav.navigate("proximamente/${rol.name}")
+                    Rol.VECINO -> nav.navigate("vecino")
+                    Rol.PRESIDENTE -> nav.navigate("presidente")
+                    Rol.ADMIN -> nav.navigate("proximamente")
                 }
             })
         }
-        composable("proximamente/{rol}") { entrada ->
-            val rol = entrada.arguments?.getString("rol")
-                ?.let { n -> Rol.entries.firstOrNull { it.name == n } } ?: Rol.VECINO
-            ProximamenteScreen(rol = rol, onVolver = { nav.popBackStack() })
+        composable("proximamente") {
+            ProximamenteScreen(onVolver = { nav.popBackStack() })
         }
+        composable("vecino") { MapaVivoScreen() }
+        composable("presidente") { PresidenteNav() }
         composable("ruta") {
             RutaScreen(
                 onParadaClick = { id -> nav.navigate("parada/$id") },
