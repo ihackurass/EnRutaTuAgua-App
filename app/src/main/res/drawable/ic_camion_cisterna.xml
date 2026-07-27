@@ -1,47 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Camión cisterna cenital para el puck del LocationComponent (plan 09).
-     REGLA DE ORO: el frente apunta HACIA ARRIBA (norte) — RenderMode.GPS rota
-     este drawable con el bearing del fix (0° = norte). Un solo asset para
-     claro/oscuro: la base blanca lo hace legible sobre ambos estilos de mapa.
+<!-- Camión cisterna cenital pseudo-3D para el puck del LocationComponent
+     (plan 09). REGLA DE ORO: el frente apunta HACIA ARRIBA (norte) —
+     RenderMode.GPS rota este drawable con el bearing (0° = norte).
+     Sin disco de fondo: volumen por gradientes (cabina iluminada de frente,
+     tanque cilíndrico con brillo axial) + sombra elíptica simétrica (rota
+     bien) + borde claro para leerse sobre el mapa oscuro.
      Colores fijos (un VectorDrawable no lee tokens Compose):
-     tinta #0E1B2A · accion #0A7F90 · blanco. -->
+     tinta #0E1B2A/#0A141F · accion #0A7F90 y derivados · claro #E9F2F7. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="44dp"
-    android:height="44dp"
-    android:viewportWidth="44"
-    android:viewportHeight="44">
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
 
-    <!-- Base: disco blanco con aro tinta al 10% -->
+    <!-- Sombra elíptica (centrada: no se nota rara al rotar) -->
     <path
-        android:pathData="M22,2 a20,20 0 1,1 -0.01,0 Z"
-        android:fillColor="#FFFFFF"
-        android:strokeColor="#1A0E1B2A"
-        android:strokeWidth="1.5" />
+        android:pathData="M10,25 a14,19 0 1,0 28,0 a14,19 0 1,0 -28,0 Z"
+        android:fillColor="#2E000000" />
 
-    <!-- Chevron de rumbo (asoma sobre la cabina, punta en y=4) -->
-    <path
-        android:pathData="M22,4 L26.5,9.5 L17.5,9.5 Z"
-        android:fillColor="#0A7F90" />
+    <!-- Espejos laterales -->
+    <path android:pathData="M11.5,10 h2.5 v2.5 h-2.5 Z" android:fillColor="#0A141F" />
+    <path android:pathData="M34,10 h2.5 v2.5 h-2.5 Z" android:fillColor="#0A141F" />
 
-    <!-- Cabina -->
+    <!-- Chasis con rim claro (visibilidad en mapa oscuro) -->
     <path
-        android:pathData="M15,10 a3,3 0 0,1 3,-3 h8 a3,3 0 0,1 3,3 v5 h-14 Z"
-        android:fillColor="#0E1B2A" />
-
-    <!-- Parabrisas -->
-    <path
-        android:pathData="M17,9 h10 v3 h-10 Z"
-        android:fillColor="#0A7F90" />
-
-    <!-- Tanque (cápsula) -->
-    <path
-        android:pathData="M14,24 a8,8 0 0,1 16,0 v4 a8,8 0 0,1 -16,0 Z"
-        android:fillColor="#0E1B2A" />
-
-    <!-- Tapa de inspección de la cisterna -->
-    <path
-        android:pathData="M22,22 a4,4 0 1,1 -0.01,0 Z"
-        android:fillColor="#0A7F90"
-        android:strokeColor="#FFFFFF"
+        android:pathData="M12,12 a6,6 0 0,1 6,-6 h12 a6,6 0 0,1 6,6 v26 a6,6 0 0,1 -6,6 h-12 a6,6 0 0,1 -6,-6 Z"
+        android:fillColor="#0A141F"
+        android:strokeColor="#8CE9F2F7"
         android:strokeWidth="1" />
+
+    <!-- Cabina (luz entrando de frente) -->
+    <path android:pathData="M14,11 a4,4 0 0,1 4,-4 h12 a4,4 0 0,1 4,4 v6 h-20 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="24" android:startY="7"
+                android:endX="24" android:endY="17">
+                <item android:offset="0" android:color="#FF2A4159" />
+                <item android:offset="1" android:color="#FF0E1B2A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Parabrisas con reflejo -->
+    <path android:pathData="M16,10.5 h16 v3.5 h-16 Z" android:fillColor="#0A7F90" />
+    <path android:pathData="M16.5,11.2 h15 v1 h-15 Z" android:fillColor="#4DFFFFFF" />
+
+    <!-- Unión cabina-tanque -->
+    <path android:pathData="M17,16.5 h14 v2.5 h-14 Z" android:fillColor="#0A141F" />
+
+    <!-- Tanque cilíndrico (brillo axial = volumen) -->
+    <path android:pathData="M15,27 a9,9 0 0,1 18,0 v6 a9,9 0 0,1 -18,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="15" android:startY="30"
+                android:endX="33" android:endY="30">
+                <item android:offset="0" android:color="#FF06525F" />
+                <item android:offset="0.3" android:color="#FF0A7F90" />
+                <item android:offset="0.5" android:color="#FF35B5C4" />
+                <item android:offset="0.7" android:color="#FF0A7F90" />
+                <item android:offset="1" android:color="#FF06525F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Tapa de inspección + brillo especular -->
+    <path
+        android:pathData="M24,25.5 a4.5,4.5 0 1,1 -0.01,0 Z"
+        android:fillColor="#075E6B"
+        android:strokeColor="#B3E9F2F7"
+        android:strokeWidth="1" />
+    <path android:pathData="M22,27.5 a1.2,1.2 0 1,1 -0.01,0 Z" android:fillColor="#CCFFFFFF" />
 </vector>
