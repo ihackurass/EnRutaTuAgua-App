@@ -29,7 +29,6 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
 import org.maplibre.android.location.OnCameraTrackingChangedListener
-import org.maplibre.android.location.engine.LocationEngineDefault
 import org.maplibre.android.location.engine.LocationEngineRequest
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -67,6 +66,7 @@ import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import pe.enrutatuagua.app.R
 import pe.enrutatuagua.app.ubicacion.MotorPosicionConRumbo
+import pe.enrutatuagua.app.ubicacion.MotorPosicionGps
 import pe.enrutatuagua.app.ubicacion.rememberPermisoUbicacion
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.designsystem.tokens.MovimientoAgua
@@ -100,7 +100,7 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
     val permiso = rememberPermisoUbicacion()
     LaunchedEffect(Unit) { if (!permiso.concedido) permiso.solicitar() }
     val motor = remember {
-        MotorPosicionConRumbo(LocationEngineDefault.getDefaultLocationEngine(contexto))
+        MotorPosicionConRumbo(MotorPosicionGps(contexto))
     }
     var siguiendo by rememberSaveable { mutableStateOf(false) }
     val escuchaSeguimiento = remember {
@@ -293,6 +293,7 @@ private fun activarPuck(
         LocationComponentActivationOptions.builder(contexto, estilo)
             .locationEngine(motor)
             .useDefaultLocationEngine(false)
+            .useSpecializedLocationLayer(true)
             .locationEngineRequest(
                 LocationEngineRequest.Builder(1000L)
                     .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)

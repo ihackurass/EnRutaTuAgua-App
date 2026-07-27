@@ -60,21 +60,27 @@ class MotorPosicionConRumbo(private val delegado: LocationEngine) : LocationEngi
         delegado.removeLocationUpdates(pendingIntent)
 
     private fun conRumbo(posicion: Location): Location {
-        if (!posicion.hasBearing()) {
+        // El rumbo del propio fix solo es confiable en movimiento: el GNSS del
+        // emulador (y algunos receptores) emite bearing=0 con velocidad 0.
+        val rumboPropioConfiable = posicion.hasBearing() && posicion.speed > VELOCIDAD_MINIMA
+        if (rumboPropioConfiable) {
+            ultimoRumbo = posicion.bearing
+        } else {
             val previa = ultimaPosicion
             if (previa != null && previa.distanceTo(posicion) > UMBRAL_METROS) {
                 posicion.bearing =
                     rumboEntre(previa.latitude, previa.longitude, posicion.latitude, posicion.longitude)
+                ultimoRumbo = posicion.bearing
             } else {
                 ultimoRumbo?.let { posicion.bearing = it }
             }
         }
-        if (posicion.hasBearing()) ultimoRumbo = posicion.bearing
         ultimaPosicion = posicion
         return posicion
     }
 
     private companion object {
         const val UMBRAL_METROS = 2f
+        const val VELOCIDAD_MINIMA = 0.5f // m/s
     }
 }

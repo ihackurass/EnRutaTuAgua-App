@@ -54,11 +54,12 @@ class MotorPosicionConRumboTest {
         override fun onFailure(excepcion: Exception) = Unit
     }
 
-    private fun posicion(lat: Double, lng: Double, rumbo: Float? = null) =
+    private fun posicion(lat: Double, lng: Double, rumbo: Float? = null, velocidad: Float? = null) =
         Location("gps").apply {
             latitude = lat
             longitude = lng
             if (rumbo != null) bearing = rumbo
+            if (velocidad != null) speed = velocidad
         }
 
     private fun motorSuscrito(fake: MotorFake, receptor: Receptor): MotorPosicionConRumbo {
@@ -94,15 +95,33 @@ class MotorPosicionConRumboTest {
     }
 
     @Test
-    fun `un fix que ya trae rumbo pasa intacto`() {
+    fun `un fix en movimiento que ya trae rumbo pasa intacto`() {
         val fake = MotorFake()
         val receptor = Receptor()
         motorSuscrito(fake, receptor)
 
         fake.emitir(posicion(-12.1571, -76.9442))
-        fake.emitir(posicion(-12.1613, -76.9488, rumbo = 77f))
+        fake.emitir(posicion(-12.1613, -76.9488, rumbo = 77f, velocidad = 5f))
 
         assertEquals(77f, receptor.recibidas[1].bearing, 0.01f)
+    }
+
+    @Test
+    fun `un rumbo espurio con velocidad cero se recalcula`() {
+        // El GNSS del emulador (y algunos receptores) emite bearing=0 con
+        // velocidad 0: ese rumbo no es confiable y se recalcula del trazo.
+        val fake = MotorFake()
+        val receptor = Receptor()
+        motorSuscrito(fake, receptor)
+
+        fake.emitir(posicion(-12.1571, -76.9442))
+        fake.emitir(posicion(-12.1613, -76.9488, rumbo = 0f, velocidad = 0f))
+
+        assertEquals(
+            rumboEntre(-12.1571, -76.9442, -12.1613, -76.9488),
+            receptor.recibidas[1].bearing,
+            1f,
+        )
     }
 
     @Test
