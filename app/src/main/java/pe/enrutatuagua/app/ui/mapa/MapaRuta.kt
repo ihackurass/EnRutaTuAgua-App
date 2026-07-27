@@ -92,6 +92,7 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
     val density = LocalDensity.current
 
     val cAccion = paleta.accion.toArgb()
+    val cTinta = paleta.tinta.toArgb()
     val cExito = paleta.exito.toArgb()
     val cAlerta = paleta.alerta.toArgb()
     val cHoja = paleta.hoja.toArgb()
@@ -154,15 +155,17 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                     oscuroAplicado[0] = oscuro
                     mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro))) { estilo ->
                         estilo.addSource(GeoJsonSource("ruta", geoJsonDeRuta(ruta)))
+                        // Trazo en tinta (negro azulado; casi blanco en oscuro): el
+                        // teal queda para el camión, pines y acentos, estilo Uber.
                         estilo.addLayer(
                             LineLayer("ruta-halo", "ruta").withProperties(
-                                lineColor(cAccion), lineOpacity(0.18f), lineWidth(13f),
+                                lineColor(cTinta), lineOpacity(0.18f), lineWidth(13f),
                                 lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
                             ),
                         )
                         estilo.addLayer(
                             LineLayer("ruta-linea", "ruta").withProperties(
-                                lineColor(cAccion), lineWidth(5f),
+                                lineColor(cTinta), lineWidth(5f),
                                 lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
                             ),
                         )
