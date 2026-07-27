@@ -87,7 +87,10 @@ fun RutaScreen(
                 ColumnaDeAgua(
                     litrosRestantes = rc.litrosRestantes,
                     capacidadLitros = rc.ruta.vehiculo.capacidadTanqueLitros,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 72.dp, end = 14.dp),
+                    // Bajo la cabecera: la cifra no debe rozar el chip "En ruta".
+                    modifier = Modifier.align(Alignment.TopEnd)
+                        .statusBarsPadding()
+                        .padding(top = 92.dp, end = 14.dp),
                 )
                 HojaArrastrable { ancla ->
                     ContenidoHoja(rc, ancla, onParadaClick, onOmitirClick)

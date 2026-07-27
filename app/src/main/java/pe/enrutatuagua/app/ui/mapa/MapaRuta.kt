@@ -3,6 +3,7 @@ package pe.enrutatuagua.app.ui.mapa
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.Gravity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -141,6 +142,14 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
             val concedido = permiso.concedido
             val sigue = siguiendo
             vista.getMapAsync { mapa ->
+                // Brújula abajo a la izquierda, sobre la hoja: arriba a la
+                // derecha chocaba con el chip de estado y la columna de agua.
+                mapa.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
+                with(density) {
+                    mapa.uiSettings.setCompassMargins(
+                        14.dp.toPx().toInt(), 0, 0, 286.dp.toPx().toInt(),
+                    )
+                }
                 if (oscuroAplicado[0] != oscuro) {
                     oscuroAplicado[0] = oscuro
                     mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro))) { estilo ->
