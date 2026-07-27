@@ -33,11 +33,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Dots
+import compose.icons.tablericons.Droplet
+import compose.icons.tablericons.DropletOff
+import compose.icons.tablericons.UserOff
 import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.CifraLitros
 import pe.enrutatuagua.designsystem.component.DeslizadorConfirmar
 import pe.enrutatuagua.designsystem.component.GridMotivos
+import pe.enrutatuagua.designsystem.component.MotivoUi
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
 import pe.enrutatuagua.designsystem.component.TecladoLitros
 import pe.enrutatuagua.designsystem.component.formatearLitros
@@ -52,17 +63,19 @@ import pe.enrutatuagua.domain.modelo.MotivoOmision
  * dominio; el `excede` local es solo feedback inmediato en pantalla.
  */
 @Composable
-fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
+fun ParadaScreen(onHecho: (mensajeAviso: String?) -> Unit, vm: ParadaViewModel = hiltViewModel()) {
     val hecho by vm.hecho.collectAsState()
     val error by vm.error.collectAsState()
     val parada by vm.parada.collectAsState()
-    LaunchedEffect(hecho) { if (hecho) onHecho() }
 
     var enOmision by rememberSaveable { mutableStateOf(vm.iniciaEnOmision) }
     var litros by rememberSaveable { mutableStateOf("") }
     var precargado by rememberSaveable { mutableStateOf(false) }
     var motivoIndice by rememberSaveable { mutableStateOf<Int?>(null) }
     var comentario by rememberSaveable { mutableStateOf("") }
+    var mensajeAviso by rememberSaveable { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(hecho) { if (hecho) onHecho(mensajeAviso) }
 
     // Precarga el pedido de la parada una sola vez
     LaunchedEffect(parada) {
@@ -80,7 +93,7 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
     ) {
         Spacer(Modifier.height(8.dp))
         BotonAtras(onClick = {
-            if (enOmision && !vm.iniciaEnOmision) enOmision = false else onHecho()
+            if (enOmision && !vm.iniciaEnOmision) enOmision = false else onHecho(null)
         })
         Spacer(Modifier.height(24.dp))
 
@@ -92,7 +105,10 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
                 litros = litros,
                 errorDominio = error,
                 onLitros = { litros = it },
-                onConfirmar = { vm.confirmarEntrega(it) },
+                onConfirmar = {
+                    mensajeAviso = "Entrega registrada: ${formatearLitros(it)} L"
+                    vm.confirmarEntrega(it)
+                },
                 onNoPude = { enOmision = true },
                 modifier = Modifier.weight(1f),
             )
@@ -105,12 +121,20 @@ fun ParadaScreen(onHecho: () -> Unit, vm: ParadaViewModel = hiltViewModel()) {
                 onMotivo = { motivoIndice = it },
                 onComentario = { comentario = it },
                 onRegistrar = { motivo ->
+                    mensajeAviso = "Parada omitida: ${motivo.etiqueta}"
                     vm.omitir(motivo, comentario.takeIf { it.isNotBlank() })
                 },
                 modifier = Modifier.weight(1f),
             )
         }
     }
+}
+
+private fun iconoDeMotivo(motivo: MotivoOmision): ImageVector = when (motivo) {
+    MotivoOmision.CALLE_CERRADA -> TablerIcons.Ban
+    MotivoOmision.NADIE_PRESENTE -> TablerIcons.UserOff
+    MotivoOmision.FALTA_AGUA -> TablerIcons.DropletOff
+    MotivoOmision.OTRO -> TablerIcons.Dots
 }
 
 @Composable
@@ -121,11 +145,10 @@ private fun TarjetaError(mensaje: String) {
         Modifier
             .fillMaxWidth()
             .clip(forma)
-            .background(paleta.alerta.copy(alpha = 0.12f))
-            .border(1.dp, paleta.alerta.copy(alpha = 0.4f), forma)
+            .background(paleta.error.copy(alpha = 0.08f))
             .padding(12.dp),
     ) {
-        Text(mensaje, style = EstilosAgua.Error, color = paleta.alerta)
+        Text(mensaje, style = EstilosAgua.Error, color = paleta.error)
     }
 }
 
@@ -146,9 +169,9 @@ private fun VistaEntrega(
     val excede = valor > restante
     val invalido = excede || valor <= 0
 
-    // El teclado y el deslizador van al alcance del pulgar, no pegados arriba
-    // (patrón Cash App): un Spacer con peso empuja todo el bloque de acción
-    // hacia el borde inferior.
+    // Bloque superior fijo (cifra + error) y bloque de acción ANCLADO abajo
+    // (presets+teclado+deslizador): el error vive BAJO la cifra para que el
+    // teclado nunca se desplace cuando aparece — solo respira el Spacer(weight).
     Column(modifier.fillMaxWidth()) {
         RotuloSeccion("Entrega en", acento = titulo)
         Spacer(Modifier.height(10.dp))
@@ -162,29 +185,43 @@ private fun VistaEntrega(
             )
         }
 
-        Spacer(Modifier.weight(1f))
-
         val mensajeError = errorDominio
             ?: if (excede) "Quedan ${formatearLitros(restante)} L en el tanque. Baja la cantidad o recarga antes de entregar." else null
         mensajeError?.let {
+            Spacer(Modifier.height(14.dp))
             TarjetaError(it)
-            Spacer(Modifier.height(16.dp))
         }
+
+        Spacer(Modifier.weight(1f))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(1000, 2000, pedido).distinct().forEach { preset ->
                 val forma = RoundedCornerShape(RadiosAgua.Preset)
-                Box(
+                val elegido = preset.toString() == litros
+                Row(
                     Modifier
                         .weight(1f)
                         .heightIn(min = 48.dp)
                         .clip(forma)
-                        .border(1.dp, paleta.linea, forma)
+                        .background(paleta.superficie2)
+                        .let { if (elegido) it.border(1.5.dp, paleta.tinta, forma) else it }
                         .clickable { onLitros(preset.toString()) }
                         .padding(vertical = 13.dp),
-                    contentAlignment = Alignment.Center,
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("${formatearLitros(preset)} L", style = EstilosAgua.Preset, color = paleta.texto)
+                    Icon(
+                        TablerIcons.Droplet,
+                        contentDescription = null,
+                        tint = if (elegido) paleta.tinta else paleta.texto2,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(
+                        "${formatearLitros(preset)} L",
+                        style = EstilosAgua.Preset,
+                        color = if (elegido) paleta.tinta else paleta.texto,
+                    )
                 }
             }
         }
@@ -242,7 +279,7 @@ private fun VistaOmision(
         Spacer(Modifier.height(14.dp))
 
         GridMotivos(
-            motivos = motivos.map { it.etiqueta },
+            motivos = motivos.map { MotivoUi(etiqueta = it.etiqueta, icono = iconoDeMotivo(it)) },
             seleccionado = motivoIndice,
             onSeleccionar = onMotivo,
         )
@@ -261,8 +298,7 @@ private fun VistaOmision(
                             .fillMaxWidth()
                             .heightIn(min = 84.dp)
                             .clip(forma)
-                            .background(paleta.tenue)
-                            .border(1.dp, paleta.linea, forma)
+                            .background(paleta.superficie2)
                             .padding(12.dp),
                     ) {
                         if (comentario.isEmpty()) {

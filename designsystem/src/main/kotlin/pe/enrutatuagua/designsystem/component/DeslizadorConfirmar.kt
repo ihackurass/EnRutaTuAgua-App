@@ -50,6 +50,7 @@ enum class ExtremoDeslizador { Inicio, Fin }
  * Confirmación por gesto (no por toque): la perilla debe recorrer el 82% de la
  * pista. Evita entregas fantasma con guantes o pantalla polvorienta. Háptica al
  * confirmar; la perilla regresa sola (300ms, curva firma).
+ * Pista sólida `tinta` (patrón Uber); inválido = gris apagado, no naranja.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -60,7 +61,10 @@ fun DeslizadorConfirmar(
     alerta: Boolean = false,
 ) {
     val paleta = LocalPaletaAgua.current
-    val color = if (alerta) paleta.alerta else paleta.accion
+    val colorPista = if (alerta) paleta.superficie2 else paleta.tinta
+    val colorTexto = if (alerta) paleta.texto2 else paleta.sobreTinta
+    val colorPerilla = if (alerta) paleta.hoja else paleta.sobreTinta
+    val colorIcono = if (alerta) paleta.texto2 else paleta.tinta
     val haptica = LocalHapticFeedback.current
     val density = LocalDensity.current
     val formaPista = RoundedCornerShape(RadiosAgua.Deslizador)
@@ -93,8 +97,8 @@ fun DeslizadorConfirmar(
             .fillMaxWidth()
             .height(DimensionesAgua.AltoDeslizador)
             .clip(formaPista)
-            .background(color.copy(alpha = 0.13f))
-            .border(1.dp, color.copy(alpha = 0.32f), formaPista)
+            .background(colorPista)
+            .let { if (alerta) it.border(1.dp, paleta.linea, formaPista) else it }
             .onSizeChanged { medida ->
                 val margen = with(density) { DimensionesAgua.MargenPerilla.toPx() }
                 val perilla = with(density) { DimensionesAgua.AnchoPerilla.toPx() }
@@ -110,7 +114,7 @@ fun DeslizadorConfirmar(
         Text(
             texto,
             style = EstilosAgua.Deslizador,
-            color = color,
+            color = colorTexto,
             modifier = Modifier.align(Alignment.Center).padding(start = 46.dp),
         )
         Box(
@@ -120,7 +124,8 @@ fun DeslizadorConfirmar(
                 .offset { IntOffset(estado.requireOffset().roundToInt(), 0) }
                 .size(DimensionesAgua.AnchoPerilla, DimensionesAgua.AltoPerilla)
                 .clip(RoundedCornerShape(RadiosAgua.Perilla))
-                .background(color)
+                .background(colorPerilla)
+                .let { if (alerta) it.border(1.dp, paleta.linea, RoundedCornerShape(RadiosAgua.Perilla)) else it }
                 .anchoredDraggable(estado, Orientation.Horizontal)
                 .testTag("perilla"),
             contentAlignment = Alignment.Center,
@@ -128,7 +133,7 @@ fun DeslizadorConfirmar(
             Icon(
                 TablerIcons.ArrowRight,
                 contentDescription = texto,
-                tint = paleta.hoja,
+                tint = colorIcono,
                 modifier = Modifier.size(DimensionesAgua.IconoPerilla),
             )
         }

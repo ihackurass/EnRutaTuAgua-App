@@ -14,31 +14,42 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Truck
 import pe.enrutatuagua.app.ui.mapa.MapaRuta
 import pe.enrutatuagua.designsystem.component.AnclaHoja
+import pe.enrutatuagua.designsystem.component.AvisoSuperior
 import pe.enrutatuagua.designsystem.component.BotonSecundario
+import pe.enrutatuagua.designsystem.component.ChipEstadoRuta
 import pe.enrutatuagua.designsystem.component.ColumnaDeAgua
 import pe.enrutatuagua.designsystem.component.DeslizadorConfirmar
 import pe.enrutatuagua.designsystem.component.EstadoFicha
 import pe.enrutatuagua.designsystem.component.FichaParada
 import pe.enrutatuagua.designsystem.component.HojaArrastrable
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
+import pe.enrutatuagua.designsystem.component.rememberEstadoAviso
 import pe.enrutatuagua.designsystem.component.TarjetaDato
 import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
+import pe.enrutatuagua.designsystem.tokens.RadiosAgua
 import pe.enrutatuagua.domain.modelo.EstadoEntrega
 import pe.enrutatuagua.domain.modelo.Ruta
 import pe.enrutatuagua.domain.usecase.RutaConTanque
@@ -54,9 +65,18 @@ fun RutaScreen(
     onOmitirClick: (Long) -> Unit,
     vm: RutaViewModel = hiltViewModel(),
     mapa: @Composable (Ruta) -> Unit = { MapaRuta(it, Modifier.fillMaxSize()) },
+    aviso: String? = null,
+    onAvisoMostrado: () -> Unit = {},
 ) {
     val estado by vm.estado.collectAsState()
     val paleta = LocalPaletaAgua.current
+    val estadoAviso = rememberEstadoAviso()
+    LaunchedEffect(aviso) {
+        aviso?.let {
+            estadoAviso.mostrar(it)
+            onAvisoMostrado()
+        }
+    }
 
     Box(Modifier.fillMaxSize().background(paleta.mapaBase)) {
         val rc = estado.rutaConTanque
@@ -82,6 +102,10 @@ fun RutaScreen(
                 contentAlignment = Alignment.Center,
             ) { Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2) }
         }
+        AvisoSuperior(
+            estadoAviso,
+            Modifier.align(Alignment.TopCenter).statusBarsPadding(),
+        )
     }
 }
 
@@ -89,24 +113,41 @@ fun RutaScreen(
 private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
     val resueltas = rc.ruta.paradas.count { it.estadoEntrega != EstadoEntrega.PENDIENTE }
-    Column(
+    // Tarjeta flotante sobre el mapa (patrón Uber), no scrim: legible a pleno sol.
+    Row(
         modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    0f to paleta.mapaBase.copy(alpha = 0.92f),
-                    0.4f to paleta.mapaBase.copy(alpha = 0.92f),
-                    1f to Color.Transparent,
-                ),
-            )
             .statusBarsPadding()
-            .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 26.dp),
+            .padding(14.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Text("Mi ruta de hoy", style = EstilosAgua.Zona, color = paleta.texto)
-        Text(
-            "Cisterna ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
-            style = EstilosAgua.Placa, color = paleta.texto2,
-        )
+        Surface(
+            shape = RoundedCornerShape(RadiosAgua.Tarjeta),
+            color = paleta.hoja,
+            shadowElevation = 8.dp,
+        ) {
+            Row(
+                Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    TablerIcons.Truck,
+                    contentDescription = null,
+                    tint = paleta.texto2,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(9.dp))
+                Column {
+                    Text("Mi ruta de hoy", style = EstilosAgua.Zona, color = paleta.texto)
+                    Text(
+                        "Cisterna ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
+                        style = EstilosAgua.Placa, color = paleta.texto2,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.weight(1f))
+        ChipEstadoRuta("En ruta")
     }
 }
 
@@ -142,7 +183,11 @@ private fun ContenidoHoja(
                     Spacer(Modifier.height(14.dp))
                     DeslizadorConfirmar("Desliza para entregar", onConfirmar = { onParadaClick(proxima.id) })
                     Spacer(Modifier.height(10.dp))
-                    BotonSecundario("No pude entregar", onClick = { onOmitirClick(proxima.id) })
+                    BotonSecundario(
+                        "No pude entregar",
+                        onClick = { onOmitirClick(proxima.id) },
+                        icono = TablerIcons.Ban,
+                    )
                 }
             }
         } else {

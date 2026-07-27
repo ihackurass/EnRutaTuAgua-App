@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -56,10 +58,15 @@ fun Navegacion() {
         }
         composable("vecino") { MapaVivoScreen() }
         composable("presidente") { PresidenteNav() }
-        composable("ruta") {
+        composable("ruta") { entrada ->
+            val aviso by entrada.savedStateHandle
+                .getStateFlow<String?>("aviso", null)
+                .collectAsState()
             RutaScreen(
                 onParadaClick = { id -> nav.navigate("parada/$id") },
                 onOmitirClick = { id -> nav.navigate("parada/$id?omitir=true") },
+                aviso = aviso,
+                onAvisoMostrado = { entrada.savedStateHandle["aviso"] = null },
             )
         }
         composable(
@@ -68,6 +75,11 @@ fun Navegacion() {
                 navArgument("paradaId") { type = NavType.LongType },
                 navArgument("omitir") { type = NavType.BoolType; defaultValue = false },
             ),
-        ) { ParadaScreen(onHecho = { nav.popBackStack() }) }
+        ) {
+            ParadaScreen(onHecho = { mensaje ->
+                mensaje?.let { nav.previousBackStackEntry?.savedStateHandle?.set("aviso", it) }
+                nav.popBackStack()
+            })
+        }
     }
 }

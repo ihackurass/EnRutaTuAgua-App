@@ -19,7 +19,7 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 
 /**
  * Botón de volver circular, patrón nativo (Uber/Rappi/Yango) en vez de un link
- * de texto: 48dp, fondo `tenue`, icono de un solo trazo. Zona táctil completa.
+ * de texto: 48dp, fondo `superficie2`, icono de un solo trazo. Zona táctil completa.
  */
 @Composable
 fun BotonAtras(onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -28,7 +28,7 @@ fun BotonAtras(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(paleta.tenue)
+            .background(paleta.superficie2)
             .clickable(onClick = onClick)
             .semantics { contentDescription = "Volver" },
         contentAlignment = Alignment.Center,

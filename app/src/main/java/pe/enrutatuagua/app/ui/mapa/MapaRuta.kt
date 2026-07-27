@@ -95,7 +95,7 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                     estilo.addSource(GeoJsonSource("ruta", geoJsonDeRuta(ruta)))
                     estilo.addLayer(
                         LineLayer("ruta-halo", "ruta").withProperties(
-                            lineColor(cAccion), lineOpacity(0.22f), lineWidth(13f),
+                            lineColor(cAccion), lineOpacity(0.18f), lineWidth(13f),
                             lineCap(Property.LINE_CAP_ROUND), lineJoin(Property.LINE_JOIN_ROUND),
                         ),
                     )

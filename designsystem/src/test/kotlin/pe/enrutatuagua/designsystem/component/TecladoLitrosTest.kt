@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
@@ -38,6 +39,12 @@ class TecladoLitrosTest {
         assertEquals("35", valor())
         regla.onNodeWithTag("tecla-C").performClick()
         assertEquals("", valor())
+    }
+
+    @Test
+    fun `la tecla de borrar es un icono accesible`() {
+        monta("35")
+        regla.onNodeWithContentDescription("Borrar dígito").assertExists()
     }
 
     @Test

@@ -21,10 +21,14 @@ object DimensionesAgua {
     val AnchoTubo = 26.dp
     val AltoTubo = 168.dp
     val AltoBotonPrimario = 58.dp
+    val AltoBotonSecundario = 52.dp
     val AltoPreset = 48.dp
     val AltoTactilMinimo = 56.dp
     val Badge = 28.dp
     val GapMotivos = 9.dp
     val MargenPantalla = 16.dp
     val PaddingHoja = 18.dp
+    val IconoLinea = 20.dp
+    val IconoTecla = 24.dp
+    val ChevronFicha = 18.dp
 }

@@ -23,7 +23,8 @@ fun CifraLitros(litros: Int, modifier: Modifier = Modifier, enAlerta: Boolean = 
         Text(
             formatearLitros(litros),
             style = EstilosAgua.CifraHero,
-            color = if (enAlerta) paleta.alerta else paleta.texto,
+            // Exceder el tanque es un error (RN-01), no una advertencia.
+            color = if (enAlerta) paleta.error else paleta.texto,
         )
         Text(
             "L",

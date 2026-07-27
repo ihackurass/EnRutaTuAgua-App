@@ -46,6 +46,9 @@ class ParadaScreenTest {
         regla.onNodeWithTag("tecla-9").performClick()
         regla.onNodeWithTag("tecla-9").performClick()
         regla.onNodeWithText("Corrige la cantidad").assertExists()
+        regla.onNodeWithText(
+            "Quedan 12,000 L en el tanque. Baja la cantidad o recarga antes de entregar.",
+        ).assertExists()
     }
 
     @Test

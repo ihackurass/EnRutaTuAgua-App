@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import org.junit.Rule
 import org.junit.Test
@@ -42,5 +43,27 @@ class RutaScreenTest {
         regla.onNodeWithText("Desliza para entregar").assertExists()
         regla.onNodeWithText("Mi ruta de hoy").assertExists()
         regla.onNodeWithText("Cisterna ABC-123 · 0 de 1 paradas").assertExists()
+        regla.onNodeWithText("EN RUTA").assertExists()            // chip de estado
+    }
+
+    @Test
+    fun `un aviso entrante se muestra en el aviso superior`() {
+        val repo = RutaRepoFake()
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        regla.setContent {
+            TemaAgua {
+                RutaScreen(
+                    onParadaClick = {},
+                    onOmitirClick = {},
+                    vm = vm,
+                    mapa = { Box(Modifier.fillMaxSize()) },
+                    aviso = "Entrega registrada: 4,000 L",
+                )
+            }
+        }
+        regla.waitForIdle()
+
+        regla.onNodeWithTag("aviso").assertExists()
+        regla.onNodeWithText("Entrega registrada: 4,000 L").assertExists()
     }
 }

@@ -22,6 +22,8 @@ class EstiloMapaTest {
         assertEquals(8, raiz.getInt("version"))
         assertTrue(raiz.getJSONObject("sources").has("protomaps"))
         assertTrue(json.contains("pmtiles://file://"))
+        // Jerarquía vial del plan 08: casing bajo las vías mayores.
+        assertTrue(json.contains("vias-mayores-borde"))
     }
 
     @Test

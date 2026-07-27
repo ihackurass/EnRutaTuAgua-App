@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.X
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
@@ -94,6 +95,14 @@ fun FichaParada(
                     else -> paleta.texto
                 },
             )
+            if (onClick != null) {
+                Icon(
+                    TablerIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = paleta.texto2,
+                    modifier = Modifier.size(DimensionesAgua.ChevronFicha),
+                )
+            }
         }
         HorizontalDivider(color = paleta.linea)
     }

@@ -17,25 +17,37 @@ class TemaAguaTest {
     @get:Rule val regla = createComposeRule()
 
     private var primario: Color = Color.Unspecified
+    private var error: Color = Color.Unspecified
     private var accion: Color = Color.Unspecified
+    private var tinta: Color = Color.Unspecified
+    private var superficie2: Color = Color.Unspecified
 
     @Composable
     private fun Sonda() {
         primario = MaterialTheme.colorScheme.primary
+        error = MaterialTheme.colorScheme.error
         accion = LocalPaletaAgua.current.accion
+        tinta = LocalPaletaAgua.current.tinta
+        superficie2 = LocalPaletaAgua.current.superficie2
     }
 
     @Test
-    fun `tema claro expone marca como primary y accion extendida`() {
+    fun `tema claro expone tinta como primary y accion extendida`() {
         regla.setContent { TemaAgua(oscuro = false) { Sonda() } }
-        assertEquals(Color(0xFF0D3B66), primario)
-        assertEquals(Color(0xFF12A5B0), accion)
+        assertEquals(Color(0xFF0E1B2A), primario)
+        assertEquals(Color(0xFF0E1B2A), tinta)
+        assertEquals(Color(0xFFE11900), error)
+        assertEquals(Color(0xFF0A7F90), accion)
+        assertEquals(Color(0xFFF0F2F4), superficie2)
     }
 
     @Test
-    fun `tema oscuro cambia la paleta completa`() {
+    fun `tema oscuro cambia la paleta completa e invierte la tinta`() {
         regla.setContent { TemaAgua(oscuro = true) { Sonda() } }
-        assertEquals(Color(0xFF9AD1EA), primario)
-        assertEquals(Color(0xFF2ABFC9), accion)
+        assertEquals(Color(0xFFE9F2F7), primario)
+        assertEquals(Color(0xFFE9F2F7), tinta)
+        assertEquals(Color(0xFFFF5C48), error)
+        assertEquals(Color(0xFF2CC7D3), accion)
+        assertEquals(Color(0xFF1D2933), superficie2)
     }
 }

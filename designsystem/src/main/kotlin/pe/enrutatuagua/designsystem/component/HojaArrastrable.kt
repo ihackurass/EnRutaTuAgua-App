@@ -104,7 +104,7 @@ fun HojaArrastrable(
                 },
             shape = RoundedCornerShape(topStart = RadiosAgua.Hoja, topEnd = RadiosAgua.Hoja),
             color = paleta.hoja,
-            shadowElevation = 24.dp,
+            shadowElevation = 16.dp,
         ) {
             Column {
                 Box(

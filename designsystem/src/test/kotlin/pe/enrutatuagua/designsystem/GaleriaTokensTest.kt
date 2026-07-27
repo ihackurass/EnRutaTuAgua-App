@@ -33,7 +33,10 @@ class GaleriaTokensTest {
         val p = LocalPaletaAgua.current
         Column(Modifier.background(p.fondo).fillMaxWidth().padding(16.dp)) {
             Row {
-                listOf(p.marca, p.accion, p.alerta, p.exito, p.hoja, p.tenue).forEach { c ->
+                listOf(
+                    p.tinta, p.accion, p.error, p.alerta, p.exito,
+                    p.hoja, p.superficie2, p.tenue,
+                ).forEach { c ->
                     Box(Modifier.size(40.dp).padding(2.dp).background(c))
                 }
             }

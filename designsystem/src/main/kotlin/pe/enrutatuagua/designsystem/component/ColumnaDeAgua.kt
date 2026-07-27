@@ -21,9 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
@@ -58,7 +55,7 @@ fun ColumnaDeAgua(litrosRestantes: Int, capacidadLitros: Int, modifier: Modifier
             Modifier
                 .size(DimensionesAgua.AnchoTubo, DimensionesAgua.AltoTubo)
                 .clip(formaTubo)
-                .background(paleta.hoja.copy(alpha = 0.82f))
+                .background(paleta.hoja.copy(alpha = 0.9f))
                 .border(1.dp, paleta.linea, formaTubo)
                 .testTag("tubo"),
         ) {
@@ -67,11 +64,7 @@ fun ColumnaDeAgua(litrosRestantes: Int, capacidadLitros: Int, modifier: Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .fillMaxHeight(fraccionAnimada)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(lerp(paleta.accion, Color.White, 0.12f), paleta.accion),
-                        ),
-                    )
+                    .background(paleta.accion)
                     .testTag("tubo-agua"),
             )
             listOf(0.25f, 0.5f, 0.75f).forEach { marca ->
