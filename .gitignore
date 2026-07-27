@@ -15,3 +15,7 @@
 /domain/build
 /data/build
 /designsystem/build
+
+# Artefactos de IDE/shell que no son fuente
+/domain/bin/
+*.stackdump
