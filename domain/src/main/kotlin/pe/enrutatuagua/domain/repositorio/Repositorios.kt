@@ -74,3 +74,17 @@ interface DescargadorRegionMapa {
     /** Best-effort, sin garantía de completitud (ver "Por qué NO WorkManager" en el plan). */
     fun descargar(clave: String, region: RegionMapa)
 }
+
+// ANDROID-PLAN-02 (T2, alcance acotado): sin login real todavía -- ver
+// ConfiguracionAuthDev. El token vive SÓLO en memoria (mismo criterio que
+// SesionRepositoryMemoria: no sobrevive un relanzamiento del proceso).
+interface AutenticacionRepository {
+    /** Login perezoso: si no hay token vigente, lo pide antes de devolver. */
+    suspend fun tokenVigente(): String
+
+    /** Descarta el token cacheado y vuelve a loguearse -- 401 a mitad de sesión (token vencido server-side). */
+    suspend fun forzarRelogin(): String
+}
+
+/** Valores de configuración de desarrollo (BuildConfig) -- sin login real, ver ANDROID-PLAN-02. */
+data class ConfiguracionAuthDev(val baseUrl: String, val dni: String, val clave: String)

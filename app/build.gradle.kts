@@ -25,6 +25,13 @@ android {
         buildConfigField("long", "AGUATERO_ID_DEV", "3L")
         buildConfigField("long", "RUTA_ID_DEV", "29L")
         buildConfigField("String", "MQTT_BROKER_URL_DEV", "\"tcp://192.168.18.6:1883\"")
+
+        // ANDROID-PLAN-02 (T1, sin login real): mismo criterio que los
+        // valores de arriba -- se pisan antes de cada corrida e2e con la IP
+        // LAN de la máquina de desarrollo (NO localhost).
+        buildConfigField("String", "BASE_URL_DEV", "\"http://192.168.18.6:8080/\"")
+        buildConfigField("String", "AGUATERO_DNI_DEV", "\"10000003\"")
+        buildConfigField("String", "AGUATERO_CLAVE_DEV", "\"aguatero1234\"")
     }
 
     compileOptions {
