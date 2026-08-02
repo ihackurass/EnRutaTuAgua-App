@@ -5,6 +5,11 @@
     <!-- Ubicación (plan 09): el AAR de MapLibre ya los fusiona; se declaran por legibilidad. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Rastreo GPS en segundo plano (ANDROID-PLAN-04, RA-07). -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".EnRutaTuAguaApp"
@@ -22,6 +27,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- ANDROID-PLAN-04: rastreo GPS del aguatero mientras hay ruta ABIERTA. -->
+        <service
+            android:name=".ubicacion.ServicioTrackingGps"
+            android:foregroundServiceType="location"
+            android:exported="false" />
     </application>
 
 </manifest>

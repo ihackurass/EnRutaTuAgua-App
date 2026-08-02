@@ -17,14 +17,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,6 +37,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Ban
 import compose.icons.tablericons.Truck
+import pe.enrutatuagua.app.ubicacion.rememberPermisoNotificaciones
+import pe.enrutatuagua.app.ubicacion.rememberPermisoUbicacionSegundoPlano
 import pe.enrutatuagua.app.ui.mapa.MapaRuta
 import pe.enrutatuagua.designsystem.component.AnclaHoja
 import pe.enrutatuagua.designsystem.component.AvisoSuperior
@@ -78,6 +85,27 @@ fun RutaScreen(
         }
     }
 
+    // ANDROID-PLAN-04 (RA-07): sólo se pide con ruta ABIERTA -- no tiene
+    // sentido molestar al aguatero con esto si todavía no hay nada que
+    // trackear.
+    val hayRutaAbierta = estado.rutaConTanque != null
+    val permisoSegundoPlano = rememberPermisoUbicacionSegundoPlano()
+    val permisoNotificaciones = rememberPermisoNotificaciones()
+    var mostrarExplicacionUbicacion by remember { mutableStateOf(false) }
+    LaunchedEffect(hayRutaAbierta, permisoSegundoPlano.concedido) {
+        if (hayRutaAbierta && !permisoSegundoPlano.concedido) mostrarExplicacionUbicacion = true
+    }
+    if (mostrarExplicacionUbicacion) {
+        DialogoExplicacionUbicacionSegundoPlano(
+            onPermitir = {
+                mostrarExplicacionUbicacion = false
+                permisoNotificaciones.solicitar()
+                permisoSegundoPlano.solicitar()
+            },
+            onDescartar = { mostrarExplicacionUbicacion = false },
+        )
+    }
+
     Box(Modifier.fillMaxSize().background(paleta.mapaBase)) {
         val rc = estado.rutaConTanque
         when {
@@ -110,6 +138,24 @@ fun RutaScreen(
             Modifier.align(Alignment.TopCenter).statusBarsPadding(),
         )
     }
+}
+
+/** RA-07: "permiso de ubicación en segundo plano con explicación clara" -- este es el "por qué". */
+@Composable
+private fun DialogoExplicacionUbicacionSegundoPlano(onPermitir: () -> Unit, onDescartar: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDescartar,
+        title = { Text("Compartir tu ubicación") },
+        text = {
+            Text(
+                "Mientras tengas la ruta abierta, compartimos tu ubicación para que los vecinos " +
+                    "vean por dónde va la cisterna -- incluso con la pantalla apagada. Podés " +
+                    "desactivarlo cuando quieras desde los ajustes del celular.",
+            )
+        },
+        confirmButton = { TextButton(onClick = onPermitir) { Text("Permitir") } },
+        dismissButton = { TextButton(onClick = onDescartar) { Text("Ahora no") } },
+    )
 }
 
 @Composable

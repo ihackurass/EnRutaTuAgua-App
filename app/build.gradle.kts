@@ -16,6 +16,15 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+
+        // ANDROID-PLAN-04 (alcance acotado, sin login real): valores de
+        // config de desarrollo para el rastreo GPS -- se pisan antes de cada
+        // corrida e2e con el aguateroId/rutaId reales que devuelve el
+        // backend sembrado y la IP LAN de la máquina de desarrollo (NO
+        // localhost: el broker corre en la máquina dev, no en el celular).
+        buildConfigField("long", "AGUATERO_ID_DEV", "3L")
+        buildConfigField("long", "RUTA_ID_DEV", "29L")
+        buildConfigField("String", "MQTT_BROKER_URL_DEV", "\"tcp://192.168.18.6:1883\"")
     }
 
     compileOptions {
@@ -29,6 +38,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

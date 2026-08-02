@@ -28,3 +28,34 @@ interface TrackingRepository {
     fun observarUltimaPosicion(): Flow<PosicionCisterna?>
     fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>>  // RV-02, solo lectura
 }
+
+// ANDROID-PLAN-04 (alcance acotado): borde GPS del aguatero, ADR-2. Puerto
+// de PERSISTENCIA (RNF-01, "guardado local siempre") separado del puerto de
+// RED (best-effort) -- así cada uno se testea con su propio fake, sin
+// acoplar "¿guardé el punto?" a si el broker respondió.
+data class PosicionGps(
+    val id: Long = 0,
+    val rutaId: Long,
+    val lat: Double,
+    val lng: Double,
+    val registradaEnMillis: Long,
+)
+
+interface PosicionGpsRepository {
+    suspend fun guardar(posicion: PosicionGps): PosicionGps
+    suspend fun pendientes(maxItems: Int): List<PosicionGps>
+    suspend fun marcarPublicadas(ids: List<Long>)
+    suspend fun purgarAntiguas(limiteMillis: Long, maxFilas: Int)
+}
+
+interface PublicadorPosicionMqtt {
+    /** true si el broker confirmó el publish (QoS1) -- no garantiza que el backend lo haya aceptado. */
+    suspend fun publicar(aguateroId: Long, posicion: PosicionGps): Boolean
+}
+
+/** Valores de configuración de desarrollo (BuildConfig) -- sin login real, ver ANDROID-PLAN-04. */
+data class ConfiguracionTrackingDev(
+    val aguateroId: Long,
+    val rutaId: Long,
+    val brokerUrl: String,
+)
