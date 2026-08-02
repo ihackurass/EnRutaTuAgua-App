@@ -59,3 +59,18 @@ data class ConfiguracionTrackingDev(
     val rutaId: Long,
     val brokerUrl: String,
 )
+
+// Mapa híbrido online/offline (alcance acotado, ver plan): el PMTiles
+// bundleado sigue siendo el piso garantizado sin internet (RNF-01); esto
+// es sólo la señal para decidir cuándo preferir el estilo online y cuándo
+// disparar la precarga de la zona de la ruta.
+interface ConectividadRepository {
+    fun observarConectividad(): Flow<Boolean>
+}
+
+data class RegionMapa(val latNorte: Double, val lonEste: Double, val latSur: Double, val lonOeste: Double)
+
+interface DescargadorRegionMapa {
+    /** Best-effort, sin garantía de completitud (ver "Por qué NO WorkManager" en el plan). */
+    fun descargar(clave: String, region: RegionMapa)
+}

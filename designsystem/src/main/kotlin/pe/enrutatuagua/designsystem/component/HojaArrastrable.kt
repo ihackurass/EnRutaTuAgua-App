@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -67,7 +68,15 @@ fun HojaArrastrable(
     val alcance = rememberCoroutineScope()
     val onAnclaActual by rememberUpdatedState(onAncla)
 
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    // navigationBarsPadding ACÁ (no sólo en el contenido de adentro): el
+    // ancla "Asomo" es una altura fija (262dp) medida contra `maxHeight` --
+    // si `maxHeight` incluye la franja de la barra de navegación del
+    // sistema (pantalla edge-to-edge), el borde inferior del asomo cae
+    // detrás de esa barra sin importar cuánto padding tenga el contenido de
+    // adentro (hallazgo real en dispositivo: el botón "No pude entregar"
+    // quedaba tapado). Al descontarla acá, TODO lo que se calcule desde
+    // `maxHeight` (incluida la posición del ancla) ya excluye esa franja.
+    BoxWithConstraints(modifier.fillMaxSize().navigationBarsPadding()) {
         val altoHoja = maxHeight * fraccionAbierta
         val desliz = with(density) { (altoHoja - alturaAsomo).toPx().coerceAtLeast(0f) }
 

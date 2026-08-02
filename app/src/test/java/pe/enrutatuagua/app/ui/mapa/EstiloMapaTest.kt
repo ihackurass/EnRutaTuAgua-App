@@ -34,4 +34,27 @@ class EstiloMapaTest {
         assertEquals(primera.absolutePath, segunda.absolutePath)
         assertEquals(marca, segunda.lastModified())
     }
+
+    @Test
+    fun `online=false por defecto -- mismo comportamiento offline de siempre`() {
+        val json = EstiloMapa.json(contexto, oscuro = false)
+        assertTrue(json.contains("pmtiles://file://"))
+        assertFalse(json.contains(EstiloMapa.URL_ONLINE))
+    }
+
+    @Test
+    fun `online=true usa la fuente remota, no el pmtiles local`() {
+        val json = EstiloMapa.json(contexto, oscuro = false, online = true)
+        assertTrue(json.contains(EstiloMapa.URL_ONLINE))
+        assertFalse(json.contains("pmtiles://file://"))
+        assertFalse(json.contains("__PMTILES__"))
+    }
+
+    @Test
+    fun `prepararArchivoEstiloOnline materializa un json valido en filesDir`() {
+        val archivo = EstiloMapa.prepararArchivoEstiloOnline(contexto, oscuro = false)
+        assertTrue(archivo.exists())
+        val raiz = JSONObject(archivo.readText())
+        assertTrue(raiz.getJSONObject("sources").getJSONObject("protomaps").getString("url").contains(EstiloMapa.URL_ONLINE))
+    }
 }

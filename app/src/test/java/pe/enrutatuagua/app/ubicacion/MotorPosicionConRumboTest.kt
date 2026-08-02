@@ -142,6 +142,36 @@ class MotorPosicionConRumboTest {
     }
 
     @Test
+    fun `sin rumbo previo usa el rumboInicial en vez del crudo del fix (norte)`() {
+        // Hallazgo real (reporte del usuario): activar "seguir camión" con
+        // el camión detenido hacía saltar la cámara a norte -- el motor
+        // debe ofrecer un rumbo de arranque configurable en vez de dejar
+        // pasar el bearing crudo (0 = norte) del primer fix.
+        val fake = MotorFake()
+        val receptor = Receptor()
+        val motor = motorSuscrito(fake, receptor)
+        motor.rumboInicial = 123f
+
+        fake.emitir(posicion(-12.1571, -76.9442))
+
+        assertEquals(123f, receptor.recibidas[0].bearing, 0.01f)
+    }
+
+    @Test
+    fun `una vez que hay movimiento real, el rumboInicial deja de usarse`() {
+        val fake = MotorFake()
+        val receptor = Receptor()
+        val motor = motorSuscrito(fake, receptor)
+        motor.rumboInicial = 123f
+
+        fake.emitir(posicion(-12.1571, -76.9442))
+        fake.emitir(posicion(-12.1613, -76.9488)) // movimiento real: gana el rumbo calculado
+
+        val segunda = receptor.recibidas[1]
+        assertEquals(rumboEntre(-12.1571, -76.9442, -12.1613, -76.9488), segunda.bearing, 1f)
+    }
+
+    @Test
     fun `removeLocationUpdates con el callback original desregistra la envoltura`() {
         val fake = MotorFake()
         val receptor = Receptor()

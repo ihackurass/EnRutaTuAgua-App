@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import pe.enrutatuagua.app.servicio.ObservadorRutaAbiertaGps
+import pe.enrutatuagua.app.servicio.PrecacheRutaObservador
 import pe.enrutatuagua.app.ui.Navegacion
 import pe.enrutatuagua.designsystem.theme.TemaAgua
 import javax.inject.Inject
@@ -17,6 +18,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var observadorRutaAbiertaGps: ObservadorRutaAbiertaGps
+    @Inject lateinit var precacheRutaObservador: PrecacheRutaObservador
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -29,7 +31,9 @@ class MainActivity : ComponentActivity() {
         // prueba genérica, no MainActivity) -- así los tests de pantallas
         // sueltas (ParadaScreenTest, PresidenteNavTest, etc.) no disparan un
         // observador de fondo tocando el Room real por accidente.
-        observadorRutaAbiertaGps.iniciar(CoroutineScope(SupervisorJob() + Dispatchers.Default))
+        val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        observadorRutaAbiertaGps.iniciar(alcance)
+        precacheRutaObservador.iniciar(alcance)
         setContent {
             TemaAgua {
                 Navegacion()

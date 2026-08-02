@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import pe.enrutatuagua.app.ui.mapa.MapaDiagnosticoScreen
 import pe.enrutatuagua.app.ui.parada.ParadaScreen
 import pe.enrutatuagua.app.ui.presidente.PresidenteNav
 import pe.enrutatuagua.app.ui.rol.ProximamenteScreen
@@ -51,8 +52,9 @@ fun Navegacion() {
                     Rol.PRESIDENTE -> nav.navigate("presidente")
                     Rol.ADMIN -> nav.navigate("proximamente")
                 }
-            })
+            }, onDiagnosticoMapaClick = { nav.navigate("mapa-diagnostico") })
         }
+        composable("mapa-diagnostico") { MapaDiagnosticoScreen() }
         composable("proximamente") {
             ProximamenteScreen(onVolver = { nav.popBackStack() })
         }

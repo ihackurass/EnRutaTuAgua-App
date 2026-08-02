@@ -18,13 +18,14 @@ import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Droplet
 import pe.enrutatuagua.designsystem.component.BotonPrimario
+import pe.enrutatuagua.designsystem.component.BotonSecundario
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.Rol
 
 @Composable
-fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit) {
+fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit, onDiagnosticoMapaClick: () -> Unit = {}) {
     val paleta = LocalPaletaAgua.current
     Column(
         Modifier.fillMaxSize().background(paleta.fondo).padding(24.dp),
@@ -43,5 +44,10 @@ fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit) {
         Rol.entries.forEach { rol ->
             BotonPrimario(rol.etiqueta, onClick = { onRolElegido(rol) })
         }
+        Spacer(Modifier.height(10.dp))
+        // Diagnóstico temporal: mapa pelado (sin encuadre/HojaArrastrable de
+        // la app) para aislar si "no carga ciertas partes" es del dato
+        // (PMTiles) o de la lógica de cámara -- ver MapaDiagnosticoScreen.kt.
+        BotonSecundario("Diagnóstico: mapa pelado", onClick = onDiagnosticoMapaClick)
     }
 }

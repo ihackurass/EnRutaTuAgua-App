@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import pe.enrutatuagua.data.ConectividadRepositoryAndroid
 import pe.enrutatuagua.data.PedidoRepositoryMemoria
 import pe.enrutatuagua.data.PosicionGpsRepositoryRoom
 import pe.enrutatuagua.data.RutaRepositoryRoom
@@ -15,6 +16,7 @@ import pe.enrutatuagua.data.SesionRepositoryMemoria
 import pe.enrutatuagua.data.TrackingRepositoryMemoria
 import pe.enrutatuagua.data.local.EnRutaTuAguaDb
 import pe.enrutatuagua.data.mqtt.PublicadorPosicionMqttPaho
+import pe.enrutatuagua.domain.repositorio.ConectividadRepository
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.repositorio.PosicionGpsRepository
 import pe.enrutatuagua.domain.repositorio.PublicadorPosicionMqtt

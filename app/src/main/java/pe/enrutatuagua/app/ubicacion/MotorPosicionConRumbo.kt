@@ -21,6 +21,17 @@ class MotorPosicionConRumbo(private val delegado: LocationEngine) : LocationEngi
     private var ultimoRumbo: Float? = null
 
     /**
+     * Hallazgo real (reporte del usuario): al activar "seguir camión" con el
+     * camión detenido (sin movimiento todavía, `ultimoRumbo` en null), el
+     * rumbo caía al crudo del fix (0° = norte) y la cámara "saltaba" a norte
+     * -- deshaciendo el encuadre izquierda-a-derecha que se armó recién. Se
+     * puede fijar un rumbo de arranque (p.ej. el bearing de lectura
+     * izq→der) para que, hasta que haya movimiento real, la cámara no
+     * salte a un norte arbitrario.
+     */
+    var rumboInicial: Float? = null
+
+    /**
      * Envoltura registrada por cada callback original: removeLocationUpdates
      * llega con el original y debe desregistrar en el delegado la MISMA
      * envoltura que se registró en su momento.
@@ -72,7 +83,7 @@ class MotorPosicionConRumbo(private val delegado: LocationEngine) : LocationEngi
                     rumboEntre(previa.latitude, previa.longitude, posicion.latitude, posicion.longitude)
                 ultimoRumbo = posicion.bearing
             } else {
-                ultimoRumbo?.let { posicion.bearing = it }
+                (ultimoRumbo ?: rumboInicial)?.let { posicion.bearing = it }
             }
         }
         ultimaPosicion = posicion
