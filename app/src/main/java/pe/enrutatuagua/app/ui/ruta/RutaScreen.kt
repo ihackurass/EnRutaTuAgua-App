@@ -42,6 +42,7 @@ import pe.enrutatuagua.app.ubicacion.rememberPermisoUbicacionSegundoPlano
 import pe.enrutatuagua.app.ui.mapa.MapaRuta
 import pe.enrutatuagua.designsystem.component.AnclaHoja
 import pe.enrutatuagua.designsystem.component.AvisoSuperior
+import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.BotonSecundario
 import pe.enrutatuagua.designsystem.component.ChipEstadoRuta
 import pe.enrutatuagua.designsystem.component.ColumnaDeAgua
@@ -76,12 +77,19 @@ fun RutaScreen(
     onAvisoMostrado: () -> Unit = {},
 ) {
     val estado by vm.estado.collectAsState()
+    val mensaje by vm.mensaje.collectAsState()
     val paleta = LocalPaletaAgua.current
     val estadoAviso = rememberEstadoAviso()
     LaunchedEffect(aviso) {
         aviso?.let {
             estadoAviso.mostrar(it)
             onAvisoMostrado()
+        }
+    }
+    LaunchedEffect(mensaje) {
+        mensaje?.let {
+            estadoAviso.mostrar(it)
+            vm.mensajeMostrado()
         }
     }
 
@@ -121,7 +129,7 @@ fun RutaScreen(
                         .padding(top = 92.dp, end = 14.dp),
                 )
                 HojaArrastrable { ancla ->
-                    ContenidoHoja(rc, ancla, onParadaClick, onOmitirClick)
+                    ContenidoHoja(rc, ancla, estado.procesandoAccion, onParadaClick, onOmitirClick, vm::cerrarRuta)
                 }
             }
             estado.cargando -> Box(
@@ -129,9 +137,19 @@ fun RutaScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator(color = paleta.accion) }
             else -> Box(
-                Modifier.fillMaxSize().background(paleta.fondo),
+                Modifier.fillMaxSize().background(paleta.fondo).padding(24.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2) }
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2)
+                    Spacer(Modifier.height(16.dp))
+                    BotonPrimario(
+                        "Empezar mi ruta de hoy",
+                        onClick = vm::abrirRuta,
+                        habilitado = !estado.procesandoAccion,
+                    )
+                }
+            }
         }
         AvisoSuperior(
             estadoAviso,
@@ -204,8 +222,10 @@ private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
 private fun ContenidoHoja(
     rc: RutaConTanque,
     ancla: AnclaHoja,
+    procesandoAccion: Boolean,
     onParadaClick: (Long) -> Unit,
     onOmitirClick: (Long) -> Unit,
+    onCerrarRuta: () -> Unit,
 ) {
     val paleta = LocalPaletaAgua.current
     val proxima = rc.ruta.paradas.firstOrNull { it.estadoEntrega == EstadoEntrega.PENDIENTE }
@@ -250,11 +270,8 @@ private fun ContenidoHoja(
                         TarjetaDato(formatearLitros(entregadoTotal), "Litros entregados", Modifier.weight(1f))
                         TarjetaDato("$omitidas", "Paradas omitidas", Modifier.weight(1f))
                     }
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "El cierre de ruta llega con el plan 02",
-                        style = EstilosAgua.ItemSub, color = paleta.texto2,
-                    )
+                    Spacer(Modifier.height(14.dp))
+                    BotonPrimario("Cerrar ruta", onClick = onCerrarRuta, habilitado = !procesandoAccion)
                 }
             }
         }

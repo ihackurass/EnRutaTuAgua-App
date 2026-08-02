@@ -2,10 +2,13 @@ package pe.enrutatuagua.app.ui.ruta
 
 import android.app.Application
 import android.os.Build
+import android.os.Looper
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -20,6 +23,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.util.ReflectionHelpers
 import pe.enrutatuagua.designsystem.theme.TemaAgua
+import pe.enrutatuagua.domain.modelo.EstadoEntrega
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.RutaRepoFake
 
@@ -110,6 +114,50 @@ class RutaScreenTest {
 
         assertEquals(null, shadowOf(contexto).nextStartedActivity)
         regla.onAllNodesWithText("Compartir tu ubicación").assertCountEquals(0)
+    }
+
+    @Test
+    fun `sin ruta abierta muestra el boton para empezar la ruta y lo dispara`() {
+        val repo = RutaRepoFake()
+        repo.rutaFlow.value = null
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        regla.setContent {
+            TemaAgua {
+                RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })
+            }
+        }
+        regla.waitForIdle()
+
+        regla.onNodeWithText("Sin ruta abierta").assertExists()
+        regla.onNodeWithText("Empezar mi ruta de hoy").performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        regla.waitForIdle()
+
+        assertEquals(RutaRepoFake.rutaDePrueba().id, repo.rutaFlow.value?.id)
+    }
+
+    @Test
+    fun `sin paradas pendientes muestra el boton cerrar ruta y lo dispara`() {
+        val repo = RutaRepoFake()
+        val paradaEntregada = RutaRepoFake.rutaDePrueba().paradas[0]
+            .copy(estadoEntrega = EstadoEntrega.ENTREGADO)
+        repo.rutaFlow.value = RutaRepoFake.rutaDePrueba().copy(paradas = listOf(paradaEntregada))
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        regla.setContent {
+            TemaAgua {
+                RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })
+            }
+        }
+        regla.waitForIdle()
+
+        // La hoja arranca colapsada (AnclaHoja.Asomo) -- el botón vive
+        // dentro de esa hoja arrastrable/animada, cuyo timing de gesto+tween
+        // no es fiable de simular bajo Robolectric. Se verifica que el
+        // botón existe, está habilitado y tiene acción de click registrada
+        // (wiring de la UI); que `cerrarRuta()` realmente actualiza el
+        // repositorio ya lo cubre `RutaViewModelTest` con Turbine.
+        regla.onNodeWithText("Ruta lista para cerrar").assertExists()
+        regla.onNodeWithText("Cerrar ruta").assertExists().assertHasClickAction().assertIsEnabled()
     }
 
     @Test

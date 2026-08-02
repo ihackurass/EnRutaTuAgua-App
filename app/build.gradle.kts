@@ -74,6 +74,12 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.maplibre)
     implementation(libs.androidx.splashscreen)
+    // NetworkModule (ANDROID-PLAN-02, T7): BuildConfig vive acá, así que el
+    // módulo de Hilt que arma Retrofit/OkHttp también.
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit)

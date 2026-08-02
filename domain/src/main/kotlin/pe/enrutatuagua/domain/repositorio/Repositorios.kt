@@ -9,6 +9,13 @@ interface RutaRepository {
     suspend fun registrarEntrega(entrega: Entrega)
     suspend fun omitirParada(paradaId: Long, motivo: MotivoOmision, comentario: String?)
     suspend fun sembrarSiVacio()
+
+    // ANDROID-PLAN-02 (T5): "hoy salgo a repartir" / cierre de ruta -- el
+    // backend es la única autoridad de negocio acá (sin pedidos pendientes,
+    // ruta ya abierta, paradas pendientes al cerrar); el cliente no valida
+    // nada de eso, sólo propaga el error del servidor.
+    suspend fun abrirRuta(): Ruta
+    suspend fun cerrarRuta(): Ruta
 }
 
 interface SesionRepository {

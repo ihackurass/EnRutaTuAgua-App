@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ANDROID-PLAN-02 (T8, hallazgo real): API 28+ bloquea HTTP plano por
+  defecto (CLEARTEXT communication ... not permitted); BASE_URL_DEV
+  apunta a la IP LAN de la máquina de desarrollo por http:// (mismo
+  esquema que MQTT_BROKER_URL_DEV). Se habilita cleartext SÓLO para esa
+  IP de dev, no para todo el tráfico de la app.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.18.6</domain>
+    </domain-config>
+</network-security-config>

@@ -20,6 +20,23 @@ class RutaRepoFake : RutaRepository {
     }
     override suspend fun sembrarSiVacio() {}
 
+    var lanzarEnAbrir: Exception? = null
+    var lanzarEnCerrar: Exception? = null
+
+    override suspend fun abrirRuta(): Ruta {
+        lanzarEnAbrir?.let { throw it }
+        val ruta = rutaDePrueba()
+        rutaFlow.value = ruta
+        return ruta
+    }
+
+    override suspend fun cerrarRuta(): Ruta {
+        lanzarEnCerrar?.let { throw it }
+        val cerrada = rutaFlow.value!!.copy(estado = EstadoRuta.CERRADA)
+        rutaFlow.value = null // "abierta" sólo representa la ruta ABIERTA, ver RutaRepositoryHttp
+        return cerrada
+    }
+
     companion object {
         fun rutaDePrueba(): Ruta {
             val punto = Punto(1, "Comité 12 — Loma Alta", -12.1571, -76.9442, 4000)

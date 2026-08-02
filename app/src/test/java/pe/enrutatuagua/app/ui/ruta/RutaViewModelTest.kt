@@ -29,4 +29,33 @@ class RutaViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test fun `abrirRuta llama al repositorio y prende y apaga procesandoAccion`() = runTest {
+        val repo = RutaRepoFake()
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        vm.estado.test {
+            awaitItem() // cargando=true
+            awaitItem() // carga inicial resuelta
+
+            vm.abrirRuta()
+
+            assertEquals(true, awaitItem().procesandoAccion)
+            assertEquals(false, awaitItem().procesandoAccion)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test fun `cerrarRuta con error del repo publica un mensaje y no lo deja tildado`() = runTest {
+        val repo = RutaRepoFake()
+        repo.lanzarEnCerrar = IllegalStateException("Quedan paradas pendientes")
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        vm.estado.test { awaitItem(); awaitItem(); cancelAndIgnoreRemainingEvents() }
+
+        vm.mensaje.test {
+            assertEquals(null, awaitItem())
+            vm.cerrarRuta()
+            assertEquals("Quedan paradas pendientes", awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

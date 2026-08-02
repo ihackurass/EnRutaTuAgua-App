@@ -1,6 +1,12 @@
-# Simulador de GPS para el emulador (plan 09): recorre la ruta seed del
+# Simulador de GPS para el emulador (plan 09): recorre la ruta del
 # aguatero enviando fixes con `adb emu geo fix`. La app calcula el rumbo
 # entre fixes (MotorPosicionConRumbo), asi que no hace falta bearing.
+#
+# ANDROID-PLAN-02 (T8): SeedInicial.kt ya no existe (Room dado de baja,
+# la ruta viene del backend real) -- estos waypoints quedaron
+# coincidiendo con los del seed real (R__seed_desarrollo.sql), pero si
+# la ruta abierta trae otras paradas, hay que actualizar este array a
+# mano con `GET /api/v1/rutas/abierta` + `GET /api/v1/puntos/{id}`.
 #
 # Uso tipico (emulador Pixel_7a_API_35 corriendo):
 #   powershell -ExecutionPolicy Bypass -File scripts\simular-gps.ps1
