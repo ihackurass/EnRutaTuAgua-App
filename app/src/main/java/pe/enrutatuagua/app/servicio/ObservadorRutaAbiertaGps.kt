@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.app.ubicacion.ServicioTrackingGps
 import pe.enrutatuagua.domain.modelo.EstadoRuta
@@ -52,6 +53,11 @@ class ObservadorRutaAbiertaGps @Inject constructor(
             .map { it?.estado == EstadoRuta.ABIERTA }
             .distinctUntilChanged()
             .onEach { hayRutaAbierta -> reaccionar(hayRutaAbierta, alcance) }
+            // Hallazgo real (crash sin ruta al backend): sin retry, un solo
+            // SocketTimeoutException mataba esta colección para siempre --
+            // el tracking GPS dejaba de reaccionar a abrir/cerrar ruta por
+            // el resto de la sesión, en silencio. Reintenta cada 5s.
+            .retry { delay(5_000L); true }
             .launchIn(alcance)
     }
 

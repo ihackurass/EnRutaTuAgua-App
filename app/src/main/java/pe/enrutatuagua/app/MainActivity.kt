@@ -1,10 +1,12 @@
 package pe.enrutatuagua.app
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,7 +33,16 @@ class MainActivity : ComponentActivity() {
         // prueba genérica, no MainActivity) -- así los tests de pantallas
         // sueltas (ParadaScreenTest, PresidenteNavTest, etc.) no disparan un
         // observador de fondo tocando el Room real por accidente.
-        val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // Hallazgo real (crash en Huawei P Smart 2019 sin ruta al backend):
+        // un SocketTimeoutException acá no tenía quién lo atrape -- a
+        // diferencia de RutaViewModel (que sólo protege SU PROPIA
+        // colección), estos dos observadores corren en un scope aparte;
+        // sin manejador, cualquier corte de red tumbaba la app entera
+        // desde un hilo de fondo.
+        val manejadorErrores = CoroutineExceptionHandler { _, error ->
+            Log.w("MainActivity", "Observador de fondo falló, se ignora (best-effort)", error)
+        }
+        val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default + manejadorErrores)
         observadorRutaAbiertaGps.iniciar(alcance)
         precacheRutaObservador.iniciar(alcance)
         setContent {
