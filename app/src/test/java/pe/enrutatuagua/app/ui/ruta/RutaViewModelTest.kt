@@ -3,7 +3,9 @@ package pe.enrutatuagua.app.ui.ruta
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -55,6 +57,39 @@ class RutaViewModelTest {
             assertEquals(null, awaitItem())
             vm.cerrarRuta()
             assertEquals("Quedan paradas pendientes", awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    // Hallazgo real (auditoría rol Aguatero): sin retry, un error en la
+    // carga inicial dejaba el collect muerto para siempre -- había que
+    // reabrir la pantalla. Mismo patrón ya usado en ObservadorRutaAbiertaGps.
+    @Test fun `un error transitorio en la carga inicial se reintenta y termina mostrando la ruta`() = runTest {
+        val repo = RutaRepoFake()
+        repo.lanzarEnObservarRutaAbierta = IllegalStateException("Sin conexión")
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+
+        vm.estado.test {
+            awaitItem() // cargando=true (estado inicial)
+
+            advanceTimeBy(5_001L)
+            runCurrent()
+
+            val estado = awaitItem()
+            assertEquals(false, estado.cargando)
+            assertEquals(12000, estado.rutaConTanque?.litrosRestantes)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test fun `mientras reintenta la carga inicial expone un mensaje de reintento`() = runTest {
+        val repo = RutaRepoFake()
+        repo.lanzarEnObservarRutaAbierta = IllegalStateException("Sin conexión")
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+
+        vm.mensaje.test {
+            assertEquals(null, awaitItem())
+            assertEquals("Sin conexión", awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }

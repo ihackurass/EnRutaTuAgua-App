@@ -2,6 +2,8 @@ package pe.enrutatuagua.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import pe.enrutatuagua.domain.modelo.*
 import pe.enrutatuagua.domain.repositorio.RutaRepository
 import java.time.LocalDate
@@ -11,8 +13,12 @@ class RutaRepoFake : RutaRepository {
     val entregasFlow = MutableStateFlow<List<Entrega>>(emptyList())
     val registradas = mutableListOf<Entrega>()
     var omitida: Triple<Long, MotivoOmision, String?>? = null
+    var lanzarEnObservarRutaAbierta: Exception? = null
 
-    override fun observarRutaAbierta(): Flow<Ruta?> = rutaFlow
+    override fun observarRutaAbierta(): Flow<Ruta?> = flow {
+        lanzarEnObservarRutaAbierta?.let { lanzarEnObservarRutaAbierta = null; throw it }
+        emitAll(rutaFlow)
+    }
     override fun observarEntregas(rutaId: Long): Flow<List<Entrega>> = entregasFlow
     override suspend fun registrarEntrega(entrega: Entrega) {
         lanzarEnRegistrarEntrega?.let { throw it }

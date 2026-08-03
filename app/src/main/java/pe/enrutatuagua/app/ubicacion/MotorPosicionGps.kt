@@ -29,15 +29,9 @@ class MotorPosicionGps(contexto: Context) : LocationEngine {
     private val escuchas =
         mutableMapOf<LocationEngineCallback<LocationEngineResult>, LocationListener>()
 
-    private fun proveedor(): String = when {
-        gestor.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
-        gestor.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
-        else -> LocationManager.PASSIVE_PROVIDER
-    }
-
     @SuppressLint("MissingPermission") // MapaRuta activa el puck solo con permiso concedido
     override fun getLastLocation(callback: LocationEngineCallback<LocationEngineResult>) {
-        val ultima: Location? = gestor.getLastKnownLocation(proveedor())
+        val ultima: Location? = gestor.getLastKnownLocation(gestor.proveedorDisponible())
         if (ultima != null) {
             callback.onSuccess(LocationEngineResult.create(ultima))
         } else {
@@ -55,7 +49,7 @@ class MotorPosicionGps(contexto: Context) : LocationEngine {
             LocationListener { posicion -> callback.onSuccess(LocationEngineResult.create(posicion)) }
         }
         gestor.requestLocationUpdates(
-            proveedor(),
+            gestor.proveedorDisponible(),
             request.interval,
             request.displacement,
             escucha,

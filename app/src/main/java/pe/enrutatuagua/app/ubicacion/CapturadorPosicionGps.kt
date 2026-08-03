@@ -32,12 +32,6 @@ class CapturadorPosicionGps(contexto: Context) {
 
     private var escuchaActiva: LocationListener? = null
 
-    private fun proveedor(): String = when {
-        gestor.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
-        gestor.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
-        else -> LocationManager.PASSIVE_PROVIDER
-    }
-
     fun iniciar(onFix: (Location) -> Unit) {
         detener()
         val escucha = LocationListener { ubicacion ->
@@ -66,6 +60,6 @@ class CapturadorPosicionGps(contexto: Context) {
 
     @SuppressLint("MissingPermission") // el llamador (ServicioTrackingGps) verifica el permiso antes de iniciar
     private fun registrar(escucha: LocationListener, intervaloMs: Long) {
-        gestor.requestLocationUpdates(proveedor(), intervaloMs, 0f, escucha, Looper.getMainLooper())
+        gestor.requestLocationUpdates(gestor.proveedorDisponible(), intervaloMs, 0f, escucha, Looper.getMainLooper())
     }
 }

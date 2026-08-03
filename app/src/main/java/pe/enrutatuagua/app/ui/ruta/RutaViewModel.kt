@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.repositorio.RutaRepository
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
@@ -34,9 +36,23 @@ class RutaViewModel @Inject constructor(
         viewModelScope.launch {
             repo.sembrarSiVacio()
             try {
-                obtenerRutaAbierta().collect { rc ->
-                    _estado.value = _estado.value.copy(cargando = false, rutaConTanque = rc)
-                }
+                // Hallazgo real (auditoría rol Aguatero): sin retry, un
+                // fallo en la carga inicial dejaba el collect muerto para
+                // siempre -- había que reabrir la pantalla. Mismo patrón ya
+                // usado en ObservadorRutaAbiertaGps/PrecacheRutaObservador
+                // (reintenta cada 5s, infinito); seguro acá porque
+                // RutaRepositoryHttp.observarRutaAbierta() sólo puede fallar
+                // en la carga inicial -- una vez bootstrapeado no vuelve a
+                // lanzar.
+                obtenerRutaAbierta()
+                    .retry { e ->
+                        _mensaje.value = e.message ?: "No se pudo cargar la ruta, reintentando…"
+                        delay(5_000L)
+                        true
+                    }
+                    .collect { rc ->
+                        _estado.value = _estado.value.copy(cargando = false, rutaConTanque = rc)
+                    }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -45,7 +61,8 @@ class RutaViewModel @Inject constructor(
                 // así que RutaRepositoryHttp no lo puede tratar como
                 // SinRutaAbierta -- sin este catch, tumbaba toda la app en
                 // vez de mostrar el error (viola "sin cola offline, error
-                // visible" del plan).
+                // visible" del plan). Red de seguridad para lo que quede
+                // fuera del predicado de retry de arriba.
                 _estado.value = _estado.value.copy(cargando = false, rutaConTanque = null)
                 _mensaje.value = e.message ?: "No se pudo cargar la ruta, revisá tu conexión"
             }
