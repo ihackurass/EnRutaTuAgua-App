@@ -2,6 +2,8 @@ package pe.enrutatuagua.app.ubicacion
 
 import android.content.Context
 import android.location.Location
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,7 +53,17 @@ class MotorPublicacionGps @Inject constructor(
         jobDrenaje = alcance.launch {
             while (true) {
                 delay(CICLO_DRENAJE_MS)
-                drenar()
+                // Hallazgo real (auditoría rol Aguatero): sin este catch, un
+                // solo fallo de drenar() (Room, MQTT) mataba el loop entero
+                // para siempre -- el buffer de GPS dejaba de drenarse por el
+                // resto de la ruta, en silencio.
+                try {
+                    drenar()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w("MotorPublicacionGps", "drenar() falló, se reintenta en el próximo ciclo", e)
+                }
             }
         }
     }

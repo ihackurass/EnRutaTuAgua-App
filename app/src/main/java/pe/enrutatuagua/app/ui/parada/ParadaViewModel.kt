@@ -4,10 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import pe.enrutatuagua.domain.modelo.ErrorDominio
 import pe.enrutatuagua.domain.modelo.MotivoOmision
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.OmitirParadaUseCase
@@ -49,8 +49,15 @@ class ParadaViewModel @Inject constructor(
 
     private fun ejecutar(accion: suspend () -> Unit) {
         viewModelScope.launch {
-            try { _error.value = null; accion(); _hecho.value = true }
-            catch (e: ErrorDominio) { _error.value = e.message }
+            _error.value = null
+            try {
+                accion()
+                _hecho.value = true
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Ocurrió un error, probá de nuevo"
+            }
         }
     }
 }

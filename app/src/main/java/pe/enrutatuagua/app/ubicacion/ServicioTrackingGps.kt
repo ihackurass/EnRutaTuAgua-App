@@ -5,8 +5,10 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.util.Log
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +29,14 @@ class ServicioTrackingGps : Service() {
 
     @Inject lateinit var motor: MotorPublicacionGps
 
-    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Hallazgo real (auditoría rol Aguatero): sin handler, una excepción no
+    // atrapada acá (p.ej. procesarFix() fallando) tumbaba la app entera
+    // desde este hilo de fondo -- mismo patrón que se arregló en
+    // MainActivity para los otros observadores.
+    private val manejadorErrores = CoroutineExceptionHandler { _, error ->
+        Log.w("ServicioTrackingGps", "Motor de tracking GPS falló, se ignora (best-effort)", error)
+    }
+    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.Default + manejadorErrores)
 
     override fun onCreate() {
         super.onCreate()

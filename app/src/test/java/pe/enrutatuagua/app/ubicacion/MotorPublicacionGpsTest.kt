@@ -80,4 +80,26 @@ class MotorPublicacionGpsTest {
 
         motor.detener() // cancela el loop infinito antes de que termine el test
     }
+
+    // Hallazgo real (auditoría rol Aguatero): sin try/catch dentro del
+    // while(true), un solo fallo de drenar() mataba el loop entero para
+    // siempre -- el buffer de GPS dejaba de drenarse por el resto de la ruta.
+    @Test fun `un ciclo de drenaje que falla no mata el loop -- el siguiente ciclo sigue corriendo`() = runTest {
+        publicador.proximoResultado = false
+        motor.procesarFix(fix(-12.16, -76.94)) // deja 1 pendiente
+
+        repo.lanzarUnaVezEnPendientes = RuntimeException("fallo simulado")
+        motor.iniciarDrenajePeriodico(this)
+
+        advanceTimeBy(30_001L); runCurrent() // ciclo 1: drenar() explota, se traga
+        assertEquals(1, repo.guardadas.size) // sigue pendiente, no se perdió
+
+        publicador.proximoResultado = true
+        advanceTimeBy(30_000L); runCurrent() // ciclo 2: corre normal
+
+        assertTrue(repo.guardadas.isEmpty())
+        assertEquals(1, publicador.publicadas.size)
+
+        motor.detener()
+    }
 }

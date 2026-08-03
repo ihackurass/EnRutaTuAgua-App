@@ -59,4 +59,22 @@ class ParadaViewModelTest {
         assertEquals(4000, vm.parada.value?.pedidoLitros)
         assertEquals(12000, vm.parada.value?.litrosRestantes)
     }
+
+    // Hallazgo real (auditoría rol Aguatero): ParadaViewModel sólo atrapaba
+    // ErrorDominio -- una excepción de red (timeout, 500) al confirmar
+    // entrega u omitir parada crasheaba la app entera. Mismo patrón que ya
+    // se arregló en RutaViewModel.
+    @Test fun `un error de red al confirmar entrega expone el mensaje en error y no marca hecho`() = runTest {
+        repo.lanzarEnRegistrarEntrega = IllegalStateException("Sin conexión, probá de nuevo")
+        vm.confirmarEntrega(3500); advanceUntilIdle()
+        assertEquals(false, vm.hecho.value)
+        assertEquals("Sin conexión, probá de nuevo", vm.error.value)
+    }
+
+    @Test fun `un error de red al omitir expone el mensaje en error y no marca hecho`() = runTest {
+        repo.lanzarEnOmitir = IllegalStateException("omitirParada sin ruta cargada")
+        vm.omitir(MotivoOmision.CALLE_CERRADA, null); advanceUntilIdle()
+        assertEquals(false, vm.hecho.value)
+        assertEquals("omitirParada sin ruta cargada", vm.error.value)
+    }
 }

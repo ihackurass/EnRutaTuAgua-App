@@ -14,14 +14,20 @@ class RutaRepoFake : RutaRepository {
 
     override fun observarRutaAbierta(): Flow<Ruta?> = rutaFlow
     override fun observarEntregas(rutaId: Long): Flow<List<Entrega>> = entregasFlow
-    override suspend fun registrarEntrega(entrega: Entrega) { registradas += entrega; entregasFlow.value += entrega }
+    override suspend fun registrarEntrega(entrega: Entrega) {
+        lanzarEnRegistrarEntrega?.let { throw it }
+        registradas += entrega; entregasFlow.value += entrega
+    }
     override suspend fun omitirParada(paradaId: Long, motivo: MotivoOmision, comentario: String?) {
+        lanzarEnOmitir?.let { throw it }
         omitida = Triple(paradaId, motivo, comentario)
     }
     override suspend fun sembrarSiVacio() {}
 
     var lanzarEnAbrir: Exception? = null
     var lanzarEnCerrar: Exception? = null
+    var lanzarEnRegistrarEntrega: Exception? = null
+    var lanzarEnOmitir: Exception? = null
 
     override suspend fun abrirRuta(): Ruta {
         lanzarEnAbrir?.let { throw it }

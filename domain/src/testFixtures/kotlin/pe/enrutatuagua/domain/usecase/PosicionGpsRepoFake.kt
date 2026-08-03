@@ -13,8 +13,12 @@ class PosicionGpsRepoFake : PosicionGpsRepository {
         return conId
     }
 
-    override suspend fun pendientes(maxItems: Int): List<PosicionGps> =
-        guardadas.sortedBy { it.id }.take(maxItems)
+    var lanzarUnaVezEnPendientes: Exception? = null
+
+    override suspend fun pendientes(maxItems: Int): List<PosicionGps> {
+        lanzarUnaVezEnPendientes?.let { lanzarUnaVezEnPendientes = null; throw it }
+        return guardadas.sortedBy { it.id }.take(maxItems)
+    }
 
     override suspend fun marcarPublicadas(ids: List<Long>) {
         guardadas.removeAll { it.id in ids }
