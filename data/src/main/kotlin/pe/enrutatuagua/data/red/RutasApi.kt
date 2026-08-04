@@ -44,9 +44,16 @@ data class RegistrarEntregaRequestDto(
     val registradaEn: String,
 )
 
+@Serializable
+data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val fecha: String)
+
 interface RutasApi {
     @GET("api/v1/rutas/abierta")
     suspend fun abierta(): RutaDto
+
+    /** Auditoría rol Vecino: 404 (HttpException) si no hay ruta ABIERTA en la zona -- estado válido. */
+    @GET("api/v1/rutas/zona")
+    suspend fun zona(): RutaZonaDto
 
     @POST("api/v1/rutas/abrir")
     suspend fun abrir(): RutaDto

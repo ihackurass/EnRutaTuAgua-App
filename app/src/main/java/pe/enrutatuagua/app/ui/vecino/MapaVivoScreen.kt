@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,19 +30,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.delay
 import compose.icons.TablerIcons
 import compose.icons.tablericons.WifiOff
+import pe.enrutatuagua.designsystem.component.AvisoSuperior
 import pe.enrutatuagua.designsystem.component.EstadoFicha
 import pe.enrutatuagua.designsystem.component.FichaParada
 import pe.enrutatuagua.designsystem.component.HojaArrastrable
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
 import pe.enrutatuagua.designsystem.component.TarjetaDato
 import pe.enrutatuagua.designsystem.component.formatearLitros
+import pe.enrutatuagua.designsystem.component.rememberEstadoAviso
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.designsystem.tokens.RadiosAgua
-import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 
@@ -59,7 +62,27 @@ fun MapaVivoScreen(
         { puntos, posicion -> MapaZonaVecino(puntos, posicion, Modifier.fillMaxSize()) },
 ) {
     val estado by vm.estado.collectAsState()
+    val mensaje by vm.mensaje.collectAsState()
     val paleta = LocalPaletaAgua.current
+    val estadoAviso = rememberEstadoAviso()
+    LaunchedEffect(mensaje) {
+        mensaje?.let {
+            estadoAviso.mostrar(it)
+            vm.mensajeMostrado()
+        }
+    }
+    // Auditoría rol Vecino: recalcula minutosSinSenal periódicamente sin
+    // reemisión del backend -- vive acá (no en el ViewModel) a propósito:
+    // un `while(true){delay()}` dentro de viewModelScope rompía tanto
+    // Compose (waitForIdle nunca "asentaba") como los tests unitarios del
+    // ViewModel (runTest nunca terminaba de drenar el scheduler
+    // compartido). Acá, un test puede desactivarlo con mainClock.autoAdvance = false.
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(INTERVALO_TICK_RELOJ_MS)
+            vm.recalcularMinutosSinSenal()
+        }
+    }
 
     Box(Modifier.fillMaxSize().background(paleta.mapaBase)) {
         val posicion = estado.posicion
@@ -86,6 +109,7 @@ fun MapaVivoScreen(
                 contentAlignment = Alignment.Center,
             ) { Text("Sin datos de tu zona todavía", style = EstilosAgua.TituloParada, color = paleta.texto2) }
         }
+        AvisoSuperior(estadoAviso, Modifier.align(Alignment.TopCenter).statusBarsPadding())
     }
 }
 
@@ -106,6 +130,10 @@ private fun CabeceraZona(modifier: Modifier = Modifier) {
             .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
     ) {
         Text("Tu zona", style = EstilosAgua.Zona, color = paleta.texto)
+        // TODO placeholder: no existe todavía un campo "nombre de
+        // asociación" expuesto por el backend (la tabla `asociacion` no
+        // tiene módulo hexagonal propio, ver auditoría rol Vecino) -- fijo
+        // a propósito hasta que se construya esa pieza.
         Text("AA.HH. Villa Solidaridad", style = EstilosAgua.Placa, color = paleta.texto2)
     }
 }
@@ -156,11 +184,9 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna, puntos: List<PuntoAbas
                 titulo = p.nombre,
                 subtitulo = "Capacidad: ${formatearLitros(p.capacidadLitros)} L",
                 textoDerecha = p.estado.etiqueta,
-                estado = if (p.estado == EstadoValidacionPunto.VALIDADO) {
-                    EstadoFicha.Entregada
-                } else {
-                    EstadoFicha.Pendiente
-                },
+                // El ViewModel ya filtra a sólo VALIDADO (auditoría rol
+                // Vecino) -- ningún otro estado llega hasta acá.
+                estado = EstadoFicha.Entregada,
             )
         }
         item(key = "pie") { Spacer(Modifier.height(24.dp)) }

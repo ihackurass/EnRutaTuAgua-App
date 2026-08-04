@@ -18,4 +18,8 @@ data class PuntoDto(
 interface PuntosApi {
     @GET("api/v1/puntos/{id}")
     suspend fun porId(@Path("id") id: Long): PuntoDto
+
+    /** Auditoría rol Vecino: todos los puntos de la asociación del actor, sin filtrar por estado. */
+    @GET("api/v1/puntos/zona")
+    suspend fun zona(): List<PuntoDto>
 }

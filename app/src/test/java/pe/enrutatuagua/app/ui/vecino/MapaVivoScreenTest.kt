@@ -20,6 +20,14 @@ class MapaVivoScreenTest {
     fun `muestra cabecera, badge sin conexion, litros y puntos de la zona sobre el mapa stub`() {
         val repo = TrackingRepoFake(ahoraMs = System.currentTimeMillis())
         val vm = MapaVivoViewModel(repo)
+        // Auditoría rol Vecino: MapaVivoViewModel corre un ticker perpetuo
+        // (while(true){emit;delay(30s)}) para refrescar minutosSinSenal --
+        // con autoAdvance=true (default) waitForIdle() intenta drenar TODO
+        // el trabajo programado, y como el ticker se reprograma a sí mismo
+        // para siempre, el test cuelga (confirmado empíricamente: colgó
+        // ~10 min hasta matar el daemon). autoAdvance=false congela el
+        // reloj de test en vez de intentar agotar un timer infinito.
+        regla.mainClock.autoAdvance = false
         regla.setContent {
             TemaAgua {
                 MapaVivoScreen(vm = vm, mapa = { _, _ -> Box(Modifier.fillMaxSize()) })
@@ -34,7 +42,9 @@ class MapaVivoScreenTest {
         regla.onNodeWithText("DE 12,000 L").assertExists()   // TarjetaDato uppercasea el rotulo
         regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()
         regla.onNodeWithText("Comité 12 — Loma Alta").assertExists()
-        regla.onNodeWithText("AAHH Buena Vista, sector B").assertExists()
         regla.onNodeWithText("Comité 7 — José C. Mariátegui").assertExists()
+        // Auditoría rol Vecino: el ViewModel filtra a sólo VALIDADO -- "AAHH
+        // Buena Vista, sector B" (PROPUESTO en TrackingRepoFake) no debe verse.
+        regla.onNodeWithText("AAHH Buena Vista, sector B").assertDoesNotExist()
     }
 }
