@@ -17,13 +17,14 @@ import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.tokens.*
 import pe.enrutatuagua.domain.modelo.RutaPlanificada
 import pe.enrutatuagua.domain.repositorio.OperacionRepository
+import pe.enrutatuagua.domain.repositorio.RutaRepository
 import retrofit2.HttpException
 
-@HiltViewModel class RutaAsignadaViewModel @Inject constructor(private val repo:OperacionRepository):ViewModel(){
+@HiltViewModel class RutaAsignadaViewModel @Inject constructor(private val repo:OperacionRepository,private val rutas:RutaRepository):ViewModel(){
     val ruta=MutableStateFlow<RutaPlanificada?>(null);val cargando=MutableStateFlow(true);val mensaje=MutableStateFlow<String?>(null)
     init{consultar()}
     fun consultar()=viewModelScope.launch{cargando.value=true;mensaje.value=null;try{ruta.value=repo.asignada()}catch(e:HttpException){ruta.value=null;if(e.code()!=404)mensaje.value="No se pudo consultar la ruta"}catch(_:Exception){ruta.value=null;mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false}}
-    fun iniciar()=viewModelScope.launch{val r=ruta.value?:return@launch;try{repo.iniciar(r.id);ruta.value=null}catch(e:Exception){mensaje.value=e.message?:"No se pudo iniciar"}}
+    fun iniciar()=viewModelScope.launch{val r=ruta.value?:return@launch;try{repo.iniciar(r.id);rutas.invalidarCache();ruta.value=null}catch(e:Exception){mensaje.value=e.message?:"No se pudo iniciar"}}
 }
 
 @Composable fun RutaAsignadaGate(conRutaAbierta: @Composable () -> Unit,vm:RutaAsignadaViewModel= hiltViewModel()){

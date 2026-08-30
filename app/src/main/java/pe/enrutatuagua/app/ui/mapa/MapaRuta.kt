@@ -334,14 +334,17 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                     }
                     if (encuadreAplicado[0] != clave) {
                         encuadreAplicado[0] = clave
-                        val bounds = LatLngBounds.Builder()
-                        ruta.paradas.forEach { bounds.include(LatLng(it.punto.lat, it.punto.lng)) }
+                        val ubicaciones = ruta.paradas.map { LatLng(it.punto.lat, it.punto.lng) }
                         // Pedido del usuario: se lee de izquierda a derecha,
                         // como texto -- parada 1 a la izquierda, la última a
                         // la derecha. Sin dirección clara (menos de 2
                         // paradas) se mantiene el bearing actual de la cámara.
                         val bearing = bearingLecturaIzqADer(ruta) ?: mapa.cameraPosition.bearing
-                        with(density) {
+                        if (ubicaciones.size == 1) {
+                            mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicaciones.single(), 15.0))
+                        } else if (ubicaciones.size > 1) with(density) {
+                            val bounds = LatLngBounds.Builder()
+                            ubicaciones.forEach(bounds::include)
                             // Hallazgo real (capturas en Pixel 4a y emulador,
                             // ANDROID-PLAN-04): sumar alturaBarraNav al
                             // padding inferior acá hacía que newLatLngBounds

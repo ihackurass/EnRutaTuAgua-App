@@ -57,6 +57,10 @@ class RutaRepositoryHttp @Inject constructor(
         emitAll(estado)
     }
 
+    override fun invalidarCache() {
+        cargada = false
+    }
+
     override fun observarEntregas(rutaId: Long): Flow<List<Entrega>> =
         observarRutaAbierta().map { it?.entregasAproximadas() ?: emptyList() }
 

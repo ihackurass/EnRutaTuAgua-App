@@ -9,6 +9,7 @@ import pe.enrutatuagua.domain.repositorio.RutaRepository
 import java.time.LocalDate
 
 class RutaRepoFake : RutaRepository {
+    override fun invalidarCache() = Unit
     val rutaFlow = MutableStateFlow<Ruta?>(rutaDePrueba())
     val entregasFlow = MutableStateFlow<List<Entrega>>(emptyList())
     val registradas = mutableListOf<Entrega>()

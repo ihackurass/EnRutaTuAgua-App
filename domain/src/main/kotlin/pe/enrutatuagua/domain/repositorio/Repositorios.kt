@@ -5,6 +5,7 @@ import pe.enrutatuagua.domain.modelo.*
 
 interface RutaRepository {
     fun observarRutaAbierta(): Flow<Ruta?>
+    fun invalidarCache()
     fun observarEntregas(rutaId: Long): Flow<List<Entrega>>
     suspend fun registrarEntrega(entrega: Entrega)
     suspend fun omitirParada(paradaId: Long, motivo: MotivoOmision, comentario: String?)
