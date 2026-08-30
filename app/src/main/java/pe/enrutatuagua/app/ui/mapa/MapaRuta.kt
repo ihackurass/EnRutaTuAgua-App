@@ -191,13 +191,8 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                 // Mapa híbrido: esta restricción sólo tiene sentido offline
                 // (dataset chico y fijo); online (OpenFreeMap) hay cobertura
                 // real en toda el área, así que se levanta.
-                if (usarOnline) {
-                    mapa.setLatLngBoundsForCameraTarget(null)
-                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
-                } else {
-                    mapa.setLatLngBoundsForCameraTarget(EstiloMapa.LIMITE_PMTILES)
-                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_OFFLINE)
-                }
+                mapa.setLatLngBoundsForCameraTarget(null)
+                mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
                 mapa.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
                 with(density) {
                     mapa.uiSettings.setCompassMargins(
@@ -206,7 +201,7 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                 }
                 if (modoAplicado[0] != (oscuro to usarOnline)) {
                     modoAplicado[0] = oscuro to usarOnline
-                    mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro, usarOnline))) { estilo ->
+                    mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) { estilo ->
                         estilo.addSource(GeoJsonSource("ruta", geoJsonDeRuta(ruta)))
                         // Trazo en tinta (negro azulado; casi blanco en oscuro): el
                         // teal queda para el camión, pines y acentos, estilo Uber.

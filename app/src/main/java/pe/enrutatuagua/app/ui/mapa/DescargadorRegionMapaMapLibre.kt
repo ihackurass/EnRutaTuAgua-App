@@ -38,7 +38,7 @@ class DescargadorRegionMapaMapLibre @Inject constructor(
             // inicializado (MapLibreConfigurationException si no).
             MapLibre.getInstance(contexto)
             val bounds = LatLngBounds.from(region.latNorte, region.lonEste, region.latSur, region.lonOeste)
-            val styleUrl = "file://${EstiloMapa.prepararArchivoEstiloOnline(contexto, oscuro = false).absolutePath}"
+            val styleUrl = EstiloMapa.URL_ONLINE
             val definicion = OfflineTilePyramidRegionDefinition(
                 styleUrl, bounds, ZOOM_MIN, ZOOM_MAX, contexto.resources.displayMetrics.density,
             )

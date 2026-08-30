@@ -86,14 +86,9 @@ fun MapaZonaVecino(
             val modo = oscuro to online
             if (modoAplicado[0] != modo) {
                 modoAplicado[0] = modo
-                if (online) {
-                    mapa.setLatLngBoundsForCameraTarget(null)
-                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
-                } else {
-                    mapa.setLatLngBoundsForCameraTarget(EstiloMapa.LIMITE_PMTILES)
-                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_OFFLINE)
-                }
-                mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro, online))) { estilo ->
+                mapa.setLatLngBoundsForCameraTarget(null)
+                mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
+                mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) { estilo ->
                     estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicion)))
 
                     val puntosCapa = CircleLayer("puntos-zona", "zona")

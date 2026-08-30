@@ -71,7 +71,7 @@ fun MapaDiagnosticoScreen(oscuro: Boolean = isSystemInDarkTheme()) {
     Box(Modifier.fillMaxSize()) {
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { mapView }, update = { vista ->
             vista.getMapAsync { mapa ->
-                mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro))) {
+                mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) {
                     // Centro geométrico del bbox extraído en
                     // lima-sur.pmtiles (-76.99,-12.21 a -76.90,-12.12) --
                     // sin bounds-fit, sin padding, la posición de cámara
