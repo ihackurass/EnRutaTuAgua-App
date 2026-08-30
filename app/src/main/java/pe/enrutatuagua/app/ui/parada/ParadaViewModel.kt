@@ -39,7 +39,7 @@ class ParadaViewModel @Inject constructor(
             obtenerRutaAbierta().collect { rc ->
                 _parada.value = rc?.ruta?.paradas
                     ?.firstOrNull { it.id == paradaId }
-                    ?.let { p -> ParadaUi(p.punto.nombre, p.capacidadEsperadaLitros, rc.litrosRestantes) }
+                    ?.let { p -> ParadaUi(p.punto.nombre, p.capacidadEsperadaLitros - p.litrosEntregados, rc.litrosRestantes) }
             }
         }
     }

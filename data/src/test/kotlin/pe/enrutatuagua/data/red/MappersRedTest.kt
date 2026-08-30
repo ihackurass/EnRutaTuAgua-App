@@ -61,7 +61,8 @@ class MappersRedTest {
 
     @Test fun `entregasAproximadas suma solo las paradas ENTREGADO`() {
         val paradaEntregada = ParadaDto(
-            id = 1, puntoId = 1, orden = 1, capacidadEsperadaLitros = 500, estadoEntrega = "ENTREGADO",
+            id = 1, puntoId = 1, orden = 1, capacidadEsperadaLitros = 500,
+            litrosEntregados = 500, estadoEntrega = "ENTREGADO",
         )
         val paradaPendiente = ParadaDto(
             id = 2, puntoId = 2, orden = 2, capacidadEsperadaLitros = 300, estadoEntrega = "PENDIENTE",

@@ -82,7 +82,7 @@ class RutaRepositoryHttp @Inject constructor(
                 registradaEn = Instant.ofEpochMilli(entrega.registradaEn).toString(),
             ),
         )
-        marcarParadaLocalmente(entrega.paradaId, EstadoEntrega.ENTREGADO, motivo = null, comentario = null)
+        aplicarEntregaLocal(entrega.paradaId, entrega.litros)
     }
 
     override suspend fun omitirParada(paradaId: Long, motivo: MotivoOmision, comentario: String?) {
@@ -136,6 +136,19 @@ class RutaRepositoryHttp @Inject constructor(
                 else it
             },
         )
+    }
+
+    private fun aplicarEntregaLocal(paradaId: Long, litros: Int) {
+        val actual = estado.value ?: return
+        estado.value = actual.copy(paradas = actual.paradas.map { parada ->
+            if (parada.id != paradaId) parada else {
+                val acumulado = (parada.litrosEntregados + litros).coerceAtMost(parada.capacidadEsperadaLitros)
+                parada.copy(
+                    litrosEntregados = acumulado,
+                    estadoEntrega = if (acumulado == parada.capacidadEsperadaLitros) EstadoEntrega.ENTREGADO else EstadoEntrega.PARCIAL,
+                )
+            }
+        })
     }
 
     private suspend fun enriquecer(dto: RutaDto): Ruta = coroutineScope {

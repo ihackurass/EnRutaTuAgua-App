@@ -13,6 +13,7 @@ data class ParadaDto(
     val pedidoItemId: Long? = null,
     val orden: Int,
     val capacidadEsperadaLitros: Int,
+    val litrosEntregados: Int = 0,
     val estadoEntrega: String,
     val motivoOmision: String? = null,
     val comentarioOmision: String? = null,

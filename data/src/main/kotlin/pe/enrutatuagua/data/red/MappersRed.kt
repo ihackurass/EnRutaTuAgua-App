@@ -41,6 +41,7 @@ fun ParadaDto.aDominio(punto: Punto) = Parada(
     estadoEntrega = EstadoEntrega.valueOf(estadoEntrega),
     motivoOmision = motivoOmision?.let { MotivoOmision.valueOf(it) },
     comentarioOmision = comentarioOmision,
+    litrosEntregados = litrosEntregados,
 )
 
 fun RutaDto.aDominio(vehiculo: Vehiculo, puntos: Map<Long, Punto>) = Ruta(
@@ -61,10 +62,10 @@ fun RutaDto.aDominio(vehiculo: Vehiculo, puntos: Map<Long, Punto>) = Ruta(
  * aguatero está en ruta, no la integridad de los datos.
  */
 fun Ruta.entregasAproximadas(): List<Entrega> = paradas
-    .filter { it.estadoEntrega == EstadoEntrega.ENTREGADO }
+    .filter { it.litrosEntregados > 0 }
     .map { parada ->
         Entrega(
             id = "aprox-${parada.id}", paradaId = parada.id, tipo = TipoEntrega.ENTREGA, ajustaA = null,
-            litros = parada.capacidadEsperadaLitros, gpsLat = null, gpsLng = null, registradaEn = 0L,
+            litros = parada.litrosEntregados, gpsLat = null, gpsLng = null, registradaEn = 0L,
         )
     }

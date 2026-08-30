@@ -138,6 +138,21 @@ class RutaRepositoryHttpTest {
         assertEquals(4, servidor.requestCount)
     }
 
+    @Test fun `registrar una cantidad menor conserva la parada como parcial y muestra el saldo`() = runTest {
+        colaRutas += json(RUTA_JSON)
+        repo.observarRutaAbierta().first()
+        colaRutas += MockResponse().setResponseCode(201).setBody(
+            """{"id":"e-parcial","rutaPuntoId":10,"tipo":"ENTREGA","litros":300,"registradaEn":"2026-01-01T00:00:00Z"}""",
+        )
+
+        repo.registrarEntrega(Entrega("e-parcial", 10, TipoEntrega.ENTREGA, null, 300, null, null, 0L))
+
+        val parada = repo.observarRutaAbierta().first()!!.paradas.single()
+        assertEquals(EstadoEntrega.PARCIAL, parada.estadoEntrega)
+        assertEquals(300, parada.litrosEntregados)
+        assertEquals(200, parada.capacidadEsperadaLitros - parada.litrosEntregados)
+    }
+
     @Test fun `omitirParada publica y parchea motivo y comentario localmente`() = runTest {
         colaRutas += json(RUTA_JSON)
         repo.observarRutaAbierta().first()

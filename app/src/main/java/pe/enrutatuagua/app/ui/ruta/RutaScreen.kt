@@ -290,6 +290,7 @@ private fun ContenidoHoja(
                     EstadoEntrega.ENTREGADO -> "Entregada"
                     EstadoEntrega.OMITIDO -> p.motivoOmision?.etiqueta ?: "Omitida"
                     EstadoEntrega.PENDIENTE -> "${formatearLitros(p.capacidadEsperadaLitros)} L"
+                    EstadoEntrega.PARCIAL -> "Faltan ${formatearLitros(p.capacidadEsperadaLitros - p.litrosEntregados)} L"
                 },
                 estado = when {
                     p.estadoEntrega == EstadoEntrega.ENTREGADO -> EstadoFicha.Entregada

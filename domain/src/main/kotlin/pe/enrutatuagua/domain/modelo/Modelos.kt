@@ -19,7 +19,7 @@ enum class Rol(val codigo: Int, val etiqueta: String) {
     OPERADOR(5, "Operador de empresa")
 }
 enum class EstadoRuta(val codigo: Int) { ABIERTA(1), CERRADA(2), PLANIFICADA(3), CANCELADA(4) }
-enum class EstadoEntrega(val codigo: Int) { PENDIENTE(1), ENTREGADO(2), OMITIDO(3) }
+enum class EstadoEntrega(val codigo: Int) { PENDIENTE(1), ENTREGADO(2), OMITIDO(3), PARCIAL(4) }
 enum class MotivoOmision(val codigo: Int, val etiqueta: String) {
     CALLE_CERRADA(1, "Calle cerrada"), NADIE_PRESENTE(2, "Nadie presente"),
     FALTA_AGUA(3, "Falta de agua"), OTRO(4, "Otro")
@@ -33,7 +33,8 @@ enum class EstadoValidacionPunto(val codigo: Int, val etiqueta: String) {
 }
 enum class EstadoPedido(val codigo: Int, val etiqueta: String) {
     PENDIENTE(1, "Pendiente"), EN_RUTA(2, "En ruta"), ATENDIDO(3, "Atendido"),
-    CANCELADO(4, "Cancelado"), RETENIDO(5, "Retenido"), PROGRAMADO(6, "Programado")
+    CANCELADO(4, "Cancelado"), RETENIDO(5, "Retenido"), PROGRAMADO(6, "Programado"),
+    PARCIAL(7, "Atendido parcialmente")
 }
 
 data class LimitePedido(val capacidadMaximaCisternaLitros: Int, val maxLitrosPedido: Int, val tienePedidoActivo: Boolean)
@@ -53,6 +54,7 @@ data class Punto(val id: Long, val nombre: String, val lat: Double, val lng: Dou
 data class Parada(
     val id: Long, val punto: Punto, val orden: Int, val capacidadEsperadaLitros: Int,
     val estadoEntrega: EstadoEntrega, val motivoOmision: MotivoOmision?, val comentarioOmision: String?,
+    val litrosEntregados: Int = 0,
 )
 data class Ruta(
     val id: Long, val fecha: LocalDate, val estado: EstadoRuta,
