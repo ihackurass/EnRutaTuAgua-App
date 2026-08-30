@@ -22,6 +22,7 @@ import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
 import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
+import pe.enrutatuagua.app.ui.tracking.PruebaTrackingScreen
 import pe.enrutatuagua.designsystem.tokens.MovimientoAgua
 import pe.enrutatuagua.domain.modelo.Rol
 
@@ -52,9 +53,11 @@ fun Navegacion() {
                     Rol.PRESIDENTE -> nav.navigate("presidente")
                     Rol.ADMIN -> nav.navigate("proximamente")
                 }
-            }, onDiagnosticoMapaClick = { nav.navigate("mapa-diagnostico") })
+            }, onDiagnosticoMapaClick = { nav.navigate("mapa-diagnostico") },
+                onPruebaTrackingClick = { nav.navigate("prueba-tracking") })
         }
         composable("mapa-diagnostico") { MapaDiagnosticoScreen() }
+        composable("prueba-tracking") { PruebaTrackingScreen(onVolver = { nav.popBackStack() }) }
         composable("proximamente") {
             ProximamenteScreen(onVolver = { nav.popBackStack() })
         }

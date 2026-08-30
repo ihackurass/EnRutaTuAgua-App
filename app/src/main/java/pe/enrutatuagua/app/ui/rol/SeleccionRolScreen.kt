@@ -25,7 +25,11 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.Rol
 
 @Composable
-fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit, onDiagnosticoMapaClick: () -> Unit = {}) {
+fun SeleccionRolScreen(
+    onRolElegido: (Rol) -> Unit,
+    onDiagnosticoMapaClick: () -> Unit = {},
+    onPruebaTrackingClick: () -> Unit = {},
+) {
     val paleta = LocalPaletaAgua.current
     Column(
         Modifier.fillMaxSize().background(paleta.fondo).padding(24.dp),
@@ -49,5 +53,6 @@ fun SeleccionRolScreen(onRolElegido: (Rol) -> Unit, onDiagnosticoMapaClick: () -
         // la app) para aislar si "no carga ciertas partes" es del dato
         // (PMTiles) o de la lógica de cámara -- ver MapaDiagnosticoScreen.kt.
         BotonSecundario("Diagnóstico: mapa pelado", onClick = onDiagnosticoMapaClick)
+        BotonSecundario("Prueba tracking en vivo", onClick = onPruebaTrackingClick)
     }
 }

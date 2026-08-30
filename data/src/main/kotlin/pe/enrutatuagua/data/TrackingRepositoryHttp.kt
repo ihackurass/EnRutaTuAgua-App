@@ -13,7 +13,7 @@ import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
 import retrofit2.HttpException
 
-private const val INTERVALO_POSICION_MS = 15_000L // cadencia GPS del aguatero (CapturadorPosicionGps)
+private const val INTERVALO_POSICION_MS = 5_000L
 private const val INTERVALO_PUNTOS_MS = 120_000L // los puntos de zona cambian poco
 private const val TTL_RUTA_ZONA_MS = 60_000L
 

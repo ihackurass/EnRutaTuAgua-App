@@ -1,5 +1,6 @@
 package pe.enrutatuagua.app.ui.vecino
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,11 +25,15 @@ import org.maplibre.android.style.expressions.Expression.get
 import org.maplibre.android.style.expressions.Expression.literal
 import org.maplibre.android.style.expressions.Expression.switchCase
 import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.layers.PropertyFactory.circleColor
 import org.maplibre.android.style.layers.PropertyFactory.circleOpacity
 import org.maplibre.android.style.layers.PropertyFactory.circleRadius
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
+import org.maplibre.android.style.layers.PropertyFactory.iconImage
+import org.maplibre.android.style.layers.PropertyFactory.iconSize
 import org.maplibre.android.style.sources.GeoJsonSource
 import pe.enrutatuagua.app.ui.mapa.EstiloMapa
 import pe.enrutatuagua.data.ConectividadRepositoryAndroid
@@ -90,6 +95,10 @@ fun MapaZonaVecino(
                 mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
                 mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) { estilo ->
                     estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicion)))
+                    estilo.addImage(
+                        "cisterna-icono",
+                        BitmapFactory.decodeResource(contexto.resources, pe.enrutatuagua.app.R.drawable.ic_camion_cisterna),
+                    )
 
                     val puntosCapa = CircleLayer("puntos-zona", "zona")
                     puntosCapa.setFilter(eq(get("tipo"), literal("punto")))
@@ -114,11 +123,10 @@ fun MapaZonaVecino(
                     )
                     estilo.addLayer(cisternaHalo)
 
-                    val cisterna = CircleLayer("cisterna", "zona")
+                    val cisterna = SymbolLayer("cisterna", "zona")
                     cisterna.setFilter(eq(get("tipo"), literal("cisterna")))
                     cisterna.setProperties(
-                        circleRadius(12f), circleColor(cMarca),
-                        circleStrokeWidth(3f), circleStrokeColor(cHoja),
+                        iconImage("cisterna-icono"), iconSize(0.55f), iconAllowOverlap(true),
                     )
                     estilo.addLayer(cisterna)
                 }
@@ -131,7 +139,9 @@ fun MapaZonaVecino(
                 claveEncuadre[0] = clave
                 val ubicaciones = puntos.map { LatLng(it.lat, it.lng) } +
                     listOfNotNull(posicion?.let { LatLng(it.lat, it.lng) })
-                if (ubicaciones.isNotEmpty()) {
+                if (ubicaciones.size == 1) {
+                    mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicaciones.single(), 15.0))
+                } else if (ubicaciones.isNotEmpty()) {
                     val bounds = LatLngBounds.Builder()
                     ubicaciones.forEach { bounds.include(it) }
                     with(density) {
