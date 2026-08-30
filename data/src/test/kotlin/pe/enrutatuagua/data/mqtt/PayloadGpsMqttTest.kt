@@ -13,12 +13,12 @@ class PayloadGpsMqttTest {
 
     @Test fun `json tiene el shape exacto que espera el backend`() {
         val momento = Instant.parse("2026-07-27T10:00:00Z")
-        val posicion = PosicionGps(rutaId = 42, lat = -12.16, lng = -76.94, registradaEnMillis = momento.toEpochMilli())
+        val posicion = PosicionGps(mensajeId = "11111111-1111-1111-1111-111111111111", rutaId = 42, lat = -12.16, lng = -76.94, registradaEnMillis = momento.toEpochMilli())
 
         val json = PayloadGpsMqtt.json(posicion)
 
         assertEquals(
-            "{\"rutaId\":42,\"lat\":-12.16,\"lng\":-76.94,\"registradoEn\":\"2026-07-27T10:00:00Z\"}",
+            "{\"mensajeId\":\"11111111-1111-1111-1111-111111111111\",\"rutaId\":42,\"lat\":-12.16,\"lng\":-76.94,\"registradoEn\":\"2026-07-27T10:00:00Z\"}",
             json,
         )
     }

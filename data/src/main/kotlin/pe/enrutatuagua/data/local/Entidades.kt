@@ -9,5 +9,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "posicion_gps_pendiente")
 data class PosicionGpsPendienteEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val mensajeId: String,
     val rutaId: Long, val lat: Double, val lng: Double, val registradaEnMillis: Long,
 )

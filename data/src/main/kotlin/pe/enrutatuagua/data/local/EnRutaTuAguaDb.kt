@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [PosicionGpsPendienteEntity::class],
-    version = 3, exportSchema = false,
+    version = 4, exportSchema = false,
 )
 abstract class EnRutaTuAguaDb : RoomDatabase() {
     abstract fun posicionGpsDao(): PosicionGpsDao

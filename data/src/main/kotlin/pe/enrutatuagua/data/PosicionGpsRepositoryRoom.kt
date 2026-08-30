@@ -6,8 +6,8 @@ import pe.enrutatuagua.domain.repositorio.PosicionGps
 import pe.enrutatuagua.domain.repositorio.PosicionGpsRepository
 import javax.inject.Inject
 
-fun PosicionGpsPendienteEntity.aDominio() = PosicionGps(id, rutaId, lat, lng, registradaEnMillis)
-fun PosicionGps.aEntity() = PosicionGpsPendienteEntity(id, rutaId, lat, lng, registradaEnMillis)
+fun PosicionGpsPendienteEntity.aDominio() = PosicionGps(id, mensajeId, rutaId, lat, lng, registradaEnMillis)
+fun PosicionGps.aEntity() = PosicionGpsPendienteEntity(id, mensajeId, rutaId, lat, lng, registradaEnMillis)
 
 class PosicionGpsRepositoryRoom @Inject constructor(private val db: EnRutaTuAguaDb) : PosicionGpsRepository {
 

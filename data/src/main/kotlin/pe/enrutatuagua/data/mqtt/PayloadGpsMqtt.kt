@@ -17,7 +17,7 @@ object PayloadGpsMqtt {
 
     fun json(posicion: PosicionGps): String {
         val registradoEn = Instant.ofEpochMilli(posicion.registradaEnMillis)
-        return "{\"rutaId\":${posicion.rutaId},\"lat\":${posicion.lat},\"lng\":${posicion.lng}," +
+        return "{\"mensajeId\":\"${posicion.mensajeId}\",\"rutaId\":${posicion.rutaId},\"lat\":${posicion.lat},\"lng\":${posicion.lng}," +
             "\"registradoEn\":\"$registradoEn\"}"
     }
 }

@@ -42,6 +42,7 @@ interface TrackingRepository {
 // acoplar "¿guardé el punto?" a si el broker respondió.
 data class PosicionGps(
     val id: Long = 0,
+    val mensajeId: String = java.util.UUID.randomUUID().toString(),
     val rutaId: Long,
     val lat: Double,
     val lng: Double,
