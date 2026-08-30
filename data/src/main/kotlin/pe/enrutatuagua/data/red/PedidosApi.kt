@@ -6,8 +6,8 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-@Serializable data class CrearPedidoRequestDto(val puntoId: Long, val litros: Int)
 @Serializable data class PedidoItemDto(val puntoId: Long, val litros: Int)
+@Serializable data class CrearPedidoRequestDto(val items: List<PedidoItemDto>)
 @Serializable data class PedidoDto(
     val id: Long,
     val items: List<PedidoItemDto>,

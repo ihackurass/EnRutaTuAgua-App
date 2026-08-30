@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onStart
 import pe.enrutatuagua.data.red.CambiarEstadoPuntoRequestDto
 import pe.enrutatuagua.data.red.CrearPedidoRequestDto
 import pe.enrutatuagua.data.red.PedidoDto
+import pe.enrutatuagua.data.red.PedidoItemDto
 import pe.enrutatuagua.data.red.PedidosApi
 import pe.enrutatuagua.data.red.PuntoDto
 import pe.enrutatuagua.data.red.PuntosApi
@@ -43,7 +44,11 @@ class PedidoRepositoryHttp @Inject constructor(
             .map { puntosApi.zona().map(PuntoDto::aDominio) }
 
     override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido {
-        val creado = pedidosApi.crear(CrearPedidoRequestDto(puntoId, litros)).aDominio()
+        return crearPedidoMultipunto(listOf(PedidoItem(puntoId, litros)))
+    }
+
+    override suspend fun crearPedidoMultipunto(items: List<PedidoItem>): Pedido {
+        val creado = pedidosApi.crear(CrearPedidoRequestDto(items.map { PedidoItemDto(it.puntoId, it.litros) })).aDominio()
         refrescarPedidos.tryEmit(Unit)
         return creado
     }

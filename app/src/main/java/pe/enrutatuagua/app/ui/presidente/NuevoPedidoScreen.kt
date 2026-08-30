@@ -45,6 +45,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
     val hecho by vm.hecho.collectAsState()
     val error by vm.error.collectAsState()
     val limite by vm.limite.collectAsState()
+    val items by vm.items.collectAsState()
     LaunchedEffect(hecho) { if (hecho) onHecho() }
 
     var puntoId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -52,7 +53,8 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
 
     val paleta = LocalPaletaAgua.current
     val valor = litros.toIntOrNull() ?: 0
-    val invalido = puntoId == null || valor <= 0 || limite == null || valor > (limite?.maxLitrosPedido ?: 0) || limite?.tienePedidoActivo == true
+    val invalido = puntoId == null || valor <= 0 || limite == null || valor > (limite?.maxLitrosPedido ?: 0) ||
+        limite?.tienePedidoActivo == true || items.any { it.puntoId == puntoId }
 
     Column(
         Modifier
@@ -88,7 +90,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
             Spacer(Modifier.height(8.dp))
             Text(
                 if (it.tienePedidoActivo) "Este punto ya tiene un pedido activo"
-                else "Máximo por pedido: ${formatearLitros(it.maxLitrosPedido)} L (cisterna mayor: ${formatearLitros(it.capacidadMaximaCisternaLitros)} L)",
+                else "Máximo para este punto: ${formatearLitros(it.maxLitrosPedido)} L. Puede atenderse en varios viajes.",
                 style = EstilosAgua.Cuerpo,
                 color = if (it.tienePedidoActivo || valor > it.maxLitrosPedido) paleta.error else paleta.texto2,
             )
@@ -107,9 +109,26 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         }
         Spacer(Modifier.height(12.dp))
         BotonPrimario(
-            texto = "Pedir agua",
+            texto = "Agregar punto",
             habilitado = !invalido,
-            onClick = { puntoId?.let { id -> vm.crear(id, valor) } },
+            onClick = { puntoId?.let { id -> vm.agregar(id, valor) } },
         )
+        if (items.isNotEmpty()) {
+            Spacer(Modifier.height(18.dp))
+            Text("Puntos incluidos", style = EstilosAgua.ItemTitulo, color = paleta.texto)
+            items.forEach { item ->
+                val nombre = puntos.firstOrNull { it.id == item.puntoId }?.nombre ?: "Punto #${item.puntoId}"
+                FichaParada(
+                    numero = item.puntoId.toInt(), titulo = nombre,
+                    subtitulo = "${formatearLitros(item.litros)} L", textoDerecha = "Quitar",
+                    estado = EstadoFicha.Proxima, onClick = { vm.quitar(item.puntoId) },
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            BotonPrimario(
+                texto = "Enviar pedido · ${items.size} punto${if (items.size == 1) "" else "s"}",
+                onClick = vm::crearMultipunto,
+            )
+        }
     }
 }

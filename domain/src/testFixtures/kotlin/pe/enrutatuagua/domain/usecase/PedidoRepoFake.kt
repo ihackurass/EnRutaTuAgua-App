@@ -14,7 +14,11 @@ class PedidoRepoFake : PedidoRepository {
     override fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>> = puntosFlow
 
     override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido {
-        val pedido = Pedido(siguienteId++, listOf(PedidoItem(puntoId, litros)), EstadoPedido.PENDIENTE, 0L)
+        return crearPedidoMultipunto(listOf(PedidoItem(puntoId, litros)))
+    }
+
+    override suspend fun crearPedidoMultipunto(items: List<PedidoItem>): Pedido {
+        val pedido = Pedido(siguienteId++, items, EstadoPedido.PENDIENTE, 0L)
         pedidosFlow.value = pedidosFlow.value + pedido
         return pedido
     }

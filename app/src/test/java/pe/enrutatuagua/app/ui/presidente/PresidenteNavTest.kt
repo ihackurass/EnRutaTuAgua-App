@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -107,8 +108,10 @@ class PresidenteNavTest {
         regla.waitForIdle()
         regla.onNodeWithText("2,000").assertExists()
 
-        regla.onNodeWithText("Pedir agua").assertIsEnabled()
-        regla.onNodeWithText("Pedir agua").performClick()
+        regla.onNodeWithText("Agregar punto").assertIsEnabled()
+        regla.onNodeWithText("Agregar punto").performClick()
+        regla.waitForIdle()
+        regla.onNodeWithText("Enviar pedido · 1 punto").performScrollTo().performClick()
         regla.waitForIdle()
 
         regla.onNodeWithText("MIS PEDIDOS").assertExists()

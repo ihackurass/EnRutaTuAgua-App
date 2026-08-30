@@ -34,6 +34,10 @@ interface PedidoRepository {
     fun observarPedidos(): Flow<List<Pedido>>
     fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>>
     suspend fun crearPedido(puntoId: Long, litros: Int): Pedido
+    suspend fun crearPedidoMultipunto(items: List<PedidoItem>): Pedido {
+        require(items.size == 1)
+        return crearPedido(items.single().puntoId, items.single().litros)
+    }
     suspend fun cancelarPedido(pedidoId: Long)
     suspend fun validarPunto(puntoId: Long)
     suspend fun consultarLimite(puntoId: Long): LimitePedido
