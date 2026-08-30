@@ -1,75 +1,76 @@
 package pe.enrutatuagua.app.ui
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import pe.enrutatuagua.app.ui.mapa.MapaDiagnosticoScreen
 import pe.enrutatuagua.app.ui.parada.ParadaScreen
 import pe.enrutatuagua.app.ui.presidente.PresidenteNav
+import pe.enrutatuagua.app.ui.rol.LoginScreen
 import pe.enrutatuagua.app.ui.rol.ProximamenteScreen
 import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
 import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
-import pe.enrutatuagua.app.ui.tracking.PruebaTrackingScreen
-import pe.enrutatuagua.designsystem.tokens.MovimientoAgua
 import pe.enrutatuagua.domain.modelo.Rol
+import pe.enrutatuagua.domain.modelo.Sesion
 
 @Composable
-fun Navegacion() {
+fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
+    val sesion by vm.sesion.collectAsState()
+    val procesando by vm.procesando.collectAsState()
+    val error by vm.error.collectAsState()
+    val actual = sesion
+    when {
+        actual == null -> LoginScreen(procesando, error, vm::iniciar)
+        actual.rolActivo == null -> SeleccionRolScreen(
+            roles = actual.roles,
+            onRolElegido = vm::seleccionarRol,
+        )
+        else -> AplicacionAutenticada(actual, vm::cerrar, vm::cambiarRol)
+    }
+}
+
+@Composable
+private fun AplicacionAutenticada(sesion: Sesion, onCerrar: () -> Unit, onCambiarRol: () -> Unit) {
+    Box(Modifier.fillMaxSize()) {
+        when (sesion.rolActivo) {
+            Rol.AGUATERO -> NavegacionAguatero()
+            Rol.VECINO -> MapaVivoScreen()
+            Rol.PRESIDENTE -> PresidenteNav()
+            Rol.ADMIN -> ProximamenteScreen(onVolver = onCerrar)
+            null -> Unit
+        }
+        Row(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+            if (sesion.roles.size > 1) TextButton(onClick = onCambiarRol) { Text("Cambiar rol") }
+            TextButton(onClick = onCerrar) { Text("Salir") }
+        }
+    }
+}
+
+@Composable
+private fun NavegacionAguatero() {
     val nav = rememberNavController()
-    NavHost(
-        nav,
-        startDestination = "rol",
-        enterTransition = {
-            slideInHorizontally(tween(MovimientoAgua.Hoja, easing = MovimientoAgua.EasingSalida)) { it / 4 } +
-                fadeIn(tween(MovimientoAgua.Hoja))
-        },
-        exitTransition = { fadeOut(tween(MovimientoAgua.Perilla)) },
-        popEnterTransition = { fadeIn(tween(MovimientoAgua.Hoja)) },
-        popExitTransition = {
-            slideOutHorizontally(tween(MovimientoAgua.Hoja, easing = MovimientoAgua.EasingSalida)) { it / 4 } +
-                fadeOut(tween(MovimientoAgua.Hoja))
-        },
-    ) {
-        composable("rol") {
-            val vm: SesionViewModel = hiltViewModel()
-            SeleccionRolScreen(onRolElegido = { rol ->
-                vm.seleccionarRol(rol)
-                when (rol) {
-                    Rol.AGUATERO -> nav.navigate("ruta")
-                    Rol.VECINO -> nav.navigate("vecino")
-                    Rol.PRESIDENTE -> nav.navigate("presidente")
-                    Rol.ADMIN -> nav.navigate("proximamente")
-                }
-            }, onDiagnosticoMapaClick = { nav.navigate("mapa-diagnostico") },
-                onPruebaTrackingClick = { nav.navigate("prueba-tracking") })
-        }
-        composable("mapa-diagnostico") { MapaDiagnosticoScreen() }
-        composable("prueba-tracking") { PruebaTrackingScreen(onVolver = { nav.popBackStack() }) }
-        composable("proximamente") {
-            ProximamenteScreen(onVolver = { nav.popBackStack() })
-        }
-        composable("vecino") { MapaVivoScreen() }
-        composable("presidente") { PresidenteNav() }
+    NavHost(nav, startDestination = "ruta") {
         composable("ruta") { entrada ->
-            val aviso by entrada.savedStateHandle
-                .getStateFlow<String?>("aviso", null)
-                .collectAsState()
+            val aviso by entrada.savedStateHandle.getStateFlow<String?>("aviso", null).collectAsState()
             RutaScreen(
-                onParadaClick = { id -> nav.navigate("parada/$id") },
-                onOmitirClick = { id -> nav.navigate("parada/$id?omitir=true") },
+                onParadaClick = { nav.navigate("parada/$it") },
+                onOmitirClick = { nav.navigate("parada/$it?omitir=true") },
                 aviso = aviso,
                 onAvisoMostrado = { entrada.savedStateHandle["aviso"] = null },
             )

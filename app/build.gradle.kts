@@ -31,15 +31,6 @@ android {
         // valores de arriba -- se pisan antes de cada corrida e2e con la IP
         // LAN de la máquina de desarrollo (NO localhost).
         buildConfigField("String", "BASE_URL_DEV", "\"${enrutaBaseUrl.get()}\"")
-        buildConfigField("String", "AGUATERO_DNI_DEV", "\"10000003\"")
-        buildConfigField("String", "AGUATERO_CLAVE_DEV", "\"aguatero1234\"")
-
-        // Auditoría rol Vecino: atajo de desarrollo para poder probar
-        // TrackingRepositoryHttp en dispositivo real sin login de Vecino
-        // real (ver comentario en NetworkModule.kt) -- credenciales del
-        // usuario Vecino ya sembrado por R__seed_desarrollo.sql.
-        buildConfigField("String", "VECINO_DNI_DEV", "\"10000002\"")
-        buildConfigField("String", "VECINO_CLAVE_DEV", "\"vecino1234\"")
     }
 
     compileOptions {

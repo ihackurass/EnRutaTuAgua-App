@@ -3,7 +3,8 @@ package pe.enrutatuagua.data.red
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
-import pe.enrutatuagua.domain.repositorio.AutenticacionRepository
+import java.io.IOException
+import pe.enrutatuagua.domain.repositorio.SesionRepository
 
 /**
  * ANDROID-PLAN-02 (T3): adjunta `Authorization: Bearer`. OkHttp ya corre los
@@ -15,17 +16,15 @@ import pe.enrutatuagua.domain.repositorio.AutenticacionRepository
  * inválido) reintenta UNA sola vez con un token fresco -- ni la request
  * original ni el reintento se repiten en bucle.
  */
-class InterceptorAutenticacion(private val autenticacion: AutenticacionRepository) : Interceptor {
+class InterceptorAutenticacion(private val sesion: SesionRepository) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        val token = runBlocking { autenticacion.tokenVigente() }
+        val token = runBlocking { sesion.tokenVigente() } ?: throw IOException("No hay una sesión vigente")
         val respuesta = chain.proceed(conBearer(original, token))
         if (respuesta.code != 401) return respuesta
-
-        respuesta.close()
-        val tokenNuevo = runBlocking { autenticacion.forzarRelogin() }
-        return chain.proceed(conBearer(original, tokenNuevo))
+        runBlocking { sesion.cerrar() }
+        return respuesta
     }
 
     private fun conBearer(request: okhttp3.Request, token: String) =

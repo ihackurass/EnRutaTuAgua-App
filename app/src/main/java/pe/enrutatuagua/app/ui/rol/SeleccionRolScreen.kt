@@ -27,8 +27,10 @@ import pe.enrutatuagua.domain.modelo.Rol
 @Composable
 fun SeleccionRolScreen(
     onRolElegido: (Rol) -> Unit,
+    roles: Set<Rol> = Rol.entries.toSet(),
     onDiagnosticoMapaClick: () -> Unit = {},
     onPruebaTrackingClick: () -> Unit = {},
+    mostrarDiagnosticos: Boolean = false,
 ) {
     val paleta = LocalPaletaAgua.current
     Column(
@@ -43,16 +45,18 @@ fun SeleccionRolScreen(
             style = EstilosAgua.TituloParada.copy(fontSize = 32.sp, lineHeight = 34.sp),
             color = paleta.texto,
         )
-        RotuloSeccion("Selector provisional (solo pruebas)")
+        RotuloSeccion("Elige cómo deseas ingresar")
         Spacer(Modifier.height(10.dp))
-        Rol.entries.forEach { rol ->
+        Rol.entries.filter { it in roles }.forEach { rol ->
             BotonPrimario(rol.etiqueta, onClick = { onRolElegido(rol) })
         }
         Spacer(Modifier.height(10.dp))
         // Diagnóstico temporal: mapa pelado (sin encuadre/HojaArrastrable de
         // la app) para aislar si "no carga ciertas partes" es del dato
         // (PMTiles) o de la lógica de cámara -- ver MapaDiagnosticoScreen.kt.
-        BotonSecundario("Diagnóstico: mapa pelado", onClick = onDiagnosticoMapaClick)
-        BotonSecundario("Prueba tracking en vivo", onClick = onPruebaTrackingClick)
+        if (mostrarDiagnosticos) {
+            BotonSecundario("Diagnóstico: mapa pelado", onClick = onDiagnosticoMapaClick)
+            BotonSecundario("Prueba tracking en vivo", onClick = onPruebaTrackingClick)
+        }
     }
 }

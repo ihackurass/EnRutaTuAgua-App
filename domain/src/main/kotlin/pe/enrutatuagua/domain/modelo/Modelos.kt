@@ -2,6 +2,15 @@ package pe.enrutatuagua.domain.modelo
 
 import java.time.LocalDate
 
+data class Sesion(
+    val usuarioId: Long,
+    val roles: Set<Rol>,
+    val asociacionId: Long?,
+    val rolActivo: Rol?,
+    val token: String,
+    val expiraEn: Long,
+)
+
 // Códigos idénticos a sql/01-esquema.sql (catalogo_valor)
 enum class Rol(val codigo: Int, val etiqueta: String) {
     AGUATERO(1, "Aguatero (cisterna)"), VECINO(2, "Vecino"),
