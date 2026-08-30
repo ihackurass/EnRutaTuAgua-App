@@ -2,6 +2,8 @@ package pe.enrutatuagua.data.red
 
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.Body
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 
 @Serializable
@@ -15,6 +17,9 @@ data class PuntoDto(
     val asociacionId: Long? = null,
 )
 
+@Serializable
+data class CambiarEstadoPuntoRequestDto(val estado: String, val comentario: String? = null)
+
 interface PuntosApi {
     @GET("api/v1/puntos/{id}")
     suspend fun porId(@Path("id") id: Long): PuntoDto
@@ -22,4 +27,10 @@ interface PuntosApi {
     /** Auditoría rol Vecino: todos los puntos de la asociación del actor, sin filtrar por estado. */
     @GET("api/v1/puntos/zona")
     suspend fun zona(): List<PuntoDto>
+
+    @PATCH("api/v1/puntos/{id}/estado")
+    suspend fun cambiarEstado(
+        @Path("id") id: Long,
+        @Body solicitud: CambiarEstadoPuntoRequestDto,
+    ): PuntoDto
 }

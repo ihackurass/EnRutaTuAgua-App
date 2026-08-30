@@ -11,7 +11,7 @@ import dagger.hilt.components.SingletonComponent
 import pe.enrutatuagua.data.AutenticacionRepositoryHttp
 import pe.enrutatuagua.data.ConectividadRepositoryAndroid
 import pe.enrutatuagua.data.ContextoTrackingRepositoryRuntime
-import pe.enrutatuagua.data.PedidoRepositoryMemoria
+import pe.enrutatuagua.data.PedidoRepositoryHttp
 import pe.enrutatuagua.data.PosicionGpsRepositoryRoom
 import pe.enrutatuagua.data.RutaRepositoryHttp
 import pe.enrutatuagua.data.SesionRepositoryMemoria
@@ -45,7 +45,7 @@ object DbModule {
 abstract class RepositoriosModule {
     @Binds abstract fun rutaRepository(impl: RutaRepositoryHttp): RutaRepository
     @Binds abstract fun sesionRepository(impl: SesionRepositoryMemoria): SesionRepository
-    @Binds abstract fun pedidoRepository(impl: PedidoRepositoryMemoria): PedidoRepository
+    @Binds abstract fun pedidoRepository(impl: PedidoRepositoryHttp): PedidoRepository
     @Binds abstract fun trackingRepository(impl: TrackingRepositoryHttp): TrackingRepository
     @Binds abstract fun posicionGpsRepository(impl: PosicionGpsRepositoryRoom): PosicionGpsRepository
     @Binds abstract fun publicadorPosicionMqtt(impl: PublicadorPosicionMqttPaho): PublicadorPosicionMqtt

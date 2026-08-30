@@ -14,6 +14,7 @@ import pe.enrutatuagua.data.TrackingRepositoryHttp
 import pe.enrutatuagua.data.red.AuthApi
 import pe.enrutatuagua.data.red.InterceptorAutenticacion
 import pe.enrutatuagua.data.red.PuntosApi
+import pe.enrutatuagua.data.red.PedidosApi
 import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
 import pe.enrutatuagua.data.red.VehiculosApi
@@ -99,6 +100,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun puntosApi(@RetrofitAutenticado retrofit: Retrofit): PuntosApi = retrofit.create(PuntosApi::class.java)
+
+    @Provides
+    @Singleton
+    fun pedidosApi(@RetrofitAutenticado retrofit: Retrofit): PedidosApi = retrofit.create(PedidosApi::class.java)
 
     @Provides
     @Singleton
