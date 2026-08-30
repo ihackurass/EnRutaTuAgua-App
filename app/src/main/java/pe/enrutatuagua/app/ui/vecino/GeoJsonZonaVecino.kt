@@ -10,7 +10,11 @@ import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
  * abastecimiento (solo lectura) más, si hay última posición conocida, un
  * feature de cisterna fijo — sin línea de ruta, a diferencia de geoJsonDeRuta.
  */
-fun geoJsonDeZona(puntos: List<PuntoAbastecimiento>, posicion: PosicionCisterna?): String {
+fun geoJsonDeZona(
+    puntos: List<PuntoAbastecimiento>,
+    posicion: PosicionCisterna?,
+    rumboCisterna: Float? = null,
+): String {
     val features = puntos.map { p ->
         JSONObject().put("type", "Feature")
             .put("properties", JSONObject()
@@ -22,7 +26,10 @@ fun geoJsonDeZona(puntos: List<PuntoAbastecimiento>, posicion: PosicionCisterna?
     }
     val conCisterna = if (posicion != null) {
         features + JSONObject().put("type", "Feature")
-            .put("properties", JSONObject().put("tipo", "cisterna"))
+            .put(
+                "properties",
+                JSONObject().put("tipo", "cisterna").put("rumbo", rumboCisterna ?: 0f),
+            )
             .put("geometry", JSONObject().put("type", "Point")
                 .put("coordinates", JSONArray(listOf(posicion.lng, posicion.lat))))
     } else {

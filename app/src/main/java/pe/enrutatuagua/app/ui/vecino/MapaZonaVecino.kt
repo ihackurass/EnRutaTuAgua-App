@@ -7,11 +7,23 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -34,6 +46,8 @@ import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap
 import org.maplibre.android.style.layers.PropertyFactory.iconImage
 import org.maplibre.android.style.layers.PropertyFactory.iconSize
+import org.maplibre.android.style.layers.PropertyFactory.iconRotate
+import org.maplibre.android.style.layers.PropertyFactory.iconRotationAlignment
 import org.maplibre.android.style.sources.GeoJsonSource
 import pe.enrutatuagua.app.ui.mapa.EstiloMapa
 import pe.enrutatuagua.data.ConectividadRepositoryAndroid
@@ -63,10 +77,33 @@ fun MapaZonaVecino(
     posicion: PosicionCisterna?,
     modifier: Modifier = Modifier,
     oscuro: Boolean = isSystemInDarkTheme(),
+    rumboCisterna: Float? = null,
+    margenSuperiorCamara: Dp = 0.dp,
 ) {
     val contexto = LocalContext.current
     val paleta = LocalPaletaAgua.current
     val density = LocalDensity.current
+    var posicionMostrada by remember { mutableStateOf(posicion) }
+    LaunchedEffect(posicion?.lat, posicion?.lng) {
+        val destino = posicion
+        val origen = posicionMostrada
+        if (destino == null || origen == null) {
+            posicionMostrada = destino
+        } else {
+            Animatable(0f).animateTo(1f, tween(800, easing = FastOutSlowInEasing)) {
+                posicionMostrada = destino.copy(
+                    lat = origen.lat + (destino.lat - origen.lat) * value,
+                    lng = origen.lng + (destino.lng - origen.lng) * value,
+                )
+            }
+        }
+    }
+    val pulso by rememberInfiniteTransition(label = "pulso-cisterna").animateFloat(
+        initialValue = 25f,
+        targetValue = 33f,
+        animationSpec = infiniteRepeatable(tween(1_200), RepeatMode.Reverse),
+        label = "radio-cisterna",
+    )
 
     val cMarca = paleta.marca.toArgb()
     val cExito = paleta.exito.toArgb()
@@ -88,13 +125,14 @@ fun MapaZonaVecino(
 
     AndroidView(modifier = modifier, factory = { mapView }, update = { vista ->
         vista.getMapAsync { mapa ->
+            with(density) { mapa.setPadding(0, margenSuperiorCamara.toPx().toInt(), 0, 0) }
             val modo = oscuro to online
             if (modoAplicado[0] != modo) {
                 modoAplicado[0] = modo
                 mapa.setLatLngBoundsForCameraTarget(null)
                 mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
                 mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) { estilo ->
-                    estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicion)))
+                    estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicionMostrada, rumboCisterna)))
                     estilo.addImage(
                         "cisterna-icono",
                         BitmapFactory.decodeResource(contexto.resources, pe.enrutatuagua.app.R.drawable.ic_camion_cisterna),
@@ -119,19 +157,38 @@ fun MapaZonaVecino(
                     val cisternaHalo = CircleLayer("cisterna-halo", "zona")
                     cisternaHalo.setFilter(eq(get("tipo"), literal("cisterna")))
                     cisternaHalo.setProperties(
-                        circleRadius(24f), circleColor(cMarca), circleOpacity(0.18f),
+                        circleRadius(pulso), circleColor(cMarca), circleOpacity(0.18f),
                     )
                     estilo.addLayer(cisternaHalo)
+
+                    val cisternaSombra = CircleLayer("cisterna-sombra", "zona")
+                    cisternaSombra.setFilter(eq(get("tipo"), literal("cisterna")))
+                    cisternaSombra.setProperties(
+                        circleRadius(23f), circleColor(android.graphics.Color.BLACK), circleOpacity(0.28f),
+                    )
+                    estilo.addLayer(cisternaSombra)
+
+                    val cisternaFondo = CircleLayer("cisterna-fondo", "zona")
+                    cisternaFondo.setFilter(eq(get("tipo"), literal("cisterna")))
+                    cisternaFondo.setProperties(
+                        circleRadius(20f), circleColor(android.graphics.Color.WHITE),
+                        circleStrokeWidth(2f), circleStrokeColor(cMarca),
+                    )
+                    estilo.addLayer(cisternaFondo)
 
                     val cisterna = SymbolLayer("cisterna", "zona")
                     cisterna.setFilter(eq(get("tipo"), literal("cisterna")))
                     cisterna.setProperties(
-                        iconImage("cisterna-icono"), iconSize(0.55f), iconAllowOverlap(true),
+                        iconImage("cisterna-icono"), iconSize(0.85f), iconAllowOverlap(true),
+                        iconRotate(get("rumbo")), iconRotationAlignment("map"),
                     )
                     estilo.addLayer(cisterna)
                 }
             } else {
-                (mapa.style?.getSource("zona") as? GeoJsonSource)?.setGeoJson(geoJsonDeZona(puntos, posicion))
+                (mapa.style?.getSource("zona") as? GeoJsonSource)?.setGeoJson(
+                    geoJsonDeZona(puntos, posicionMostrada, rumboCisterna),
+                )
+                (mapa.style?.getLayer("cisterna-halo") as? CircleLayer)?.setProperties(circleRadius(pulso))
             }
 
             val clave = puntos.map { it.id } to (posicion != null)

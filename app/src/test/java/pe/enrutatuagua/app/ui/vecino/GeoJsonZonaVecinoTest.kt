@@ -36,9 +36,10 @@ class GeoJsonZonaVecinoTest {
 
     @Test
     fun `el ultimo feature es la cisterna en su posicion`() {
-        val features = JSONObject(geoJsonDeZona(puntos, posicion)).getJSONArray("features")
+        val features = JSONObject(geoJsonDeZona(puntos, posicion, 137f)).getJSONArray("features")
         val cisterna = features.getJSONObject(features.length() - 1)
         assertEquals("cisterna", cisterna.getJSONObject("properties").getString("tipo"))
+        assertEquals(137.0, cisterna.getJSONObject("properties").getDouble("rumbo"), 0.01)
         val coords = cisterna.getJSONObject("geometry").getJSONArray("coordinates")
         assertEquals(posicion.lng, coords.getDouble(0), 0.0001)
         assertEquals(posicion.lat, coords.getDouble(1), 0.0001)
