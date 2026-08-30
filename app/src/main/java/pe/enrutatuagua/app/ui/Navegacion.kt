@@ -26,6 +26,7 @@ import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
 import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
+import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.modelo.Sesion
 
@@ -36,7 +37,12 @@ fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
     val error by vm.error.collectAsState()
     val actual = sesion
     when {
-        actual == null -> LoginScreen(procesando, error, vm::iniciar)
+        actual == null -> LoginScreen(
+            procesando = procesando,
+            error = error,
+            onIngresar = vm::iniciar,
+            mostrarAccesosRapidos = BuildConfig.DEBUG,
+        )
         actual.rolActivo == null -> SeleccionRolScreen(
             roles = actual.roles,
             onRolElegido = vm::seleccionarRol,
