@@ -8,6 +8,7 @@ plugins {
 
 val enrutaBaseUrl = providers.gradleProperty("ENRUTA_BASE_URL").orElse("http://10.0.2.2:8080/")
 val enrutaMqttBroker = providers.gradleProperty("ENRUTA_MQTT_BROKER").orElse("tcp://10.0.2.2:1883")
+val enrutaMqttPassword = providers.gradleProperty("ENRUTA_MQTT_PASSWORD").orElse("")
 
 android {
     namespace = "pe.enrutatuagua.app"
@@ -26,6 +27,7 @@ android {
         // backend sembrado y la IP LAN de la máquina de desarrollo (NO
         // localhost: el broker corre en la máquina dev, no en el celular).
         buildConfigField("String", "MQTT_BROKER_URL_DEV", "\"${enrutaMqttBroker.get()}\"")
+        buildConfigField("String", "MQTT_PASSWORD", "\"${enrutaMqttPassword.get()}\"")
 
         // ANDROID-PLAN-02 (T1, sin login real): mismo criterio que los
         // valores de arriba -- se pisan antes de cada corrida e2e con la IP

@@ -1,6 +1,7 @@
 package pe.enrutatuagua.domain.repositorio
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import pe.enrutatuagua.domain.modelo.*
 
 interface RutaRepository {
@@ -42,7 +43,8 @@ interface OperacionRepository {
     suspend fun resumen(): ResumenOperacion
     suspend fun sugerencia(asociacionId: Long, vehiculoId: Long): SugerenciaRuta
     suspend fun planificar(asociacionId: Long, vehiculoId: Long, aguateroId: Long, fecha: java.time.LocalDate, pedidoIds: List<Long>): RutaPlanificada
-    suspend fun cancelar(rutaId: Long)
+    suspend fun listar(fecha: java.time.LocalDate? = null, estado: EstadoRuta? = null): List<RutaOperacion>
+    suspend fun cancelar(rutaId: Long): RutaPlanificada
     suspend fun asignada(): RutaPlanificada
     suspend fun iniciar(rutaId: Long): RutaPlanificada
 }
@@ -50,6 +52,8 @@ interface OperacionRepository {
 interface TrackingRepository {
     fun observarUltimaPosicion(): Flow<PosicionCisterna?>
     fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>>  // RV-02, solo lectura
+    suspend fun asociacionActual(): String = "Tu asociación"
+    fun observarEstadoTracking(): Flow<EstadoTracking> = flowOf(EstadoTracking.RESPALDO_REST)
 }
 
 // ANDROID-PLAN-04 (alcance acotado): borde GPS del aguatero, ADR-2. Puerto
@@ -80,6 +84,7 @@ interface PublicadorPosicionMqtt {
 /** Valores de configuración de desarrollo (BuildConfig) -- sin login real, ver ANDROID-PLAN-04. */
 data class ConfiguracionTrackingDev(
     val brokerUrl: String,
+    val password: String = "",
 )
 
 data class ContextoTracking(val aguateroId: Long, val rutaId: Long)

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.EstadoTracking
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
 import javax.inject.Inject
 
@@ -22,9 +23,11 @@ const val INTERVALO_TICK_RELOJ_MS = 30_000L
 
 data class MapaVivoUiState(
     val cargando: Boolean = true,
+    val asociacionNombre: String = "Tu asociación",
     val posicion: PosicionCisterna? = null,
     val puntos: List<PuntoAbastecimiento> = emptyList(),
     val minutosSinSenal: Int = 0,
+    val estadoTracking: EstadoTracking = EstadoTracking.SIN_POSICION,
 )
 
 /** Auditoría rol Vecino: mismo patrón de resiliencia ya corregido en RutaViewModel (rol Aguatero). */
@@ -45,6 +48,13 @@ class MapaVivoViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             try {
+                _estado.value = _estado.value.copy(asociacionNombre = tracking.asociacionActual())
+            } catch (_: Exception) {
+                // El mapa y los puntos siguen siendo útiles aunque este dato auxiliar falle.
+            }
+        }
+        viewModelScope.launch {
+            try {
                 combine(
                     // Hallazgo real (auditoría rol Vecino): sin onStart{}, si
                     // un flow tarda más que el otro en emitir su primer
@@ -53,13 +63,14 @@ class MapaVivoViewModel @Inject constructor(
                     // cargando=true queda pegado para siempre.
                     tracking.observarUltimaPosicion().onStart { emit(null) },
                     tracking.observarPuntosDeZona().onStart { emit(emptyList()) },
-                ) { posicion, puntos ->
+                    tracking.observarEstadoTracking().onStart { emit(EstadoTracking.SIN_POSICION) },
+                ) { posicion, puntos, estadoTracking ->
                     val minutos = posicion?.let { ((ahora() - it.timestampMs) / 60_000).toInt() } ?: 0
                     // Hallazgo real: puntos RECHAZADO/SUSPENDIDO se veían
                     // igual que PROPUESTO en mapa y lista -- sólo VALIDADO
                     // es ruteable/relevante para un vecino buscando agua.
                     val validados = puntos.filter { it.estado == EstadoValidacionPunto.VALIDADO }
-                    MapaVivoUiState(cargando = false, posicion = posicion, puntos = validados, minutosSinSenal = minutos)
+                    MapaVivoUiState(cargando = false, asociacionNombre = _estado.value.asociacionNombre, posicion = posicion, puntos = validados, minutosSinSenal = minutos, estadoTracking = estadoTracking)
                 }
                     .retry { e ->
                         _mensaje.value = e.message ?: "No se pudo cargar tu zona, reintentando…"

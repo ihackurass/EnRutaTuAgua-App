@@ -36,8 +36,8 @@ class MapaVivoScreenTest {
         regla.waitForIdle()
 
         regla.onNodeWithText("Tu zona").assertExists()
-        regla.onNodeWithText("AA.HH. Villa Solidaridad").assertExists()
-        regla.onNodeWithText("Sin conexión en vivo · hace 47 min").assertExists()
+        regla.onNodeWithText("Tu asociación").assertExists()
+        regla.onNodeWithText("Respaldo REST · hace 47 min").assertExists()
         regla.onNodeWithText("8,500 L").assertExists()
         regla.onNodeWithText("DE 12,000 L").assertExists()   // TarjetaDato uppercasea el rotulo
         regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()
@@ -65,7 +65,7 @@ class MapaVivoScreenTest {
         regla.waitForIdle()
 
         regla.onNodeWithText("Tu zona").assertExists()
-        regla.onNodeWithText("Esperando la señal del camión").assertExists()
+        regla.onNodeWithText("Esperando la primera posición").assertExists()
         regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()
         regla.onNodeWithText("Comité 12 — Loma Alta").assertExists()
         regla.onNodeWithText("8,500 L").assertDoesNotExist()

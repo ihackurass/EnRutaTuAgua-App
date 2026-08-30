@@ -41,7 +41,13 @@ class PublicadorPosicionMqttPaho @Inject constructor(
             withContext(Dispatchers.IO) {
                 try {
                     if (!cliente.isConnected) {
-                        val opciones = MqttConnectionOptions().apply { setAutomaticReconnect(true) }
+                        val opciones = MqttConnectionOptions().apply {
+                            setAutomaticReconnect(true)
+                            if (configuracion.password.isNotBlank()) {
+                                userName = "aguatero-$aguateroId"
+                                password = configuracion.password.toByteArray()
+                            }
+                        }
                         cliente.connect(opciones).waitForCompletion(TIMEOUT_MS)
                     }
                     val mensaje = MqttMessage(PayloadGpsMqtt.json(posicion).toByteArray())

@@ -44,6 +44,9 @@ data class PedidoOperacion(val id: Long, val pedidoItemId: Long, val puntoId: Lo
 data class ResumenOperacion(val asociaciones: List<AsociacionOperacion>, val vehiculos: List<VehiculoOperacion>, val aguateros: List<AguateroOperacion>)
 data class SugerenciaRuta(val capacidadLitros: Int, val litrosSugeridos: Int, val sugeridos: List<PedidoOperacion>, val disponibles: List<PedidoOperacion>)
 data class RutaPlanificada(val id: Long, val fecha: LocalDate, val asociacionId: Long, val vehiculoId: Long, val aguateroId: Long, val litros: Int, val estado: EstadoRuta)
+data class RutaOperacion(val id: Long, val fecha: LocalDate, val estado: EstadoRuta,
+    val asociacion: AsociacionOperacion, val vehiculo: VehiculoOperacion,
+    val aguatero: AguateroOperacion, val litros: Int, val paradas: Int)
 
 data class Vehiculo(val id: Long, val placa: String, val capacidadTanqueLitros: Int)
 data class Punto(val id: Long, val nombre: String, val lat: Double, val lng: Double, val capacidadLitros: Int)
@@ -75,6 +78,7 @@ data class PosicionCisterna(
     val lat: Double, val lng: Double, val litrosRestantes: Int,
     val capacidadLitros: Int, val timestampMs: Long,
 )
+enum class EstadoTracking { EN_VIVO, RESPALDO_REST, SIN_POSICION, ERROR }
 
 // ER §5: el tanque restante es SIEMPRE derivado (ajustes restan con su signo)
 fun litrosRestantes(vehiculo: Vehiculo, entregas: List<Entrega>): Int =

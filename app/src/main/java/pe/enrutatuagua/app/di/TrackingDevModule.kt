@@ -21,5 +21,6 @@ object TrackingDevModule {
     @Singleton
     fun configuracionTrackingDev(): ConfiguracionTrackingDev = ConfiguracionTrackingDev(
         brokerUrl = BuildConfig.MQTT_BROKER_URL_DEV,
+        password = BuildConfig.MQTT_PASSWORD,
     )
 }

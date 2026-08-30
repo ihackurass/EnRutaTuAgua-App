@@ -1,8 +1,18 @@
 package pe.enrutatuagua.data
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
@@ -10,7 +20,9 @@ import pe.enrutatuagua.data.red.aPosicionCisterna
 import pe.enrutatuagua.data.red.aPuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.EstadoTracking
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
+import pe.enrutatuagua.domain.repositorio.SesionRepository
 import retrofit2.HttpException
 
 private const val INTERVALO_POSICION_MS = 5_000L
@@ -41,7 +53,12 @@ class TrackingRepositoryHttp(
     private val rutasApi: RutasApi,
     private val puntosApi: PuntosApi,
     private val trackingApi: TrackingApi,
+    private val cliente: OkHttpClient? = null,
+    private val sesion: SesionRepository? = null,
+    private val baseUrl: String = "",
 ) : TrackingRepository {
+
+    override suspend fun asociacionActual(): String = trackingApi.asociacionActual().nombre
 
     // Hallazgo real (verificación manual end-to-end): GET /vehiculos/{id}
     // exige hasRole('AGUATERO') + IDOR contra la última ruta del actor --
@@ -51,17 +68,59 @@ class TrackingRepositoryHttp(
     private data class ZonaCache(val rutaId: Long, val capacidadTanqueLitros: Int, val resueltaEnMs: Long)
 
     private var cache: ZonaCache? = null
+    private val estadoTracking = MutableStateFlow(EstadoTracking.SIN_POSICION)
+    @Volatile private var socket: WebSocket? = null
+    @Volatile private var rutaSocket: Long? = null
+    private val json = Json { ignoreUnknownKeys = true }
 
-    override fun observarUltimaPosicion(): Flow<PosicionCisterna?> = flow {
-        while (true) {
-            val actual = cache
-            if (actual == null || System.currentTimeMillis() - actual.resueltaEnMs > TTL_RUTA_ZONA_MS) {
-                cache = resolverZona()
+    override fun observarEstadoTracking(): Flow<EstadoTracking> = estadoTracking
+
+    override fun observarUltimaPosicion(): Flow<PosicionCisterna?> = callbackFlow {
+        val polling = launch {
+            while (true) {
+                val actual = cache
+                if (actual == null || System.currentTimeMillis() - actual.resueltaEnMs > TTL_RUTA_ZONA_MS) cache = resolverZona()
+                val zona = cache
+                if (zona == null) {
+                    cerrarSocket(); estadoTracking.value = EstadoTracking.SIN_POSICION; trySend(null)
+                } else {
+                    if (socket == null || rutaSocket != zona.rutaId) conectarSocket(zona) { trySend(it) }
+                    val posicion = posicionDe(zona)
+                    if (estadoTracking.value != EstadoTracking.EN_VIVO) estadoTracking.value = if (posicion == null) EstadoTracking.SIN_POSICION else EstadoTracking.RESPALDO_REST
+                    trySend(posicion)
+                }
+                delay(INTERVALO_POSICION_MS)
             }
-            emit(cache?.let { posicionDe(it) })
-            delay(INTERVALO_POSICION_MS)
         }
+        awaitClose { polling.cancel(); cerrarSocket() }
     }
+
+    private suspend fun conectarSocket(zona: ZonaCache, entregar: (PosicionCisterna) -> Unit) {
+        cerrarSocket()
+        val clienteWs = cliente ?: return
+        val token = sesion?.tokenVigente() ?: return
+        rutaSocket = zona.rutaId
+        val wsBase = baseUrl.trimEnd('/').replaceFirst("http://", "ws://").replaceFirst("https://", "wss://")
+        socket = clienteWs.newWebSocket(Request.Builder().url("$wsBase/ws/tracking?token=$token").build(), object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                webSocket.send("CONNECT\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000")
+            }
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                if (text.startsWith("CONNECTED")) {
+                    webSocket.send("SUBSCRIBE\nid:posicion-${zona.rutaId}\ndestination:/topic/rutas/${zona.rutaId}/posicion\nack:auto\n\n\u0000")
+                    estadoTracking.value = EstadoTracking.EN_VIVO
+                } else if (text.startsWith("MESSAGE")) {
+                    val cuerpo = text.substringAfter("\n\n").trimEnd('\u0000')
+                    runCatching { json.decodeFromString<pe.enrutatuagua.data.red.PosicionVivaDto>(cuerpo) }
+                        .map { it.aPosicionCisterna(zona.capacidadTanqueLitros) }.onSuccess(entregar)
+                }
+            }
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { socket = null; estadoTracking.value = EstadoTracking.RESPALDO_REST }
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { socket = null; estadoTracking.value = EstadoTracking.RESPALDO_REST }
+        })
+    }
+
+    private fun cerrarSocket() { socket?.close(1000, "fin"); socket = null; rutaSocket = null }
 
     override fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>> = flow {
         while (true) {

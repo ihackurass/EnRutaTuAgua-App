@@ -114,9 +114,9 @@ fun MapaVivoScreen(
         } else {
             mapa(estado.puntos, estado.posicion)
             Column(Modifier.align(Alignment.TopStart).fillMaxWidth()) {
-                CabeceraZona()
+                CabeceraZona(estado.asociacionNombre)
                 BadgeSinConexion(
-                    estado.posicion, estado.minutosSinSenal,
+                    estado.posicion, estado.minutosSinSenal, estado.estadoTracking,
                     Modifier.padding(start = 14.dp, end = 14.dp),
                 )
             }
@@ -129,7 +129,7 @@ fun MapaVivoScreen(
 }
 
 @Composable
-private fun CabeceraZona(modifier: Modifier = Modifier) {
+private fun CabeceraZona(asociacionNombre: String, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
     Column(
         modifier
@@ -145,20 +145,21 @@ private fun CabeceraZona(modifier: Modifier = Modifier) {
             .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
     ) {
         Text("Tu zona", style = EstilosAgua.Zona, color = paleta.texto)
-        // TODO placeholder: no existe todavía un campo "nombre de
-        // asociación" expuesto por el backend (la tabla `asociacion` no
-        // tiene módulo hexagonal propio, ver auditoría rol Vecino) -- fijo
-        // a propósito hasta que se construya esa pieza.
-        Text("AA.HH. Villa Solidaridad", style = EstilosAgua.Placa, color = paleta.texto2)
+        Text(asociacionNombre, style = EstilosAgua.Placa, color = paleta.texto2)
     }
 }
 
 @Composable
-private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, modifier: Modifier = Modifier) {
+private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, estadoTracking: pe.enrutatuagua.domain.modelo.EstadoTracking, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
     // Sin posición nunca "hace N min" no tiene sentido (nunca hubo señal) --
     // distinto de haber tenido una y quedar desactualizada.
-    val texto = if (posicion == null) "Esperando la señal del camión" else "Sin conexión en vivo · hace $minutosSinSenal min"
+    val texto = when {
+        posicion == null -> "Esperando la primera posición"
+        estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO -> "En vivo"
+        estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.ERROR -> "Error al actualizar · hace $minutosSinSenal min"
+        else -> "Respaldo REST · hace $minutosSinSenal min"
+    }
     Row(
         modifier
             .clip(RoundedCornerShape(RadiosAgua.Aviso))

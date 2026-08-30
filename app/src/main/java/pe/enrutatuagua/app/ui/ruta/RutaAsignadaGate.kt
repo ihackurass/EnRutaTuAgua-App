@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.tokens.*
@@ -22,8 +23,9 @@ import retrofit2.HttpException
 
 @HiltViewModel class RutaAsignadaViewModel @Inject constructor(private val repo:OperacionRepository,private val rutas:RutaRepository):ViewModel(){
     val ruta=MutableStateFlow<RutaPlanificada?>(null);val cargando=MutableStateFlow(true);val mensaje=MutableStateFlow<String?>(null)
-    init{consultar()}
+    init{viewModelScope.launch { while (true) { consultarAhora(); delay(5_000L) } }}
     fun consultar()=viewModelScope.launch{cargando.value=true;mensaje.value=null;try{ruta.value=repo.asignada()}catch(e:HttpException){ruta.value=null;if(e.code()!=404)mensaje.value="No se pudo consultar la ruta"}catch(_:Exception){ruta.value=null;mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false}}
+    private suspend fun consultarAhora(){try{ruta.value=repo.asignada();mensaje.value=null}catch(e:HttpException){ruta.value=null;if(e.code()!=404)mensaje.value="No se pudo consultar la ruta"}catch(_:Exception){mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false}}
     fun iniciar()=viewModelScope.launch{val r=ruta.value?:return@launch;try{repo.iniciar(r.id);rutas.invalidarCache();ruta.value=null}catch(e:Exception){mensaje.value=e.message?:"No se pudo iniciar"}}
 }
 
