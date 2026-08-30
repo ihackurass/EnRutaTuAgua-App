@@ -62,10 +62,14 @@ interface PublicadorPosicionMqtt {
 
 /** Valores de configuración de desarrollo (BuildConfig) -- sin login real, ver ANDROID-PLAN-04. */
 data class ConfiguracionTrackingDev(
-    val aguateroId: Long,
-    val rutaId: Long,
     val brokerUrl: String,
 )
+
+data class ContextoTracking(val aguateroId: Long, val rutaId: Long)
+
+interface ContextoTrackingRepository {
+    suspend fun actual(): ContextoTracking?
+}
 
 // Mapa híbrido online/offline (alcance acotado, ver plan): el PMTiles
 // bundleado sigue siendo el piso garantizado sin internet (RNF-01); esto

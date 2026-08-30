@@ -20,8 +20,6 @@ object TrackingDevModule {
     @Provides
     @Singleton
     fun configuracionTrackingDev(): ConfiguracionTrackingDev = ConfiguracionTrackingDev(
-        aguateroId = BuildConfig.AGUATERO_ID_DEV,
-        rutaId = BuildConfig.RUTA_ID_DEV,
         brokerUrl = BuildConfig.MQTT_BROKER_URL_DEV,
     )
 }

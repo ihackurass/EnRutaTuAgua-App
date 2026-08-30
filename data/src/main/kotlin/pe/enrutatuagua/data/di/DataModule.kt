@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import pe.enrutatuagua.data.AutenticacionRepositoryHttp
 import pe.enrutatuagua.data.ConectividadRepositoryAndroid
+import pe.enrutatuagua.data.ContextoTrackingRepositoryRuntime
 import pe.enrutatuagua.data.PedidoRepositoryMemoria
 import pe.enrutatuagua.data.PosicionGpsRepositoryRoom
 import pe.enrutatuagua.data.RutaRepositoryHttp
@@ -19,6 +20,7 @@ import pe.enrutatuagua.data.local.EnRutaTuAguaDb
 import pe.enrutatuagua.data.mqtt.PublicadorPosicionMqttPaho
 import pe.enrutatuagua.domain.repositorio.AutenticacionRepository
 import pe.enrutatuagua.domain.repositorio.ConectividadRepository
+import pe.enrutatuagua.domain.repositorio.ContextoTrackingRepository
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.repositorio.PosicionGpsRepository
 import pe.enrutatuagua.domain.repositorio.PublicadorPosicionMqtt
@@ -48,5 +50,6 @@ abstract class RepositoriosModule {
     @Binds abstract fun posicionGpsRepository(impl: PosicionGpsRepositoryRoom): PosicionGpsRepository
     @Binds abstract fun publicadorPosicionMqtt(impl: PublicadorPosicionMqttPaho): PublicadorPosicionMqtt
     @Binds abstract fun conectividadRepository(impl: ConectividadRepositoryAndroid): ConectividadRepository
+    @Binds abstract fun contextoTrackingRepository(impl: ContextoTrackingRepositoryRuntime): ContextoTrackingRepository
     @Binds abstract fun autenticacionRepository(impl: AutenticacionRepositoryHttp): AutenticacionRepository
 }

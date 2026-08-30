@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import pe.enrutatuagua.domain.repositorio.ConfiguracionTrackingDev
+import pe.enrutatuagua.domain.repositorio.ContextoTrackingRepository
 import pe.enrutatuagua.domain.repositorio.PosicionGps
 import pe.enrutatuagua.domain.repositorio.PosicionGpsRepository
 import pe.enrutatuagua.domain.repositorio.PublicadorPosicionMqtt
@@ -31,7 +31,7 @@ private const val TOPE_FILAS = 5000
 class MotorPublicacionGps @Inject constructor(
     private val posicionGpsRepository: PosicionGpsRepository,
     private val publicadorPosicionMqtt: PublicadorPosicionMqtt,
-    private val configuracion: ConfiguracionTrackingDev,
+    private val contextoTracking: ContextoTrackingRepository,
 ) {
     private var capturador: CapturadorPosicionGps? = null
     private var jobDrenaje: Job? = null
@@ -69,22 +69,24 @@ class MotorPublicacionGps @Inject constructor(
     }
 
     suspend fun procesarFix(ubicacion: Location) {
+        val contexto = contextoTracking.actual() ?: return
         val posicion = PosicionGps(
-            rutaId = configuracion.rutaId,
+            rutaId = contexto.rutaId,
             lat = ubicacion.latitude,
             lng = ubicacion.longitude,
             registradaEnMillis = System.currentTimeMillis(),
         )
         val guardada = posicionGpsRepository.guardar(posicion) // SIEMPRE, sin importar si el publish sigue
-        if (publicadorPosicionMqtt.publicar(configuracion.aguateroId, guardada)) {
+        if (publicadorPosicionMqtt.publicar(contexto.aguateroId, guardada)) {
             posicionGpsRepository.marcarPublicadas(listOf(guardada.id))
         }
     }
 
     suspend fun drenar() {
+        val contexto = contextoTracking.actual() ?: return
         val pendientes = posicionGpsRepository.pendientes(MAX_POR_DRENAJE)
         val publicadasIds = pendientes
-            .filter { publicadorPosicionMqtt.publicar(configuracion.aguateroId, it) }
+            .filter { it.rutaId == contexto.rutaId && publicadorPosicionMqtt.publicar(contexto.aguateroId, it) }
             .map { it.id }
         posicionGpsRepository.marcarPublicadas(publicadasIds)
         posicionGpsRepository.purgarAntiguas(

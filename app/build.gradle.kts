@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val enrutaBaseUrl = providers.gradleProperty("ENRUTA_BASE_URL").orElse("http://10.0.2.2:8080/")
+val enrutaMqttBroker = providers.gradleProperty("ENRUTA_MQTT_BROKER").orElse("tcp://10.0.2.2:1883")
+
 android {
     namespace = "pe.enrutatuagua.app"
     compileSdk = 35
@@ -22,14 +25,12 @@ android {
         // corrida e2e con el aguateroId/rutaId reales que devuelve el
         // backend sembrado y la IP LAN de la máquina de desarrollo (NO
         // localhost: el broker corre en la máquina dev, no en el celular).
-        buildConfigField("long", "AGUATERO_ID_DEV", "3L")
-        buildConfigField("long", "RUTA_ID_DEV", "29L")
-        buildConfigField("String", "MQTT_BROKER_URL_DEV", "\"tcp://192.168.18.6:1883\"")
+        buildConfigField("String", "MQTT_BROKER_URL_DEV", "\"${enrutaMqttBroker.get()}\"")
 
         // ANDROID-PLAN-02 (T1, sin login real): mismo criterio que los
         // valores de arriba -- se pisan antes de cada corrida e2e con la IP
         // LAN de la máquina de desarrollo (NO localhost).
-        buildConfigField("String", "BASE_URL_DEV", "\"http://192.168.18.6:8080/\"")
+        buildConfigField("String", "BASE_URL_DEV", "\"${enrutaBaseUrl.get()}\"")
         buildConfigField("String", "AGUATERO_DNI_DEV", "\"10000003\"")
         buildConfigField("String", "AGUATERO_CLAVE_DEV", "\"aguatero1234\"")
 

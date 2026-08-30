@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,9 @@ import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.app.ubicacion.ServicioTrackingGps
 import pe.enrutatuagua.domain.modelo.EstadoRuta
+import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.repositorio.RutaRepository
+import pe.enrutatuagua.domain.repositorio.SesionRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,12 +48,14 @@ import javax.inject.Singleton
 class ObservadorRutaAbiertaGps @Inject constructor(
     @ApplicationContext private val contexto: Context,
     private val rutaRepository: RutaRepository,
+    private val sesionRepository: SesionRepository,
 ) {
     private var jobEspera: Job? = null
 
     fun iniciar(alcance: CoroutineScope) {
-        rutaRepository.observarRutaAbierta()
-            .map { it?.estado == EstadoRuta.ABIERTA }
+        combine(rutaRepository.observarRutaAbierta(), sesionRepository.rolActual) { ruta, rol ->
+            ruta?.estado == EstadoRuta.ABIERTA && rol == Rol.AGUATERO
+        }
             .distinctUntilChanged()
             .onEach { hayRutaAbierta -> reaccionar(hayRutaAbierta, alcance) }
             // Hallazgo real (crash sin ruta al backend): sin retry, un solo

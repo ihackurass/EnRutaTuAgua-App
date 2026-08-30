@@ -11,7 +11,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import pe.enrutatuagua.domain.repositorio.ConfiguracionTrackingDev
+import pe.enrutatuagua.domain.repositorio.ContextoTracking
+import pe.enrutatuagua.domain.repositorio.ContextoTrackingRepository
 import pe.enrutatuagua.domain.usecase.PosicionGpsRepoFake
 import pe.enrutatuagua.domain.usecase.PublicadorPosicionMqttFake
 
@@ -27,7 +28,9 @@ class MotorPublicacionGpsTest {
         publicador = PublicadorPosicionMqttFake()
         motor = MotorPublicacionGps(
             repo, publicador,
-            ConfiguracionTrackingDev(aguateroId = 9, rutaId = 42, brokerUrl = "tcp://dev:1883"),
+            object : ContextoTrackingRepository {
+                override suspend fun actual() = ContextoTracking(aguateroId = 9, rutaId = 42)
+            },
         )
     }
 

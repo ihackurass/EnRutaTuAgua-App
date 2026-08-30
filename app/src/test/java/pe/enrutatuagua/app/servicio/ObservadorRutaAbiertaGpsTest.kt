@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,6 +19,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import pe.enrutatuagua.app.ubicacion.ServicioTrackingGps
 import pe.enrutatuagua.domain.modelo.EstadoRuta
+import pe.enrutatuagua.domain.modelo.Rol
+import pe.enrutatuagua.data.SesionRepositoryMemoria
 import pe.enrutatuagua.domain.usecase.RutaRepoFake
 
 /**
@@ -38,13 +41,16 @@ class ObservadorRutaAbiertaGpsTest {
     private lateinit var contexto: Application
     private lateinit var repo: RutaRepoFake
     private lateinit var observador: ObservadorRutaAbiertaGps
+    private lateinit var sesion: SesionRepositoryMemoria
     private val alcance = CoroutineScope(Dispatchers.Unconfined + Job())
 
     @Before fun preparar() {
         contexto = ApplicationProvider.getApplicationContext()
         shadowOf(contexto).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         repo = RutaRepoFake()
-        observador = ObservadorRutaAbiertaGps(contexto, repo)
+        sesion = SesionRepositoryMemoria()
+        runBlocking { sesion.seleccionarRol(Rol.AGUATERO) }
+        observador = ObservadorRutaAbiertaGps(contexto, repo, sesion)
     }
 
     @After fun limpiar() { alcance.cancel() }
