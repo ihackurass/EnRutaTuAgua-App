@@ -12,13 +12,14 @@ import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.modelo.ErrorDominio
 import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.LimitePedido
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.usecase.CrearPedidoUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class NuevoPedidoViewModel @Inject constructor(
-    repo: PedidoRepository,
+    private val repo: PedidoRepository,
     private val crearPedido: CrearPedidoUseCase,
 ) : ViewModel() {
     private val _puntos = MutableStateFlow<List<PuntoAbastecimiento>>(emptyList())
@@ -29,6 +30,8 @@ class NuevoPedidoViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val hecho: StateFlow<Boolean> = _hecho
     val error: StateFlow<String?> = _error
+    private val _limite = MutableStateFlow<LimitePedido?>(null)
+    val limite: StateFlow<LimitePedido?> = _limite
 
     init {
         viewModelScope.launch {
@@ -43,6 +46,14 @@ class NuevoPedidoViewModel @Inject constructor(
                     _error.value = null
                     _puntos.value = lista.filter { it.estado == EstadoValidacionPunto.VALIDADO }
                 }
+        }
+    }
+
+    fun seleccionarPunto(puntoId: Long) {
+        viewModelScope.launch {
+            _limite.value = null
+            try { _limite.value = repo.consultarLimite(puntoId) }
+            catch (e: Exception) { _error.value = e.mensajeParaUsuario() }
         }
     }
 

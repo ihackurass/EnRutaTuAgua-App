@@ -60,13 +60,15 @@ fun LoginScreen(
         })
         if (mostrarAccesosRapidos) {
             Text("Acceso rápido de prueba", style = EstilosAgua.Cuerpo, color = paleta.texto2)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                AccesoRapido("Presidente", procesando) { onIngresar("10000001", "presidente1234") }
-                AccesoRapido("Aguatero", procesando) { onIngresar("10000003", "aguatero1234") }
-                AccesoRapido("Vecino", procesando) { onIngresar("10000002", "vecino1234") }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AccesoRapido("Presidente", procesando) { onIngresar("10000001", "presidente1234") }
+                    AccesoRapido("Aguatero", procesando) { onIngresar("10000003", "aguatero1234") }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AccesoRapido("Vecino", procesando) { onIngresar("10000002", "vecino1234") }
+                    AccesoRapido("Operador", procesando) { onIngresar("10000005", "operador1234") }
+                }
             }
         }
     }

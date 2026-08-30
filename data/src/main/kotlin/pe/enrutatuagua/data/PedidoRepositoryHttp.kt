@@ -21,6 +21,7 @@ import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.Pedido
 import pe.enrutatuagua.domain.modelo.PedidoItem
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.LimitePedido
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 
 private const val POLLING_PEDIDOS_MS = 10_000L
@@ -55,6 +56,9 @@ class PedidoRepositoryHttp @Inject constructor(
     override suspend fun validarPunto(puntoId: Long) {
         puntosApi.cambiarEstado(puntoId, CambiarEstadoPuntoRequestDto(EstadoValidacionPunto.VALIDADO.name))
         refrescarPuntos.tryEmit(Unit)
+    }
+    override suspend fun consultarLimite(puntoId: Long): LimitePedido = pedidosApi.limite(puntoId).let {
+        LimitePedido(it.capacidadMaximaCisternaLitros, it.maxLitrosPedido, it.tienePedidoActivo)
     }
 
     private fun reloj(): Flow<Unit> = flow {

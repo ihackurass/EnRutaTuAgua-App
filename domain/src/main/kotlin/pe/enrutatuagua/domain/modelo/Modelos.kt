@@ -9,14 +9,16 @@ data class Sesion(
     val rolActivo: Rol?,
     val token: String,
     val expiraEn: Long,
+    val empresaId: Long? = null,
 )
 
 // Códigos idénticos a sql/01-esquema.sql (catalogo_valor)
 enum class Rol(val codigo: Int, val etiqueta: String) {
     AGUATERO(1, "Aguatero (cisterna)"), VECINO(2, "Vecino"),
-    PRESIDENTE(3, "Presidente de asociación"), ADMIN(4, "Administrador")
+    PRESIDENTE(3, "Presidente de asociación"), ADMIN(4, "Administrador"),
+    OPERADOR(5, "Operador de empresa")
 }
-enum class EstadoRuta(val codigo: Int) { ABIERTA(1), CERRADA(2) }
+enum class EstadoRuta(val codigo: Int) { ABIERTA(1), CERRADA(2), PLANIFICADA(3), CANCELADA(4) }
 enum class EstadoEntrega(val codigo: Int) { PENDIENTE(1), ENTREGADO(2), OMITIDO(3) }
 enum class MotivoOmision(val codigo: Int, val etiqueta: String) {
     CALLE_CERRADA(1, "Calle cerrada"), NADIE_PRESENTE(2, "Nadie presente"),
@@ -31,8 +33,17 @@ enum class EstadoValidacionPunto(val codigo: Int, val etiqueta: String) {
 }
 enum class EstadoPedido(val codigo: Int, val etiqueta: String) {
     PENDIENTE(1, "Pendiente"), EN_RUTA(2, "En ruta"), ATENDIDO(3, "Atendido"),
-    CANCELADO(4, "Cancelado"), RETENIDO(5, "Retenido")
+    CANCELADO(4, "Cancelado"), RETENIDO(5, "Retenido"), PROGRAMADO(6, "Programado")
 }
+
+data class LimitePedido(val capacidadMaximaCisternaLitros: Int, val maxLitrosPedido: Int, val tienePedidoActivo: Boolean)
+data class AsociacionOperacion(val id: Long, val nombre: String)
+data class VehiculoOperacion(val id: Long, val placa: String, val capacidadLitros: Int)
+data class AguateroOperacion(val id: Long, val nombre: String)
+data class PedidoOperacion(val id: Long, val pedidoItemId: Long, val puntoId: Long, val puntoNombre: String, val litros: Int)
+data class ResumenOperacion(val asociaciones: List<AsociacionOperacion>, val vehiculos: List<VehiculoOperacion>, val aguateros: List<AguateroOperacion>)
+data class SugerenciaRuta(val capacidadLitros: Int, val litrosSugeridos: Int, val sugeridos: List<PedidoOperacion>, val disponibles: List<PedidoOperacion>)
+data class RutaPlanificada(val id: Long, val fecha: LocalDate, val asociacionId: Long, val vehiculoId: Long, val aguateroId: Long, val litros: Int, val estado: EstadoRuta)
 
 data class Vehiculo(val id: Long, val placa: String, val capacidadTanqueLitros: Int)
 data class Punto(val id: Long, val nombre: String, val lat: Double, val lng: Double, val capacidadLitros: Int)

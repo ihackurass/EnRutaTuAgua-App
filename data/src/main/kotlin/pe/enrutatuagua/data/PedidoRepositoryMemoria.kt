@@ -22,4 +22,5 @@ class PedidoRepositoryMemoria @Inject constructor() : PedidoRepository {
     override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido = fake.crearPedido(puntoId, litros)
     override suspend fun cancelarPedido(pedidoId: Long) = fake.cancelarPedido(pedidoId)
     override suspend fun validarPunto(puntoId: Long) = fake.validarPunto(puntoId)
+    override suspend fun consultarLimite(puntoId: Long) = fake.consultarLimite(puntoId)
 }

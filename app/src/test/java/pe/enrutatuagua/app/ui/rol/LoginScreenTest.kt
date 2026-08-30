@@ -23,5 +23,6 @@ class LoginScreenTest {
         regla.onNodeWithTag("acceso-presidente").assertExists()
         regla.onNodeWithTag("acceso-aguatero").assertExists()
         regla.onNodeWithTag("acceso-vecino").assertExists()
+        regla.onNodeWithTag("acceso-operador").assertExists()
     }
 }

@@ -117,7 +117,7 @@ class RutaScreenTest {
     }
 
     @Test
-    fun `sin ruta abierta muestra el boton para empezar la ruta y lo dispara`() {
+    fun `sin ruta abierta espera la asignacion del operador`() {
         val repo = RutaRepoFake()
         repo.rutaFlow.value = null
         val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
@@ -129,11 +129,11 @@ class RutaScreenTest {
         regla.waitForIdle()
 
         regla.onNodeWithText("Sin ruta abierta").assertExists()
-        regla.onNodeWithText("Empezar mi ruta de hoy").performClick()
+        regla.onNodeWithText("Espera la asignación del operador").assertExists()
         shadowOf(Looper.getMainLooper()).idle()
         regla.waitForIdle()
 
-        assertEquals(RutaRepoFake.rutaDePrueba().id, repo.rutaFlow.value?.id)
+        assertEquals(null, repo.rutaFlow.value)
     }
 
     @Test

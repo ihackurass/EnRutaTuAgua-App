@@ -34,6 +34,16 @@ interface PedidoRepository {
     suspend fun crearPedido(puntoId: Long, litros: Int): Pedido
     suspend fun cancelarPedido(pedidoId: Long)
     suspend fun validarPunto(puntoId: Long)
+    suspend fun consultarLimite(puntoId: Long): LimitePedido
+}
+
+interface OperacionRepository {
+    suspend fun resumen(): ResumenOperacion
+    suspend fun sugerencia(asociacionId: Long, vehiculoId: Long): SugerenciaRuta
+    suspend fun planificar(asociacionId: Long, vehiculoId: Long, aguateroId: Long, fecha: java.time.LocalDate, pedidoIds: List<Long>): RutaPlanificada
+    suspend fun cancelar(rutaId: Long)
+    suspend fun asignada(): RutaPlanificada
+    suspend fun iniciar(rutaId: Long): RutaPlanificada
 }
 
 interface TrackingRepository {

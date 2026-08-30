@@ -30,6 +30,10 @@ class PedidoRepoFake : PedidoRepository {
             if (it.id == puntoId) it.copy(estado = EstadoValidacionPunto.VALIDADO) else it
         }
     }
+    override suspend fun consultarLimite(puntoId: Long) = pe.enrutatuagua.domain.modelo.LimitePedido(
+        12_000, puntosFlow.value.first { it.id == puntoId }.capacidadLitros,
+        pedidosFlow.value.any { p -> p.estado !in setOf(EstadoPedido.CANCELADO, EstadoPedido.ATENDIDO) && p.items.any { it.puntoId == puntoId } },
+    )
 
     /** Solo para tests: fuerza un estado sin pasar por las reglas del use case. */
     fun forzarEstado(pedidoId: Long, estado: EstadoPedido) {

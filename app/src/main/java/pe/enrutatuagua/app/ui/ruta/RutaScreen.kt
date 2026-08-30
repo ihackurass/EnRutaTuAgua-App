@@ -142,12 +142,8 @@ fun RutaScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2)
-                    Spacer(Modifier.height(16.dp))
-                    BotonPrimario(
-                        "Empezar mi ruta de hoy",
-                        onClick = vm::abrirRuta,
-                        habilitado = !estado.procesandoAccion,
-                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Espera la asignación del operador", style = EstilosAgua.Cuerpo, color = paleta.texto2)
                 }
             }
         }

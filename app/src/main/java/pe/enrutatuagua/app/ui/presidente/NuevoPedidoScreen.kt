@@ -44,6 +44,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
     val puntos by vm.puntos.collectAsState()
     val hecho by vm.hecho.collectAsState()
     val error by vm.error.collectAsState()
+    val limite by vm.limite.collectAsState()
     LaunchedEffect(hecho) { if (hecho) onHecho() }
 
     var puntoId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -51,7 +52,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
 
     val paleta = LocalPaletaAgua.current
     val valor = litros.toIntOrNull() ?: 0
-    val invalido = puntoId == null || valor <= 0
+    val invalido = puntoId == null || valor <= 0 || limite == null || valor > (limite?.maxLitrosPedido ?: 0) || limite?.tienePedidoActivo == true
 
     Column(
         Modifier
@@ -80,7 +81,16 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
                 subtitulo = "${formatearLitros(punto.capacidadLitros)} L de capacidad",
                 textoDerecha = if (puntoId == punto.id) "Elegido" else "",
                 estado = if (puntoId == punto.id) EstadoFicha.Proxima else EstadoFicha.Pendiente,
-                onClick = { puntoId = punto.id },
+                onClick = { puntoId = punto.id; vm.seleccionarPunto(punto.id) },
+            )
+        }
+        limite?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                if (it.tienePedidoActivo) "Este punto ya tiene un pedido activo"
+                else "Máximo por pedido: ${formatearLitros(it.maxLitrosPedido)} L (cisterna mayor: ${formatearLitros(it.capacidadMaximaCisternaLitros)} L)",
+                style = EstilosAgua.Cuerpo,
+                color = if (it.tienePedidoActivo || valor > it.maxLitrosPedido) paleta.error else paleta.texto2,
             )
         }
         Spacer(Modifier.height(16.dp))

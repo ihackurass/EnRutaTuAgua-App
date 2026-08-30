@@ -26,6 +26,8 @@ import pe.enrutatuagua.app.ui.rol.SeleccionRolScreen
 import pe.enrutatuagua.app.ui.rol.SesionViewModel
 import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
+import pe.enrutatuagua.app.ui.operador.OperacionScreen
+import pe.enrutatuagua.app.ui.ruta.RutaAsignadaGate
 import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.modelo.Sesion
@@ -55,10 +57,11 @@ fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
 private fun AplicacionAutenticada(sesion: Sesion, onCerrar: () -> Unit, onCambiarRol: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         when (sesion.rolActivo) {
-            Rol.AGUATERO -> NavegacionAguatero()
+            Rol.AGUATERO -> RutaAsignadaGate(conRutaAbierta = { NavegacionAguatero() })
             Rol.VECINO -> MapaVivoScreen()
             Rol.PRESIDENTE -> PresidenteNav()
             Rol.ADMIN -> ProximamenteScreen(onVolver = onCerrar)
+            Rol.OPERADOR -> OperacionScreen()
             null -> Unit
         }
         Row(Modifier.align(Alignment.TopEnd).padding(8.dp)) {

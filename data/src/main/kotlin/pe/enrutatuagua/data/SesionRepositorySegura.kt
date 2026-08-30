@@ -47,6 +47,7 @@ class SesionRepositorySegura @Inject constructor(
         return Sesion(
             claims.usuarioId, roles, claims.asociacionId, roles.singleOrNull(), respuesta.token,
             minOf(claims.expiraEn, java.time.Instant.parse(respuesta.expiraEn).toEpochMilli()),
+            claims.empresaId,
         ).also(::guardar)
     }
 
@@ -81,7 +82,7 @@ class SesionRepositorySegura @Inject constructor(
     }
 }
 
-private data class ClaimsSesion(val usuarioId: Long, val roles: List<String>, val asociacionId: Long?, val expiraEn: Long)
+private data class ClaimsSesion(val usuarioId: Long, val roles: List<String>, val asociacionId: Long?, val empresaId: Long?, val expiraEn: Long)
 
 private fun decodificarClaims(token: String): ClaimsSesion {
     val payload = token.split('.').getOrNull(1) ?: error("Token inválido")
@@ -91,6 +92,7 @@ private fun decodificarClaims(token: String): ClaimsSesion {
         json.getValue("sub").jsonPrimitive.content.toLong(),
         json.getValue("roles").jsonArray.map { it.jsonPrimitive.content },
         json["asoc"]?.jsonPrimitive?.content?.toLong(),
+        json["empresa"]?.jsonPrimitive?.content?.toLong(),
         json.getValue("exp").jsonPrimitive.content.toLong() * 1_000,
     )
 }
@@ -98,7 +100,7 @@ private fun decodificarClaims(token: String): ClaimsSesion {
 @Serializable
 private data class SesionGuardada(
     val usuarioId: Long, val roles: List<String>, val asociacionId: Long?, val rolActivo: String?,
-    val token: String, val expiraEn: Long,
+    val token: String, val expiraEn: Long, val empresaId: Long? = null,
 )
 
 private class AlmacenSesionCifrada(contexto: Context) {
@@ -108,7 +110,7 @@ private class AlmacenSesionCifrada(contexto: Context) {
     fun guardar(sesion: Sesion) {
         val plano = json.encodeToString(
             SesionGuardada(sesion.usuarioId, sesion.roles.map(Rol::name), sesion.asociacionId,
-                sesion.rolActivo?.name, sesion.token, sesion.expiraEn),
+                sesion.rolActivo?.name, sesion.token, sesion.expiraEn, sesion.empresaId),
         ).toByteArray()
         val cipher = Cipher.getInstance(TRANSFORMACION).apply { init(Cipher.ENCRYPT_MODE, clave()) }
         preferencias.edit()
@@ -127,7 +129,7 @@ private class AlmacenSesionCifrada(contexto: Context) {
             String(cipher.doFinal(Base64.decode(datosTexto, Base64.NO_WRAP))),
         )
         Sesion(guardada.usuarioId, guardada.roles.mapTo(linkedSetOf(), Rol::valueOf), guardada.asociacionId,
-            guardada.rolActivo?.let(Rol::valueOf), guardada.token, guardada.expiraEn)
+            guardada.rolActivo?.let(Rol::valueOf), guardada.token, guardada.expiraEn, guardada.empresaId)
     }.getOrNull()
 
     fun borrar() { preferencias.edit().clear().apply() }
