@@ -1,6 +1,8 @@
 package pe.enrutatuagua.app.ui.presidente
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +59,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
             .background(paleta.hoja)
             .statusBarsPadding()
             .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
         Spacer(Modifier.height(8.dp))
@@ -68,10 +71,8 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         Text("Elige el punto de tu zona", style = EstilosAgua.ItemTitulo, color = paleta.texto)
         Spacer(Modifier.height(6.dp))
 
-        // Lista simple (no lazy, no scroll propio): igual que el resto de la
-        // pantalla, todo el contenido vive en el mismo Column no-scrolleable
-        // que `ParadaScreen` — la cifra y el teclado quedan siempre al
-        // alcance del pulgar, sin depender de que el usuario haga scroll.
+        // Un solo scroll permite llegar a la confirmación también en equipos
+        // pequeños o con escala de fuente grande.
         puntos.forEach { punto ->
             FichaParada(
                 numero = punto.id.toInt(),

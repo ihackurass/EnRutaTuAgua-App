@@ -5,7 +5,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import pe.enrutatuagua.data.red.CambiarEstadoPuntoRequestDto
 import pe.enrutatuagua.data.red.CrearPedidoRequestDto
 import pe.enrutatuagua.data.red.PedidoDto
@@ -26,21 +30,35 @@ class PedidoRepositoryHttp @Inject constructor(
     private val pedidosApi: PedidosApi,
     private val puntosApi: PuntosApi,
 ) : PedidoRepository {
-    override fun observarPedidos(): Flow<List<Pedido>> = flow {
-        while (true) { emit(pedidosApi.listar().map(PedidoDto::aDominio)); delay(POLLING_PEDIDOS_MS) }
+    private val refrescarPedidos = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val refrescarPuntos = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    override fun observarPedidos(): Flow<List<Pedido>> =
+        merge(reloj(), refrescarPedidos.onStart { emit(Unit) })
+            .map { pedidosApi.listar().map(PedidoDto::aDominio).sortedByDescending(Pedido::creadoEn) }
+
+    override fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>> =
+        merge(reloj(), refrescarPuntos.onStart { emit(Unit) })
+            .map { puntosApi.zona().map(PuntoDto::aDominio) }
+
+    override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido {
+        val creado = pedidosApi.crear(CrearPedidoRequestDto(puntoId, litros)).aDominio()
+        refrescarPedidos.tryEmit(Unit)
+        return creado
     }
 
-    override fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>> = flow {
-        while (true) { emit(puntosApi.zona().map(PuntoDto::aDominio)); delay(POLLING_PEDIDOS_MS) }
+    override suspend fun cancelarPedido(pedidoId: Long) {
+        pedidosApi.cancelar(pedidoId)
+        refrescarPedidos.tryEmit(Unit)
     }
-
-    override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido =
-        pedidosApi.crear(CrearPedidoRequestDto(puntoId, litros)).aDominio()
-
-    override suspend fun cancelarPedido(pedidoId: Long) { pedidosApi.cancelar(pedidoId) }
 
     override suspend fun validarPunto(puntoId: Long) {
         puntosApi.cambiarEstado(puntoId, CambiarEstadoPuntoRequestDto(EstadoValidacionPunto.VALIDADO.name))
+        refrescarPuntos.tryEmit(Unit)
+    }
+
+    private fun reloj(): Flow<Unit> = flow {
+        while (true) { delay(POLLING_PEDIDOS_MS); emit(Unit) }
     }
 }
 

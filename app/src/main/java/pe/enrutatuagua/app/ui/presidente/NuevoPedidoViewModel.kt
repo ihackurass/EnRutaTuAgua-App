@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.modelo.ErrorDominio
 import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
@@ -29,16 +32,24 @@ class NuevoPedidoViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repo.observarPuntosDeZona().collect { lista ->
-                _puntos.value = lista.filter { it.estado == EstadoValidacionPunto.VALIDADO }
-            }
+            repo.observarPuntosDeZona()
+                .retryWhen { causa, _ ->
+                    _error.value = causa.mensajeParaUsuario()
+                    delay(5_000)
+                    true
+                }
+                .catch { _error.value = it.mensajeParaUsuario() }
+                .collect { lista ->
+                    _error.value = null
+                    _puntos.value = lista.filter { it.estado == EstadoValidacionPunto.VALIDADO }
+                }
         }
     }
 
     fun crear(puntoId: Long, litros: Int) {
         viewModelScope.launch {
             try { _error.value = null; crearPedido(puntoId, litros); _hecho.value = true }
-            catch (e: ErrorDominio) { _error.value = e.message }
+            catch (e: Exception) { _error.value = e.mensajeParaUsuario() }
         }
     }
 }

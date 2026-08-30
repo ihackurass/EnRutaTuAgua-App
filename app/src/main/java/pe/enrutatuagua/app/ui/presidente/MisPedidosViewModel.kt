@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.modelo.ErrorDominio
 import pe.enrutatuagua.domain.modelo.Pedido
@@ -26,14 +29,28 @@ class MisPedidosViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repo.observarPedidos().collect { _estado.value = MisPedidosUiState(cargando = false, pedidos = it) }
+            repo.observarPedidos()
+                .retryWhen { causa, _ ->
+                    _estado.value = _estado.value.copy(cargando = false)
+                    _error.value = causa.mensajeParaUsuario()
+                    delay(5_000)
+                    true
+                }
+                .catch { causa ->
+                    _estado.value = _estado.value.copy(cargando = false)
+                    _error.value = causa.mensajeParaUsuario()
+                }
+                .collect {
+                    _error.value = null
+                    _estado.value = MisPedidosUiState(cargando = false, pedidos = it)
+                }
         }
     }
 
     fun cancelar(pedidoId: Long) {
         viewModelScope.launch {
             try { _error.value = null; cancelarPedido(pedidoId) }
-            catch (e: ErrorDominio) { _error.value = e.message }
+            catch (e: Exception) { _error.value = e.mensajeParaUsuario() }
         }
     }
 }
