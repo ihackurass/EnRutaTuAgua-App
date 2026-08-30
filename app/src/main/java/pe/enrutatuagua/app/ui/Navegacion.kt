@@ -1,14 +1,19 @@
 package pe.enrutatuagua.app.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -64,9 +69,18 @@ private fun AplicacionAutenticada(sesion: Sesion, onCerrar: () -> Unit, onCambia
             Rol.OPERADOR -> OperacionScreen()
             null -> Unit
         }
-        Row(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-            if (sesion.roles.size > 1) TextButton(onClick = onCambiarRol) { Text("Cambiar rol") }
-            TextButton(onClick = onCerrar) { Text("Salir") }
+        MenuSesion(sesion.roles.size > 1, onCambiarRol, onCerrar, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(6.dp))
+    }
+}
+
+@Composable
+private fun MenuSesion(multirrol: Boolean, onCambiarRol: () -> Unit, onCerrar: () -> Unit, modifier: Modifier = Modifier) {
+    var abierto by remember { mutableStateOf(false) }
+    Box(modifier) {
+        IconButton(onClick = { abierto = true }) { Text("•••") }
+        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
+            if (multirrol) DropdownMenuItem(text = { Text("Cambiar rol") }, onClick = { abierto = false; onCambiarRol() })
+            DropdownMenuItem(text = { Text("Cerrar sesión") }, onClick = { abierto = false; onCerrar() })
         }
     }
 }
