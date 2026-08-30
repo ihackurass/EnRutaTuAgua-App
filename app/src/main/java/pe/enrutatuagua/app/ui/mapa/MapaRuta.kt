@@ -193,10 +193,10 @@ fun MapaRuta(ruta: Ruta, modifier: Modifier = Modifier, oscuro: Boolean = isSyst
                 // real en toda el área, así que se levanta.
                 if (usarOnline) {
                     mapa.setLatLngBoundsForCameraTarget(null)
-                    mapa.setMinZoomPreference(9.0)
+                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
                 } else {
-                    mapa.setLatLngBoundsForCameraTarget(LIMITE_PMTILES)
-                    mapa.setMinZoomPreference(13.5)
+                    mapa.setLatLngBoundsForCameraTarget(EstiloMapa.LIMITE_PMTILES)
+                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_OFFLINE)
                 }
                 mapa.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
                 with(density) {
@@ -412,16 +412,6 @@ private fun agregarDebajoDelCamion(estilo: Style, capa: Layer) {
 }
 
 // bbox real con el que se extrajo app/src/main/assets/mapa/lima-sur.pmtiles
-// (ANDROID-PLAN-07-design-system.md) es -76.99,-12.21 a -76.90,-12.12 --
-// fuera de ese rectángulo no hay tiles a ningún zoom. setLatLngBoundsForCameraTarget
-// sólo frena el CENTRO de la cámara, no el borde visible de la pantalla: se
-// deja un margen de 0.025° (~2.5km) hacia adentro en cada lado para que,
-// combinado con minZoomPreference, el viewport nunca llegue a asomarse al
-// vacío aunque el centro esté pegado al límite permitido.
-private val LIMITE_PMTILES = LatLngBounds.from(
-    latNorth = -12.145, lonEast = -76.925, latSouth = -12.185, lonWest = -76.965,
-)
-
 @SuppressLint("MissingPermission") // guardado por el chequeo explícito de `concedido`
 private fun activarPuck(
     mapa: MapLibreMap,

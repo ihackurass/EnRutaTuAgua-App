@@ -18,13 +18,12 @@ import org.junit.Test
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
-import pe.enrutatuagua.data.red.VehiculosApi
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import java.util.concurrent.ConcurrentLinkedQueue
 
-private const val RUTA_ZONA_JSON = """{"rutaId":29,"vehiculoId":1,"fecha":"2026-08-02"}"""
-private const val VEHICULO_JSON = """{"id":1,"placa":"ABC-123","capacidadTanqueLitros":12000}"""
+private const val RUTA_ZONA_JSON =
+    """{"rutaId":29,"vehiculoId":1,"vehiculoCapacidadTanqueLitros":12000,"fecha":"2026-08-02"}"""
 private const val POSICION_JSON = """{"rutaId":29,"lat":-12.16,"lng":-76.94,"registradoEn":"2026-08-02T12:00:00Z"}"""
 private const val PUNTOS_ZONA_JSON =
     """[{"id":1,"nombre":"Comité 12","lat":-12.16,"lng":-76.94,"capacidadLitros":4000,"estado":"VALIDADO","asociacionId":7}]"""
@@ -43,7 +42,6 @@ class TrackingRepositoryHttpTest {
         servidor = MockWebServer()
         servidor.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
-                "/api/v1/vehiculos/1" -> json(VEHICULO_JSON)
                 "/api/v1/rutas/zona" -> colaZona.poll() ?: MockResponse().setResponseCode(500)
                 "/api/v1/tracking/rutas/29/posicion" -> colaPosicion.poll() ?: MockResponse().setResponseCode(500)
                 "/api/v1/puntos/zona" -> colaPuntos.poll() ?: MockResponse().setResponseCode(500)
@@ -59,7 +57,6 @@ class TrackingRepositoryHttpTest {
         repo = TrackingRepositoryHttp(
             retrofit.create(RutasApi::class.java),
             retrofit.create(PuntosApi::class.java),
-            retrofit.create(VehiculosApi::class.java),
             retrofit.create(TrackingApi::class.java),
         )
     }

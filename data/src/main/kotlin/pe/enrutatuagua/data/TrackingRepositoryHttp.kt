@@ -6,15 +6,12 @@ import kotlinx.coroutines.flow.flow
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
-import pe.enrutatuagua.data.red.VehiculosApi
 import pe.enrutatuagua.data.red.aPosicionCisterna
 import pe.enrutatuagua.data.red.aPuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
 import retrofit2.HttpException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val INTERVALO_POSICION_MS = 15_000L // cadencia GPS del aguatero (CapturadorPosicionGps)
 private const val INTERVALO_PUNTOS_MS = 120_000L // los puntos de zona cambian poco
@@ -27,16 +24,31 @@ private const val TTL_RUTA_ZONA_MS = 60_000L
  * (`GET /tracking/rutas/{rutaId}/posicion`). El `rutaId`/`vehiculoId` de la
  * zona se cachean con un TTL corto en vez de resolverse en cada tick de
  * posición -- ese endpoint no cambia salvo que el aguatero abra/cierre ruta.
+ *
+ * <p>Sin {@code @Inject constructor}: {@code rutasApi`/`puntosApi` deben ser
+ * los calificados {@code @RetrofitVecinoDev} (identidad Vecino), pero ese
+ * calificador vive en {@code :app} (di/NetworkModule.kt) y este archivo está
+ * en {@code :data} -- no puede verlo (dependencia hacia atrás). Hallazgo
+ * real (verificación manual end-to-end): con {@code @Inject constructor} sin
+ * calificar, Dagger inyectaba silenciosamente el {@code RutasApi}/
+ * {@code PuntosApi} SIN calificador (los de la identidad Aguatero, ya
+ * bindeados en otro lado) -- la app pedía todo con el actor equivocado
+ * (asociacionId=null) y el backend lo rechazaba con 403, correctamente.
+ * Se provee manualmente en {@code NetworkModule.trackingRepositoryHttp},
+ * mismo patrón que {@code autenticacionVecinoDev} ahí mismo.
  */
-@Singleton
-class TrackingRepositoryHttp @Inject constructor(
+class TrackingRepositoryHttp(
     private val rutasApi: RutasApi,
     private val puntosApi: PuntosApi,
-    private val vehiculosApi: VehiculosApi,
     private val trackingApi: TrackingApi,
 ) : TrackingRepository {
 
-    private data class ZonaCache(val rutaId: Long, val vehiculoId: Long, val resueltaEnMs: Long)
+    // Hallazgo real (verificación manual end-to-end): GET /vehiculos/{id}
+    // exige hasRole('AGUATERO') + IDOR contra la última ruta del actor --
+    // un Vecino/Presidente SIEMPRE recibía 403 al intentar enriquecer la
+    // posición con la capacidad del vehículo por esa vía. /rutas/zona ahora
+    // trae vehiculoCapacidadTanqueLitros directo, sin segundo GET.
+    private data class ZonaCache(val rutaId: Long, val capacidadTanqueLitros: Int, val resueltaEnMs: Long)
 
     private var cache: ZonaCache? = null
 
@@ -63,7 +75,7 @@ class TrackingRepositoryHttp @Inject constructor(
     // resto se propaga para que el .retry{} del ViewModel decida.
     private suspend fun resolverZona(): ZonaCache? = try {
         val dto = rutasApi.zona()
-        ZonaCache(dto.rutaId, dto.vehiculoId, System.currentTimeMillis())
+        ZonaCache(dto.rutaId, dto.vehiculoCapacidadTanqueLitros, System.currentTimeMillis())
     } catch (e: HttpException) {
         if (e.code() == 404) null else throw e
     }
@@ -76,7 +88,6 @@ class TrackingRepositoryHttp @Inject constructor(
         } catch (e: HttpException) {
             if (e.code() == 404) return null else throw e
         }
-        val vehiculo = vehiculosApi.porId(zona.vehiculoId)
-        return posicion.aPosicionCisterna(vehiculo.capacidadTanqueLitros)
+        return posicion.aPosicionCisterna(zona.capacidadTanqueLitros)
     }
 }

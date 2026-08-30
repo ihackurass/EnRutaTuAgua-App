@@ -23,6 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +57,14 @@ import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
  * abastecimiento de su zona en modo solo lectura (RV-02). El badge "sin
  * conexión en vivo" es SIEMPRE visible cuando hay posición: es el estado
  * normal de esta versión, no un error transitorio (ver §0 del plan).
+ *
+ * <p>Hallazgo real (feedback de producto, verificación manual): antes, sin
+ * posición viva, la pantalla mostraba SÓLO un texto ("Sin datos de tu zona
+ * todavía") y nunca el mapa -- pero `MapaZonaVecino`/`GeoJsonZonaVecino` ya
+ * estaban preparados para `posicion = null` (omiten el marcador del camión,
+ * no el mapa en sí). El mapa y los puntos de la zona ahora se muestran
+ * SIEMPRE que la carga inicial terminó (`cargando = false`), con o sin
+ * posición; un toast avisa la primera vez que llega señal.
  */
 @Composable
 fun MapaVivoScreen(
@@ -71,6 +82,16 @@ fun MapaVivoScreen(
             vm.mensajeMostrado()
         }
     }
+    // Toast la primera vez que llega señal del camión (o cuando se recupera
+    // tras un hueco) -- ya no bloquea el mapa mientras tanto, ver javadoc.
+    var teniaPosicionAntes by remember { mutableStateOf(false) }
+    LaunchedEffect(estado.posicion) {
+        val hayPosicionAhora = estado.posicion != null
+        if (hayPosicionAhora && !teniaPosicionAntes) {
+            estadoAviso.mostrar("Llegó la posición del camión")
+        }
+        teniaPosicionAntes = hayPosicionAhora
+    }
     // Auditoría rol Vecino: recalcula minutosSinSenal periódicamente sin
     // reemisión del backend -- vive acá (no en el ViewModel) a propósito:
     // un `while(true){delay()}` dentro de viewModelScope rompía tanto
@@ -85,29 +106,23 @@ fun MapaVivoScreen(
     }
 
     Box(Modifier.fillMaxSize().background(paleta.mapaBase)) {
-        val posicion = estado.posicion
-        when {
-            posicion != null -> {
-                mapa(estado.puntos, posicion)
-                Column(Modifier.align(Alignment.TopStart).fillMaxWidth()) {
-                    CabeceraZona()
-                    BadgeSinConexion(
-                        estado.minutosSinSenal,
-                        Modifier.padding(start = 14.dp, end = 14.dp),
-                    )
-                }
-                HojaArrastrable {
-                    ContenidoHojaZona(posicion, estado.puntos)
-                }
-            }
-            estado.cargando -> Box(
+        if (estado.cargando) {
+            Box(
                 Modifier.fillMaxSize().background(paleta.fondo),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator(color = paleta.accion) }
-            else -> Box(
-                Modifier.fillMaxSize().background(paleta.fondo),
-                contentAlignment = Alignment.Center,
-            ) { Text("Sin datos de tu zona todavía", style = EstilosAgua.TituloParada, color = paleta.texto2) }
+        } else {
+            mapa(estado.puntos, estado.posicion)
+            Column(Modifier.align(Alignment.TopStart).fillMaxWidth()) {
+                CabeceraZona()
+                BadgeSinConexion(
+                    estado.posicion, estado.minutosSinSenal,
+                    Modifier.padding(start = 14.dp, end = 14.dp),
+                )
+            }
+            HojaArrastrable {
+                ContenidoHojaZona(estado.posicion, estado.puntos)
+            }
         }
         AvisoSuperior(estadoAviso, Modifier.align(Alignment.TopCenter).statusBarsPadding())
     }
@@ -139,8 +154,11 @@ private fun CabeceraZona(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BadgeSinConexion(minutosSinSenal: Int, modifier: Modifier = Modifier) {
+private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
+    // Sin posición nunca "hace N min" no tiene sentido (nunca hubo señal) --
+    // distinto de haber tenido una y quedar desactualizada.
+    val texto = if (posicion == null) "Esperando la señal del camión" else "Sin conexión en vivo · hace $minutosSinSenal min"
     Row(
         modifier
             .clip(RoundedCornerShape(RadiosAgua.Aviso))
@@ -153,27 +171,26 @@ private fun BadgeSinConexion(minutosSinSenal: Int, modifier: Modifier = Modifier
             TablerIcons.WifiOff, contentDescription = null,
             tint = paleta.alerta, modifier = Modifier.size(16.dp),
         )
-        Text(
-            "Sin conexión en vivo · hace $minutosSinSenal min",
-            style = EstilosAgua.ItemSub, color = paleta.alerta,
-        )
+        Text(texto, style = EstilosAgua.ItemSub, color = paleta.alerta)
     }
 }
 
 @Composable
-private fun ContenidoHojaZona(posicion: PosicionCisterna, puntos: List<PuntoAbastecimiento>) {
+private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAbastecimiento>) {
     LazyColumn(
         Modifier.fillMaxSize()
             .padding(horizontal = DimensionesAgua.PaddingHoja)
             .navigationBarsPadding(),
     ) {
-        item(key = "litros") {
+        item(key = "encabezado") {
             Column {
-                TarjetaDato(
-                    "${formatearLitros(posicion.litrosRestantes)} L",
-                    "de ${formatearLitros(posicion.capacidadLitros)} L",
-                )
-                Spacer(Modifier.height(22.dp))
+                if (posicion != null) {
+                    TarjetaDato(
+                        "${formatearLitros(posicion.litrosRestantes)} L",
+                        "de ${formatearLitros(posicion.capacidadLitros)} L",
+                    )
+                    Spacer(Modifier.height(22.dp))
+                }
                 RotuloSeccion("Puntos de tu zona")
                 Spacer(Modifier.height(4.dp))
             }

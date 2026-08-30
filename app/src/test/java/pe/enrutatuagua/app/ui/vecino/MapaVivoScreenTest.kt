@@ -47,4 +47,27 @@ class MapaVivoScreenTest {
         // Buena Vista, sector B" (PROPUESTO en TrackingRepoFake) no debe verse.
         regla.onNodeWithText("AAHH Buena Vista, sector B").assertDoesNotExist()
     }
+
+    // Hallazgo real (feedback de producto): sin posición viva, antes se
+    // ocultaba el mapa entero detrás de un texto -- ahora el mapa y los
+    // puntos de la zona se muestran igual, sólo cambia el badge.
+    @Test
+    fun `sin posicion muestra el mapa y los puntos igual, con badge de espera`() {
+        val repo = TrackingRepoFake(ahoraMs = System.currentTimeMillis())
+        repo.posicionFlow.value = null
+        val vm = MapaVivoViewModel(repo)
+        regla.mainClock.autoAdvance = false
+        regla.setContent {
+            TemaAgua {
+                MapaVivoScreen(vm = vm, mapa = { _, _ -> Box(Modifier.fillMaxSize()) })
+            }
+        }
+        regla.waitForIdle()
+
+        regla.onNodeWithText("Tu zona").assertExists()
+        regla.onNodeWithText("Esperando la señal del camión").assertExists()
+        regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()
+        regla.onNodeWithText("Comité 12 — Loma Alta").assertExists()
+        regla.onNodeWithText("8,500 L").assertDoesNotExist()
+    }
 }

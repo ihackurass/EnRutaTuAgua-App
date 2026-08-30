@@ -2,6 +2,7 @@ package pe.enrutatuagua.app.ui.mapa
 
 import android.content.Context
 import java.io.File
+import org.maplibre.android.geometry.LatLngBounds
 
 /**
  * Estilo Protomaps: por defecto offline (PMTiles empaquetado en assets --
@@ -30,6 +31,21 @@ object EstiloMapa {
     private const val MARCADOR = "__PMTILES__"
     private const val ASSET_PMTILES = "mapa/lima-sur.pmtiles"
     const val URL_ONLINE = "pmtiles://https://build.protomaps.com/20260801.pmtiles"
+
+    // Bbox real con el que se extrajo lima-sur.pmtiles (ANDROID-PLAN-07 §1)
+    // es -76.99,-12.21 a -76.90,-12.12 -- fuera de ese rectángulo no hay
+    // tiles a ningún zoom. setLatLngBoundsForCameraTarget sólo frena el
+    // CENTRO de la cámara, no el borde visible de la pantalla: se deja un
+    // margen de 0.025° (~2.5km) hacia adentro en cada lado para que,
+    // combinado con ZOOM_MIN_OFFLINE, el viewport nunca llegue a asomarse al
+    // vacío aunque el centro esté pegado al límite permitido. Compartido
+    // entre MapaRuta (Aguatero) y MapaZonaVecino -- ambos usan el mismo
+    // PMTiles bundleado, así que el mismo límite aplica a los dos.
+    val LIMITE_PMTILES: LatLngBounds = LatLngBounds.from(
+        latNorth = -12.145, lonEast = -76.925, latSouth = -12.185, lonWest = -76.965,
+    )
+    const val ZOOM_MIN_OFFLINE = 13.5
+    const val ZOOM_MIN_ONLINE = 9.0
 
     fun prepararPmtiles(contexto: Context): File {
         val destino = File(contexto.filesDir, "mapa/lima-sur.pmtiles")

@@ -3,6 +3,8 @@ package pe.enrutatuagua.app.ui.vecino
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -29,6 +31,7 @@ import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
 import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
 import org.maplibre.android.style.sources.GeoJsonSource
 import pe.enrutatuagua.app.ui.mapa.EstiloMapa
+import pe.enrutatuagua.data.ConectividadRepositoryAndroid
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
@@ -69,7 +72,10 @@ fun MapaZonaVecino(
         MapLibre.getInstance(contexto)
         MapView(contexto).apply { onCreate(null); onStart(); onResume() }
     }
-    val oscuroAplicado = remember { arrayOf<Boolean?>(null) }
+    val conectividadRepo = remember { ConectividadRepositoryAndroid(contexto) }
+    val online by conectividadRepo.observarConectividad().collectAsState(initial = false)
+    val modoAplicado = remember { arrayOf<Pair<Boolean, Boolean>?>(null) }
+    val claveEncuadre = remember { arrayOf<Pair<List<Long>, Boolean>?>(null) }
 
     DisposableEffect(Unit) {
         onDispose { mapView.onPause(); mapView.onStop(); mapView.onDestroy() }
@@ -77,9 +83,17 @@ fun MapaZonaVecino(
 
     AndroidView(modifier = modifier, factory = { mapView }, update = { vista ->
         vista.getMapAsync { mapa ->
-            if (oscuroAplicado[0] != oscuro) {
-                oscuroAplicado[0] = oscuro
-                mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro))) { estilo ->
+            val modo = oscuro to online
+            if (modoAplicado[0] != modo) {
+                modoAplicado[0] = modo
+                if (online) {
+                    mapa.setLatLngBoundsForCameraTarget(null)
+                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
+                } else {
+                    mapa.setLatLngBoundsForCameraTarget(EstiloMapa.LIMITE_PMTILES)
+                    mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_OFFLINE)
+                }
+                mapa.setStyle(Style.Builder().fromJson(EstiloMapa.json(contexto, oscuro, online))) { estilo ->
                     estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicion)))
 
                     val puntosCapa = CircleLayer("puntos-zona", "zona")
@@ -117,19 +131,23 @@ fun MapaZonaVecino(
                 (mapa.style?.getSource("zona") as? GeoJsonSource)?.setGeoJson(geoJsonDeZona(puntos, posicion))
             }
 
-            val ubicaciones = puntos.map { LatLng(it.lat, it.lng) } +
-                listOfNotNull(posicion?.let { LatLng(it.lat, it.lng) })
-            if (ubicaciones.isNotEmpty()) {
-                val bounds = LatLngBounds.Builder()
-                ubicaciones.forEach { bounds.include(it) }
-                with(density) {
-                    mapa.moveCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                            bounds.build(),
-                            40.dp.toPx().toInt(), 150.dp.toPx().toInt(),
-                            40.dp.toPx().toInt(), 286.dp.toPx().toInt(),
-                        ),
-                    )
+            val clave = puntos.map { it.id } to (posicion != null)
+            if (claveEncuadre[0] != clave) {
+                claveEncuadre[0] = clave
+                val ubicaciones = puntos.map { LatLng(it.lat, it.lng) } +
+                    listOfNotNull(posicion?.let { LatLng(it.lat, it.lng) })
+                if (ubicaciones.isNotEmpty()) {
+                    val bounds = LatLngBounds.Builder()
+                    ubicaciones.forEach { bounds.include(it) }
+                    with(density) {
+                        mapa.moveCamera(
+                            CameraUpdateFactory.newLatLngBounds(
+                                bounds.build(),
+                                40.dp.toPx().toInt(), 150.dp.toPx().toInt(),
+                                40.dp.toPx().toInt(), 286.dp.toPx().toInt(),
+                            ),
+                        )
+                    }
                 }
             }
         }

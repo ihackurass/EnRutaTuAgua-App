@@ -45,7 +45,7 @@ data class RegistrarEntregaRequestDto(
 )
 
 @Serializable
-data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val fecha: String)
+data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val vehiculoCapacidadTanqueLitros: Int, val fecha: String)
 
 interface RutasApi {
     @GET("api/v1/rutas/abierta")

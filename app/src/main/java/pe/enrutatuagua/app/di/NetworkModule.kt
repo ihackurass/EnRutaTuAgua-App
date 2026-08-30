@@ -10,6 +10,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.data.AutenticacionRepositoryHttp
+import pe.enrutatuagua.data.TrackingRepositoryHttp
 import pe.enrutatuagua.data.red.AuthApi
 import pe.enrutatuagua.data.red.InterceptorAutenticacion
 import pe.enrutatuagua.data.red.PuntosApi
@@ -38,7 +39,7 @@ annotation class RetrofitAutenticado
  * R__seed_desarrollo.sql (dni 10000002) para poder probar
  * TrackingRepositoryHttp end-to-end en un dispositivo real. Cuando exista
  * selección de rol con login real (post-MVP), ESTE CALIFICADOR Y TODO SU
- * STACK (`configuracionVecinoDev`..`vehiculosApiVecinoDev`) DEBEN
+ * STACK (`configuracionVecinoDev`..`puntosApiVecinoDev`) DEBEN
  * ELIMINARSE, y `TrackingRepositoryHttp` debe usar la identidad de la
  * sesión activa -- igual que ya hace el resto de la app para Aguatero.
  */
@@ -149,13 +150,25 @@ object NetworkModule {
     @RetrofitVecinoDev
     fun puntosApiVecinoDev(@RetrofitVecinoDev retrofit: Retrofit): PuntosApi = retrofit.create(PuntosApi::class.java)
 
-    @Provides
-    @Singleton
-    @RetrofitVecinoDev
-    fun vehiculosApiVecinoDev(@RetrofitVecinoDev retrofit: Retrofit): VehiculosApi = retrofit.create(VehiculosApi::class.java)
-
     /** Sin calificador: el mismo endpoint sirve a cualquier actor autorizado -- sólo el Retrofit que lo resuelve está fijo a la identidad Vecino dev. */
     @Provides
     @Singleton
     fun trackingApi(@RetrofitVecinoDev retrofit: Retrofit): TrackingApi = retrofit.create(TrackingApi::class.java)
+
+    /**
+     * Hallazgo real (verificación manual end-to-end): `TrackingRepositoryHttp`
+     * (`:data`) no puede ver `@RetrofitVecinoDev` (definido acá, en `:app`) --
+     * con `@Inject constructor` sin calificar, Dagger le inyectaba en
+     * silencio el `RutasApi`/`PuntosApi` SIN calificador (identidad
+     * Aguatero), y el backend rechazaba todo con 403 (actor correcto en
+     * cuanto a login, pero sin asociacionId). Se construye a mano acá, mismo
+     * patrón que `autenticacionVecinoDev`.
+     */
+    @Provides
+    @Singleton
+    fun trackingRepositoryHttp(
+        @RetrofitVecinoDev rutasApi: RutasApi,
+        @RetrofitVecinoDev puntosApi: PuntosApi,
+        trackingApi: TrackingApi,
+    ): TrackingRepositoryHttp = TrackingRepositoryHttp(rutasApi, puntosApi, trackingApi)
 }
