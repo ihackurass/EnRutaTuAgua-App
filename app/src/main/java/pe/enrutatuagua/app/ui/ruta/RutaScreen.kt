@@ -1,6 +1,7 @@
 package pe.enrutatuagua.app.ui.ruta
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -227,7 +229,7 @@ private fun JornadaSinRuta(
             .navigationBarsPadding().padding(horizontal = 20.dp, vertical = 22.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(16.dp), color = p.accion.copy(alpha = .14f)) {
+            Surface(shape = RoundedCornerShape(10.dp), color = p.superficie2) {
                 Icon(
                     TablerIcons.Truck,
                     contentDescription = null,
@@ -247,9 +249,8 @@ private fun JornadaSinRuta(
         Spacer(Modifier.height(10.dp))
         Surface(
             Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(14.dp),
             color = p.tinta,
-            shadowElevation = 5.dp,
         ) {
             Column(Modifier.padding(22.dp)) {
                 Text("ESTADO ACTUAL", style = EstilosAgua.Rotulo, color = p.sobreTinta.copy(alpha = .7f))
@@ -304,16 +305,21 @@ private fun JornadaSinRuta(
 @Composable
 private fun PasoJornada(numero: String, titulo: String, detalle: String, completado: Boolean) {
     val p = LocalPaletaAgua.current
-    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = p.hoja) {
+    val forma = RoundedCornerShape(12.dp)
+    Surface(
+        Modifier.fillMaxWidth().border(1.dp, p.linea, forma),
+        shape = forma,
+        color = p.hoja,
+    ) {
         Row(Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = if (completado) p.exito.copy(alpha = .14f) else p.tenue,
+                shape = RoundedCornerShape(8.dp),
+                color = if (completado) p.exito else p.superficie2,
             ) {
                 Text(
                     if (completado) "✓" else numero,
                     style = EstilosAgua.ItemTitulo,
-                    color = if (completado) p.exito else p.texto2,
+                    color = if (completado) Color.White else p.texto2,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                 )
             }

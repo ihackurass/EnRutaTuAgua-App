@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -82,7 +83,7 @@ private fun CabeceraPresidente() {
     val p = LocalPaletaAgua.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            Modifier.size(52.dp).clip(CircleShape).background(p.accion.copy(alpha = .14f)),
+            Modifier.size(52.dp).clip(CircleShape).background(p.superficie2),
             contentAlignment = Alignment.Center,
         ) {
             Icon(TablerIcons.Droplet, null, tint = p.accion, modifier = Modifier.size(26.dp))
@@ -106,9 +107,8 @@ private fun ResumenPresidente(activo: Pedido?) {
     val litros = activo?.items?.sumOf { it.litros }
     Surface(
         Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(14.dp),
         color = p.tinta,
-        shadowElevation = 5.dp,
     ) {
         Column(Modifier.padding(22.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -163,7 +163,8 @@ private fun RotuloPedidos() {
 @Composable
 private fun EstadoVacioPresidente() {
     val p = LocalPaletaAgua.current
-    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = p.hoja) {
+    val forma = RoundedCornerShape(12.dp)
+    Surface(Modifier.fillMaxWidth().border(1.dp, p.linea, forma), shape = forma, color = p.hoja) {
         Column(Modifier.padding(20.dp)) {
             Text("Todavía no hay solicitudes", style = EstilosAgua.ItemTitulo, color = p.texto)
             Spacer(Modifier.height(4.dp))
@@ -176,11 +177,11 @@ private fun EstadoVacioPresidente() {
 private fun PedidoPresidente(pedido: Pedido, onCancelar: () -> Unit) {
     val p = LocalPaletaAgua.current
     val cancelable = pedido.estado == EstadoPedido.PENDIENTE || pedido.estado == EstadoPedido.RETENIDO
+    val forma = RoundedCornerShape(12.dp)
     Surface(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        Modifier.fillMaxWidth().border(1.dp, p.linea, forma),
+        shape = forma,
         color = p.hoja,
-        shadowElevation = 1.dp,
     ) {
         Column(Modifier.padding(17.dp)) {
             Row(verticalAlignment = Alignment.Top) {
@@ -208,16 +209,16 @@ private fun PedidoPresidente(pedido: Pedido, onCancelar: () -> Unit) {
 @Composable
 private fun EstadoPedidoBadge(estado: EstadoPedido, invertido: Boolean = false) {
     val p = LocalPaletaAgua.current
-    val fondo = if (invertido) p.sobreTinta.copy(alpha = .14f) else when (estado) {
-        EstadoPedido.ATENDIDO -> p.exito.copy(alpha = .13f)
-        EstadoPedido.EN_RUTA, EstadoPedido.PARCIAL -> p.accion.copy(alpha = .14f)
-        EstadoPedido.CANCELADO, EstadoPedido.RETENIDO -> p.alerta.copy(alpha = .13f)
-        else -> p.tenue
-    }
-    val texto = if (invertido) p.sobreTinta else when (estado) {
+    val fondo = if (invertido) p.sobreTinta else when (estado) {
         EstadoPedido.ATENDIDO -> p.exito
         EstadoPedido.EN_RUTA, EstadoPedido.PARCIAL -> p.accion
         EstadoPedido.CANCELADO, EstadoPedido.RETENIDO -> p.alerta
+        else -> p.superficie2
+    }
+    val texto = if (invertido) p.tinta else when (estado) {
+        EstadoPedido.ATENDIDO, EstadoPedido.EN_RUTA, EstadoPedido.PARCIAL,
+        EstadoPedido.CANCELADO, EstadoPedido.RETENIDO ->
+            if (p.esClara) Color.White else Color(0xFF101820)
         else -> p.texto2
     }
     Text(
@@ -240,13 +241,13 @@ private fun GestionZona(onClick: () -> Unit) {
         )
         Spacer(Modifier.height(9.dp))
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(p.hoja)
-                .border(1.dp, p.linea, RoundedCornerShape(18.dp)).clickable(onClick = onClick)
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(p.hoja)
+                .border(1.dp, p.linea, RoundedCornerShape(12.dp)).clickable(onClick = onClick)
                 .padding(horizontal = 17.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(p.accion.copy(alpha = .12f)),
+                Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(p.superficie2),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(TablerIcons.Droplet, null, tint = p.accion, modifier = Modifier.size(22.dp))

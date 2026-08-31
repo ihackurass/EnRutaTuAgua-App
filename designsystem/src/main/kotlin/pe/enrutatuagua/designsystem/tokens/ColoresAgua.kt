@@ -22,24 +22,24 @@ data class PaletaAgua(
 )
 
 val PaletaClara = PaletaAgua(
-    marca = Color(0xFF0D3B66), accion = Color(0xFF0A7F90),
-    alerta = Color(0xFFB85500), exito = Color(0xFF048848),
-    texto = Color(0xFF0A1620), texto2 = Color(0xFF57666F), linea = Color(0xFFE3E7EA),
-    hoja = Color(0xFFFFFFFF), fondo = Color(0xFFEDF0F2), tenue = Color(0xFFF6F8FA),
-    tinta = Color(0xFF0E1B2A), sobreTinta = Color(0xFFFFFFFF),
-    superficie2 = Color(0xFFF0F2F4), error = Color(0xFFE11900),
+    marca = Color(0xFF005B6B), accion = Color(0xFF007C91),
+    alerta = Color(0xFFC65D00), exito = Color(0xFF16834A),
+    texto = Color(0xFF101820), texto2 = Color(0xFF5E6266), linea = Color(0xFFD9DDE0),
+    hoja = Color(0xFFFFFFFF), fondo = Color(0xFFF5F5F5), tenue = Color(0xFFEEEEEE),
+    tinta = Color(0xFF101820), sobreTinta = Color(0xFFFFFFFF),
+    superficie2 = Color(0xFFE7E9EA), error = Color(0xFFC62828),
     mapaBase = Color(0xFFE8EAED), mapaManzana = Color(0xFFDDE1E5),
     mapaTrazo = Color(0xFFCBD2D8), mapaVia = Color(0xFFFFFFFF), mapaAgua = Color(0xFFC3DCE8),
     esClara = true,
 )
 
 val PaletaOscura = PaletaAgua(
-    marca = Color(0xFF9AD1EA), accion = Color(0xFF2CC7D3),
-    alerta = Color(0xFFFFB03A), exito = Color(0xFF06C167),
-    texto = Color(0xFFE9F2F7), texto2 = Color(0xFF94A6B1), linea = Color(0xFF24313B),
-    hoja = Color(0xFF101A21), fondo = Color(0xFF0B1318), tenue = Color(0xFF17222B),
-    tinta = Color(0xFFE9F2F7), sobreTinta = Color(0xFF0A1620),
-    superficie2 = Color(0xFF1D2933), error = Color(0xFFFF5C48),
+    marca = Color(0xFF58CAD7), accion = Color(0xFF31B7C7),
+    alerta = Color(0xFFFFA24C), exito = Color(0xFF43B978),
+    texto = Color(0xFFF5F5F5), texto2 = Color(0xFFB3B6B8), linea = Color(0xFF34383B),
+    hoja = Color(0xFF181A1B), fondo = Color(0xFF101112), tenue = Color(0xFF25282A),
+    tinta = Color(0xFFF5F5F5), sobreTinta = Color(0xFF101820),
+    superficie2 = Color(0xFF2C3032), error = Color(0xFFFF6B64),
     mapaBase = Color(0xFF12181D), mapaManzana = Color(0xFF1A2228),
     mapaTrazo = Color(0xFF242E36), mapaVia = Color(0xFF2B3740), mapaAgua = Color(0xFF142A36),
     esClara = false,
