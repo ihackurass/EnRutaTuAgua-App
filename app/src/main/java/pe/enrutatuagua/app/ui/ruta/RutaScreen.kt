@@ -52,7 +52,6 @@ import pe.enrutatuagua.designsystem.component.AnclaHoja
 import pe.enrutatuagua.designsystem.component.AvisoSuperior
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.BotonSecundario
-import pe.enrutatuagua.designsystem.component.ChipEstadoRuta
 import pe.enrutatuagua.designsystem.component.ColumnaDeAgua
 import pe.enrutatuagua.designsystem.component.DeslizadorConfirmar
 import pe.enrutatuagua.designsystem.component.EstadoFicha
@@ -384,14 +383,13 @@ private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
                 Column {
                     Text("Mi ruta de hoy", style = EstilosAgua.Zona, color = paleta.texto)
                     Text(
-                        "Cisterna ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
-                        style = EstilosAgua.Placa, color = paleta.texto2,
+                        "En ruta · ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
+                        style = EstilosAgua.Placa,
+                        color = paleta.accion,
                     )
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
-        ChipEstadoRuta("En ruta")
     }
 }
 
@@ -443,7 +441,7 @@ private fun ContenidoHoja(
                             containerColor = paleta.superficie2,
                             contentColor = paleta.texto,
                         ),
-                    ) { Text("Registrar recarga", style = EstilosAgua.BotonPrimario) }
+                    ) { Text("Recargar", style = EstilosAgua.BotonPrimario) }
                 }
             }
             Spacer(Modifier.height(12.dp))

@@ -73,12 +73,11 @@ class RutaScreenTest {
         regla.onNodeWithText("SIGUIENTE PARADA").assertExists()
         // El título de la siguiente parada está visible; la ficha queda en el mismo LazyColumn al desplazar.
         regla.onAllNodesWithText("Comité 12 — Loma Alta").assertCountEquals(1)
-        regla.onNodeWithText("Registrar recarga").assertExists()
+        regla.onNodeWithText("Recargar").assertExists()
         regla.onNodeWithText("12,000").assertExists()            // columna de agua
         regla.onNodeWithText("Desliza para entregar").assertExists()
         regla.onNodeWithText("Mi ruta de hoy").assertExists()
-        regla.onNodeWithText("Cisterna ABC-123 · 0 de 1 paradas").assertExists()
-        regla.onNodeWithText("EN RUTA").assertExists()            // chip de estado
+        regla.onNodeWithText("En ruta · ABC-123 · 0 de 1 paradas").assertExists()
     }
 
     @Test

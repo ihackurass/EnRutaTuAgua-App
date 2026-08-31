@@ -85,19 +85,21 @@ private fun MenuSesion(multirrol: Boolean, onCambiarRol: () -> Unit, onCerrar: (
     var abierto by remember { mutableStateOf(false) }
     val paleta = LocalPaletaAgua.current
     Box(modifier) {
-        Surface(
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = paleta.hoja,
-            shadowElevation = 6.dp,
-        ) {
-            IconButton(onClick = { abierto = true }) {
-                Icon(
-                    TablerIcons.Dots,
-                    contentDescription = "Abrir menú de sesión",
-                    tint = paleta.texto,
-                    modifier = Modifier.size(24.dp),
-                )
+        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = paleta.accion,
+                shadowElevation = 4.dp,
+            ) {
+                IconButton(onClick = { abierto = true }) {
+                    Icon(
+                        TablerIcons.Dots,
+                        contentDescription = "Abrir menú de sesión",
+                        tint = paleta.sobreTinta,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
         DropdownMenu(
