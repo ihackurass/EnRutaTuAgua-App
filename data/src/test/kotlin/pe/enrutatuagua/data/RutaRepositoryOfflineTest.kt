@@ -47,6 +47,7 @@ class RutaRepositoryOfflineTest {
     private lateinit var db: EnRutaTuAguaDb
     private lateinit var repo: RutaRepositoryHttp
     private val sinRed = AtomicBoolean(false)
+    private val errorServidor = AtomicBoolean(false)
     private val conectividad = MutableStateFlow(false)
 
     @Before
@@ -61,10 +62,10 @@ class RutaRepositoryOfflineTest {
                 "/api/v1/rutas/abierta" -> json(RUTA_OFFLINE_JSON)
                 "/api/v1/vehiculos/1" -> json(VEHICULO_OFFLINE_JSON)
                 "/api/v1/puntos/1" -> json(PUNTO_OFFLINE_JSON)
-                "/api/v1/sync" -> if (sinRed.get()) {
-                    MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE)
-                } else {
-                    json(
+                "/api/v1/sync" -> when {
+                    sinRed.get() -> MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE)
+                    errorServidor.get() -> MockResponse().setResponseCode(503)
+                    else -> json(
                         """{"entregas":[{"id":"entrega-offline","ok":true,"resultado":"CREADA"}],"omisiones":[]}""",
                     )
                 }
@@ -121,6 +122,21 @@ class RutaRepositoryOfflineTest {
             .filter { it.contains("entrega-offline") }
         assertTrue(cuerposSync.size >= 2)
         assertTrue(cuerposSync.all { it.contains("\"id\":\"entrega-offline\"") })
+    }
+
+    @Test
+    fun `un error temporal del servidor conserva la entrega como pendiente`() = runTest {
+        repo.observarRutaAbierta().first()
+        errorServidor.set(true)
+
+        repo.registrarEntrega(
+            Entrega("entrega-503", 10, TipoEntrega.ENTREGA, null, 100, null, null, 0L),
+        )
+
+        val pendiente = db.accionOperativaDao().porId("entrega-503")
+        assertEquals("PENDIENTE", pendiente?.estado)
+        assertEquals(1, pendiente?.intentos)
+        assertEquals("Servidor no disponible (503)", pendiente?.error)
     }
 
     private fun json(cuerpo: String) = MockResponse()

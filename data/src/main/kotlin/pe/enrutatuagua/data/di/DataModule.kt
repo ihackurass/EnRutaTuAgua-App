@@ -31,6 +31,14 @@ import pe.enrutatuagua.domain.repositorio.SesionRepository
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
 import javax.inject.Singleton
 
+internal val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS `accion_operativa_pendiente` (`id` TEXT NOT NULL, `tipo` TEXT NOT NULL, `rutaId` INTEGER NOT NULL, `paradaId` INTEGER NOT NULL, `tipoEntrega` TEXT, `ajustaA` TEXT, `litros` INTEGER, `gpsLat` REAL, `gpsLng` REAL, `registradaEnMillis` INTEGER, `motivoOmision` TEXT, `comentario` TEXT, `estado` TEXT NOT NULL, `error` TEXT, `intentos` INTEGER NOT NULL, `creadaEnMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+        )
+    }
+}
+
 @Module @InstallIn(SingletonComponent::class)
 object DbModule {
     @Provides @Singleton
@@ -39,11 +47,7 @@ object DbModule {
         // operativas pendientes. El fallback sólo cubre versiones históricas
         // de desarrollo para las que nunca se publicó una migración incremental.
         Room.databaseBuilder(ctx, EnRutaTuAguaDb::class.java, "enrutatuagua.db")
-            .addMigrations(object : Migration(4, 5) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("""CREATE TABLE IF NOT EXISTS `accion_operativa_pendiente` (`id` TEXT NOT NULL, `tipo` TEXT NOT NULL, `rutaId` INTEGER NOT NULL, `paradaId` INTEGER NOT NULL, `tipoEntrega` TEXT, `ajustaA` TEXT, `litros` INTEGER, `gpsLat` REAL, `gpsLng` REAL, `registradaEnMillis` INTEGER, `motivoOmision` TEXT, `comentario` TEXT, `estado` TEXT NOT NULL, `error` TEXT, `intentos` INTEGER NOT NULL, `creadaEnMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))""")
-                }
-            })
+            .addMigrations(MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
 }

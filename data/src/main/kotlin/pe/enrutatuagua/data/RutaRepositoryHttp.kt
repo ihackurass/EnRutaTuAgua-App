@@ -231,6 +231,12 @@ class RutaRepositoryHttp @Inject constructor(
             if (aceptadas.isNotEmpty()) dao.eliminar(aceptadas)
         } catch (e: IOException) {
             dao.registrarFallo(acciones.map { it.id }, e.message)
+        } catch (e: HttpException) {
+            if (e.code() >= 500) {
+                dao.registrarFallo(acciones.map { it.id }, "Servidor no disponible (${e.code()})")
+            } else {
+                throw e
+            }
         }
     }
 
