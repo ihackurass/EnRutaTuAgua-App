@@ -43,9 +43,10 @@ fun FichaParada(
     estado: EstadoFicha,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    atenuar: Boolean = onClick == null && estado != EstadoFicha.Proxima,
 ) {
     val paleta = LocalPaletaAgua.current
-    Column(modifier.alpha(if (onClick == null && estado != EstadoFicha.Proxima) 0.62f else 1f)) {
+    Column(modifier.alpha(if (atenuar) 0.62f else 1f)) {
         Row(
             Modifier
                 .fillMaxWidth()

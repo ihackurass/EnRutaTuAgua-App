@@ -2,6 +2,7 @@ package pe.enrutatuagua.app.ui.vecino
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -38,9 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import compose.icons.TablerIcons
 import compose.icons.tablericons.MapPin
-import compose.icons.tablericons.Truck
-import compose.icons.tablericons.Wifi
-import compose.icons.tablericons.WifiOff
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.designsystem.component.AvisoSuperior
 import pe.enrutatuagua.designsystem.component.EstadoFicha
 import pe.enrutatuagua.designsystem.component.FichaParada
@@ -148,11 +148,10 @@ private fun CabeceraZona(asociacionNombre: String, modifier: Modifier = Modifier
             Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = TablerIcons.Truck,
+            Image(
+                painter = painterResource(R.drawable.ill_vecino_seguir_cisterna),
                 contentDescription = null,
-                tint = paleta.accion,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(50.dp),
             )
             Spacer(Modifier.size(10.dp))
             Column {
@@ -190,11 +189,12 @@ private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(
-            imageVector = if (enVivo) TablerIcons.Wifi else TablerIcons.WifiOff,
+        Image(
+            painter = painterResource(
+                if (enVivo) R.drawable.ic_vecino_en_vivo else R.drawable.ill_vecino_sin_conexion,
+            ),
             contentDescription = null,
-            tint = colorEstado,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(24.dp),
         )
         Text(texto, style = EstilosAgua.ItemSub, color = colorEstado)
     }
@@ -235,10 +235,11 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAba
                 numero = indice + 1,
                 titulo = p.nombre,
                 subtitulo = "Capacidad: ${formatearLitros(p.capacidadLitros)} L",
-                textoDerecha = p.estado.etiqueta,
+                textoDerecha = "Validado",
                 // El ViewModel ya filtra a sólo VALIDADO (auditoría rol
                 // Vecino) -- ningún otro estado llega hasta acá.
-                estado = EstadoFicha.Entregada,
+                estado = EstadoFicha.Pendiente,
+                atenuar = false,
             )
         }
         item(key = "pie") { Spacer(Modifier.height(24.dp)) }
