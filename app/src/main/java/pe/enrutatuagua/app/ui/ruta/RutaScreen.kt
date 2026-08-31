@@ -2,6 +2,7 @@ package pe.enrutatuagua.app.ui.ruta
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,14 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Ban
-import compose.icons.tablericons.Truck
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.app.ubicacion.rememberPermisoNotificaciones
 import pe.enrutatuagua.app.ubicacion.rememberPermisoUbicacionSegundoPlano
 import pe.enrutatuagua.app.ui.mapa.MapaRuta
@@ -232,11 +233,10 @@ private fun JornadaSinRuta(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = RoundedCornerShape(10.dp), color = p.superficie2) {
-                Icon(
-                    TablerIcons.Truck,
+                Image(
+                    painter = painterResource(R.drawable.ill_aguatero_cisterna),
                     contentDescription = null,
-                    tint = p.accion,
-                    modifier = Modifier.padding(13.dp).size(26.dp),
+                    modifier = Modifier.padding(8.dp).size(42.dp),
                 )
             }
             Spacer(Modifier.width(13.dp))
@@ -276,14 +276,14 @@ private fun JornadaSinRuta(
         RotuloSeccion("Pasos para comenzar")
         Spacer(Modifier.height(10.dp))
         PasoJornada(
-            numero = "1",
+            ilustracion = R.drawable.ill_aguatero_recarga,
             titulo = "Cargar la cisterna",
             detalle = if (jornada == null) "Pendiente" else "Carga registrada",
             completado = jornada != null,
         )
         Spacer(Modifier.height(10.dp))
         PasoJornada(
-            numero = "2",
+            ilustracion = R.drawable.ill_aguatero_ruta,
             titulo = "Abrir la ruta asignada",
             detalle = if (jornada == null) "Disponible después de la carga" else "Siguiente paso",
             completado = false,
@@ -300,12 +300,16 @@ private fun JornadaSinRuta(
             texto = if (jornada == null) "Registrar carga inicial" else "Abrir ruta",
             onClick = if (jornada == null) onCargar else onAbrirRuta,
             habilitado = !procesando,
+            iconoPainter = painterResource(
+                if (jornada == null) R.drawable.ill_aguatero_recarga
+                else R.drawable.ill_aguatero_ruta,
+            ),
         )
     }
 }
 
 @Composable
-private fun PasoJornada(numero: String, titulo: String, detalle: String, completado: Boolean) {
+private fun PasoJornada(@androidx.annotation.DrawableRes ilustracion: Int, titulo: String, detalle: String, completado: Boolean) {
     val p = LocalPaletaAgua.current
     val forma = RoundedCornerShape(12.dp)
     Surface(
@@ -314,17 +318,11 @@ private fun PasoJornada(numero: String, titulo: String, detalle: String, complet
         color = p.hoja,
     ) {
         Row(Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = if (completado) p.exito else p.superficie2,
-            ) {
-                Text(
-                    if (completado) "✓" else numero,
-                    style = EstilosAgua.ItemTitulo,
-                    color = if (completado) Color.White else p.texto2,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                )
-            }
+            Image(
+                painter = painterResource(ilustracion),
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+            )
             Spacer(Modifier.width(13.dp))
             Column {
                 Text(titulo, style = EstilosAgua.ItemTitulo, color = p.texto)
@@ -373,20 +371,27 @@ private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
                 Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    TablerIcons.Truck,
+                Image(
+                    painter = painterResource(R.drawable.ill_aguatero_cisterna),
                     contentDescription = null,
-                    tint = paleta.texto2,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(36.dp),
                 )
                 Spacer(Modifier.width(9.dp))
                 Column {
                     Text("Mi ruta de hoy", style = EstilosAgua.Zona, color = paleta.texto)
-                    Text(
-                        "En ruta · ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
-                        style = EstilosAgua.Placa,
-                        color = paleta.accion,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_aguatero_gps_vivo),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "En ruta · ${rc.ruta.vehiculo.placa} · $resueltas de ${rc.ruta.paradas.size} paradas",
+                            style = EstilosAgua.Placa,
+                            color = paleta.accion,
+                        )
+                    }
                 }
             }
         }
@@ -425,6 +430,12 @@ private fun ContenidoHoja(
                     Modifier.padding(start = 14.dp, top = 10.dp, end = 8.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Image(
+                        painter = painterResource(R.drawable.ill_aguatero_capacidad),
+                        contentDescription = null,
+                        modifier = Modifier.size(44.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text("AGUA DISPONIBLE", style = EstilosAgua.Rotulo, color = paleta.texto2)
                         Text(
@@ -441,7 +452,15 @@ private fun ContenidoHoja(
                             containerColor = paleta.superficie2,
                             contentColor = paleta.texto,
                         ),
-                    ) { Text("Recargar", style = EstilosAgua.BotonPrimario) }
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.ill_aguatero_recarga),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text("Recargar", style = EstilosAgua.BotonPrimario)
+                    }
                 }
             }
             Spacer(Modifier.height(12.dp))

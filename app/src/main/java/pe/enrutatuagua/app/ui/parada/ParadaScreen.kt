@@ -2,6 +2,7 @@ package pe.enrutatuagua.app.ui.parada
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ import compose.icons.tablericons.Dots
 import compose.icons.tablericons.Droplet
 import compose.icons.tablericons.DropletOff
 import compose.icons.tablericons.UserOff
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.CifraLitros
@@ -140,18 +143,32 @@ private fun iconoDeMotivo(motivo: MotivoOmision): ImageVector = when (motivo) {
 }
 
 @Composable
-private fun TarjetaError(mensaje: String) {
+private fun TarjetaError(mensaje: String, mostrarSinAgua: Boolean = false) {
     val paleta = LocalPaletaAgua.current
     val forma = RoundedCornerShape(RadiosAgua.Aviso)
-    Box(
+    Row(
         Modifier
             .fillMaxWidth()
             .clip(forma)
             .background(paleta.hoja)
             .border(1.dp, paleta.error, forma)
             .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(mensaje, style = EstilosAgua.Error, color = paleta.error)
+        if (mostrarSinAgua) {
+            Image(
+                painter = painterResource(R.drawable.ic_aguatero_sin_agua),
+                contentDescription = null,
+                modifier = Modifier.size(34.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(
+            text = mensaje,
+            modifier = Modifier.weight(1f),
+            style = EstilosAgua.Error,
+            color = paleta.error,
+        )
     }
 }
 
@@ -176,7 +193,15 @@ private fun VistaEntrega(
     // (presets+teclado+deslizador): el error vive BAJO la cifra para que el
     // teclado nunca se desplace cuando aparece — solo respira el Spacer(weight).
     Column(modifier.fillMaxWidth()) {
-        RotuloSeccion("Entrega en", acento = titulo)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.ill_aguatero_entrega),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            RotuloSeccion("Entrega en", modifier = Modifier.weight(1f), acento = titulo)
+        }
         Spacer(Modifier.height(10.dp))
 
         Column(
@@ -195,7 +220,7 @@ private fun VistaEntrega(
             ?: if (excede) "Quedan ${formatearLitros(restante)} L en el tanque. Baja la cantidad o recarga antes de entregar." else null
         mensajeError?.let {
             Spacer(Modifier.height(14.dp))
-            TarjetaError(it)
+            TarjetaError(it, mostrarSinAgua = restante == 0 || excede)
         }
 
         Spacer(Modifier.weight(1f))
