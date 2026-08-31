@@ -65,7 +65,7 @@ class MapaVivoViewModelTest {
 
         vm.mensaje.test {
             assertEquals(null, awaitItem())
-            assertEquals("Sin conexión", awaitItem())
+            assertEquals("No pudimos actualizar tu zona. Conservamos los últimos datos.", awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -132,5 +132,14 @@ class MapaVivoViewModelTest {
         runCurrent()
 
         assertEquals(listOf("Validado"), vm.estado.value.puntos.map { it.nombre })
+    }
+
+    @Test fun `al compartir ubicacion identifica la cisterna mas cercana`() = runTest {
+        val vm = MapaVivoViewModel(TrackingRepoFake())
+        runCurrent()
+
+        vm.actualizarUbicacionVecino(-12.16, -76.94)
+
+        assertEquals(0L, vm.estado.value.rutaMasCercanaId)
     }
 }

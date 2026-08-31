@@ -2,6 +2,7 @@ package pe.enrutatuagua.domain.repositorio
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import pe.enrutatuagua.domain.modelo.*
 
 interface RutaRepository {
@@ -71,6 +72,9 @@ interface OperacionRepository {
 
 interface TrackingRepository {
     fun observarUltimaPosicion(): Flow<PosicionCisterna?>
+    fun observarCisternas(): Flow<List<CisternaEnZona>> = observarUltimaPosicion().map { posicion ->
+        if (posicion == null) emptyList() else listOf(CisternaEnZona(0, 0, posicion.capacidadLitros, posicion))
+    }
     fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>>  // RV-02, solo lectura
     suspend fun asociacionActual(): String = "Tu asociación"
     fun observarEstadoTracking(): Flow<EstadoTracking> = flowOf(EstadoTracking.RESPALDO_REST)

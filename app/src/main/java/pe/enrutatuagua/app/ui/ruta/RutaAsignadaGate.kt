@@ -19,13 +19,16 @@ import pe.enrutatuagua.designsystem.tokens.*
 import pe.enrutatuagua.domain.modelo.RutaPlanificada
 import pe.enrutatuagua.domain.repositorio.OperacionRepository
 import pe.enrutatuagua.domain.repositorio.RutaRepository
+import pe.enrutatuagua.domain.repositorio.SesionRepository
+import pe.enrutatuagua.domain.modelo.Rol
+import kotlinx.coroutines.flow.first
 import retrofit2.HttpException
 
-@HiltViewModel class RutaAsignadaViewModel @Inject constructor(private val repo:OperacionRepository,private val rutas:RutaRepository):ViewModel(){
+@HiltViewModel class RutaAsignadaViewModel @Inject constructor(private val repo:OperacionRepository,private val rutas:RutaRepository, private val sesion: SesionRepository):ViewModel(){
     val ruta=MutableStateFlow<RutaPlanificada?>(null);val cargando=MutableStateFlow(true);val mensaje=MutableStateFlow<String?>(null)
-    init{viewModelScope.launch { while (true) { consultarAhora(); delay(5_000L) } }}
+    init{viewModelScope.launch { while (sesion.rolActual.first() == Rol.AGUATERO) { if(!consultarAhora()) break; delay(5_000L) } }}
     fun consultar()=viewModelScope.launch{cargando.value=true;mensaje.value=null;try{ruta.value=repo.asignada()}catch(e:HttpException){ruta.value=null;if(e.code()!=404)mensaje.value="No se pudo consultar la ruta"}catch(_:Exception){ruta.value=null;mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false}}
-    private suspend fun consultarAhora(){try{ruta.value=repo.asignada();mensaje.value=null}catch(e:HttpException){ruta.value=null;if(e.code()!=404)mensaje.value="No se pudo consultar la ruta"}catch(_:Exception){mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false}}
+    private suspend fun consultarAhora():Boolean{var continuar=true;try{ruta.value=repo.asignada();mensaje.value=null}catch(e:HttpException){ruta.value=null;continuar=e.code()!=404;mensaje.value=if(e.code()==404)null else "No se pudo consultar la ruta"}catch(_:Exception){ruta.value=null;mensaje.value="No se pudo consultar la ruta"}finally{cargando.value=false};return continuar}
     fun iniciar()=viewModelScope.launch{val r=ruta.value?:return@launch;try{repo.iniciar(r.id);rutas.invalidarCache();ruta.value=null}catch(e:Exception){mensaje.value=e.message?:"No se pudo iniciar"}}
 }
 

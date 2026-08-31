@@ -32,3 +32,15 @@ data class AccionOperativaEntity(
     val intentos: Int = 0,
     val creadaEnMillis: Long = System.currentTimeMillis(),
 )
+
+@Entity(tableName = "vecino_punto_cache", primaryKeys = ["asociacionId", "puntoId"])
+data class VecinoPuntoCacheEntity(
+    val asociacionId: Long, val puntoId: Long, val nombre: String,
+    val lat: Double, val lng: Double, val capacidadLitros: Int, val estado: String,
+)
+
+@Entity(tableName = "vecino_cisterna_cache", primaryKeys = ["asociacionId", "rutaId"])
+data class VecinoCisternaCacheEntity(
+    val asociacionId: Long, val rutaId: Long, val vehiculoId: Long, val capacidadLitros: Int,
+    val lat: Double?, val lng: Double?, val litrosRestantes: Int?, val timestampMs: Long?,
+)

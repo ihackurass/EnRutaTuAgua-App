@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.CisternaEnZona
 
 /**
  * GeoJSON de la zona del vecino (RV-01/02): un punto por cada punto de
@@ -36,4 +37,23 @@ fun geoJsonDeZona(
         features
     }
     return JSONObject().put("type", "FeatureCollection").put("features", JSONArray(conCisterna)).toString()
+}
+
+fun geoJsonDeZonaPlural(
+    puntos: List<PuntoAbastecimiento>,
+    cisternas: List<CisternaEnZona>,
+    rumboCisterna: Float? = null,
+): String {
+    val features = puntos.map { p ->
+        JSONObject().put("type", "Feature")
+            .put("properties", JSONObject().put("tipo", "punto").put("nombre", p.nombre).put("estado", p.estado.name))
+            .put("geometry", JSONObject().put("type", "Point").put("coordinates", JSONArray(listOf(p.lng, p.lat))))
+    } + cisternas.mapNotNull { cisterna ->
+        cisterna.posicion?.let { posicion ->
+            JSONObject().put("type", "Feature")
+                .put("properties", JSONObject().put("tipo", "cisterna").put("rutaId", cisterna.rutaId).put("rumbo", rumboCisterna ?: 0f))
+                .put("geometry", JSONObject().put("type", "Point").put("coordinates", JSONArray(listOf(posicion.lng, posicion.lat))))
+        }
+    }
+    return JSONObject().put("type", "FeatureCollection").put("features", JSONArray(features)).toString()
 }

@@ -37,3 +37,17 @@ interface AccionOperativaDao {
     @Query("UPDATE accion_operativa_pendiente SET intentos=intentos+1,error=:error WHERE id IN (:ids)")
     suspend fun registrarFallo(ids: List<String>, error: String?)
 }
+
+@Dao
+interface VecinoCacheDao {
+    @Query("SELECT * FROM vecino_punto_cache WHERE asociacionId=:asociacionId ORDER BY puntoId")
+    suspend fun puntos(asociacionId: Long): List<VecinoPuntoCacheEntity>
+    @Query("SELECT * FROM vecino_cisterna_cache WHERE asociacionId=:asociacionId ORDER BY rutaId")
+    suspend fun cisternas(asociacionId: Long): List<VecinoCisternaCacheEntity>
+    @Query("DELETE FROM vecino_punto_cache WHERE asociacionId=:asociacionId")
+    suspend fun borrarPuntos(asociacionId: Long)
+    @Query("DELETE FROM vecino_cisterna_cache WHERE asociacionId=:asociacionId")
+    suspend fun borrarCisternas(asociacionId: Long)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun guardarPuntos(items: List<VecinoPuntoCacheEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun guardarCisternas(items: List<VecinoCisternaCacheEntity>)
+}

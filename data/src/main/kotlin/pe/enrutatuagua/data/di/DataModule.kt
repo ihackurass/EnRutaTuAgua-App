@@ -38,6 +38,12 @@ internal val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+internal val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `vecino_punto_cache` (`asociacionId` INTEGER NOT NULL, `puntoId` INTEGER NOT NULL, `nombre` TEXT NOT NULL, `lat` REAL NOT NULL, `lng` REAL NOT NULL, `capacidadLitros` INTEGER NOT NULL, `estado` TEXT NOT NULL, PRIMARY KEY(`asociacionId`, `puntoId`))")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `vecino_cisterna_cache` (`asociacionId` INTEGER NOT NULL, `rutaId` INTEGER NOT NULL, `vehiculoId` INTEGER NOT NULL, `capacidadLitros` INTEGER NOT NULL, `lat` REAL, `lng` REAL, `litrosRestantes` INTEGER, `timestampMs` INTEGER, PRIMARY KEY(`asociacionId`, `rutaId`))")
+    }
+}
 
 @Module @InstallIn(SingletonComponent::class)
 object DbModule {
@@ -47,9 +53,12 @@ object DbModule {
         // operativas pendientes. El fallback sólo cubre versiones históricas
         // de desarrollo para las que nunca se publicó una migración incremental.
         Room.databaseBuilder(ctx, EnRutaTuAguaDb::class.java, "enrutatuagua.db")
-            .addMigrations(MIGRATION_4_5)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
             .fallbackToDestructiveMigration()
             .build()
+
+    @Provides
+    fun vecinoCacheDao(db: EnRutaTuAguaDb) = db.vecinoCacheDao()
 }
 
 @Module @InstallIn(SingletonComponent::class)

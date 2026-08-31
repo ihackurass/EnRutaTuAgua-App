@@ -15,7 +15,10 @@ import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.EstadoTracking
+import pe.enrutatuagua.domain.modelo.CisternaEnZona
 import pe.enrutatuagua.domain.repositorio.TrackingRepository
+import pe.enrutatuagua.domain.repositorio.ConectividadRepository
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 
 /** Intervalo del ticker de UI que llama a `recalcularMinutosSinSenal()` (ver MapaVivoScreen.kt). */
@@ -25,15 +28,24 @@ data class MapaVivoUiState(
     val cargando: Boolean = true,
     val asociacionNombre: String = "Tu asociación",
     val posicion: PosicionCisterna? = null,
+    val cisternas: List<CisternaEnZona> = emptyList(),
     val puntos: List<PuntoAbastecimiento> = emptyList(),
     val minutosSinSenal: Int = 0,
     val estadoTracking: EstadoTracking = EstadoTracking.SIN_POSICION,
+    val conectado: Boolean = true,
+    val frescura: FrescuraPosicion = FrescuraPosicion.SIN_POSICION,
+    val rutaMasCercanaId: Long? = null,
 )
+
+enum class FrescuraPosicion { EN_VIVO, DEMORADA, SIN_SENAL, SIN_POSICION }
 
 /** Auditoría rol Vecino: mismo patrón de resiliencia ya corregido en RutaViewModel (rol Aguatero). */
 @HiltViewModel
 class MapaVivoViewModel @Inject constructor(
     private val tracking: TrackingRepository,
+    private val conectividad: ConectividadRepository = object : ConectividadRepository {
+        override fun observarConectividad() = flowOf(true)
+    },
 ) : ViewModel() {
     private val _estado = MutableStateFlow(MapaVivoUiState())
     val estado: StateFlow<MapaVivoUiState> = _estado
@@ -44,6 +56,7 @@ class MapaVivoViewModel @Inject constructor(
     // Seam de test para el reloj -- propiedad mutable en vez de parámetro
     // @Inject: Dagger no puede bindear un Function0<Long> anónimo.
     internal var ahora: () -> Long = { System.currentTimeMillis() }
+    private var ubicacionVecino: Pair<Double, Double>? = null
 
     init {
         viewModelScope.launch {
@@ -61,19 +74,21 @@ class MapaVivoViewModel @Inject constructor(
                     // valor (posible una vez TrackingRepositoryHttp haga
                     // polling real), combine() no produce nada y
                     // cargando=true queda pegado para siempre.
-                    tracking.observarUltimaPosicion().onStart { emit(null) },
+                    tracking.observarCisternas().onStart { emit(emptyList()) },
                     tracking.observarPuntosDeZona().onStart { emit(emptyList()) },
                     tracking.observarEstadoTracking().onStart { emit(EstadoTracking.SIN_POSICION) },
-                ) { posicion, puntos, estadoTracking ->
+                    conectividad.observarConectividad().onStart { emit(true) },
+                ) { cisternas, puntos, estadoTracking, conectado ->
+                    val posicion = cisternas.mapNotNull { it.posicion }.maxByOrNull { it.timestampMs }
                     val minutos = posicion?.let { ((ahora() - it.timestampMs) / 60_000).toInt() } ?: 0
                     // Hallazgo real: puntos RECHAZADO/SUSPENDIDO se veían
                     // igual que PROPUESTO en mapa y lista -- sólo VALIDADO
                     // es ruteable/relevante para un vecino buscando agua.
                     val validados = puntos.filter { it.estado == EstadoValidacionPunto.VALIDADO }
-                    MapaVivoUiState(cargando = false, asociacionNombre = _estado.value.asociacionNombre, posicion = posicion, puntos = validados, minutosSinSenal = minutos, estadoTracking = estadoTracking)
+                    MapaVivoUiState(cargando = false, asociacionNombre = _estado.value.asociacionNombre, posicion = posicion, cisternas = cisternas, puntos = validados, minutosSinSenal = minutos, estadoTracking = estadoTracking, conectado = conectado, frescura = frescura(posicion, conectado), rutaMasCercanaId = masCercana(cisternas))
                 }
                     .retry { e ->
-                        _mensaje.value = e.message ?: "No se pudo cargar tu zona, reintentando…"
+                        _mensaje.value = "No pudimos actualizar tu zona. Conservamos los últimos datos."
                         delay(5_000L)
                         true
                     }
@@ -107,6 +122,37 @@ class MapaVivoViewModel @Inject constructor(
      */
     fun recalcularMinutosSinSenal() {
         val posicion = _estado.value.posicion ?: return
-        _estado.value = _estado.value.copy(minutosSinSenal = ((ahora() - posicion.timestampMs) / 60_000).toInt())
+        _estado.value = _estado.value.copy(
+            minutosSinSenal = ((ahora() - posicion.timestampMs) / 60_000).toInt(),
+            frescura = frescura(posicion, _estado.value.conectado),
+        )
+    }
+
+    fun actualizarUbicacionVecino(lat: Double, lng: Double) {
+        ubicacionVecino = lat to lng
+        _estado.value = _estado.value.copy(rutaMasCercanaId = masCercana(_estado.value.cisternas))
+    }
+
+    private fun masCercana(cisternas: List<CisternaEnZona>): Long? {
+        val origen = ubicacionVecino ?: return null
+        return cisternas.filter { it.posicion != null }.minByOrNull { cisterna ->
+            val p = cisterna.posicion!!
+            val dLat = Math.toRadians(p.lat - origen.first)
+            val dLng = Math.toRadians(p.lng - origen.second)
+            val a = kotlin.math.sin(dLat / 2).let { it * it } +
+                kotlin.math.cos(Math.toRadians(origen.first)) * kotlin.math.cos(Math.toRadians(p.lat)) *
+                kotlin.math.sin(dLng / 2).let { it * it }
+            2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        }?.rutaId
+    }
+
+    private fun frescura(posicion: PosicionCisterna?, conectado: Boolean): FrescuraPosicion {
+        if (posicion == null) return FrescuraPosicion.SIN_POSICION
+        if (!conectado) return FrescuraPosicion.SIN_SENAL
+        return when (ahora() - posicion.timestampMs) {
+            in Long.MIN_VALUE..30_000L -> FrescuraPosicion.EN_VIVO
+            in 30_001L..120_000L -> FrescuraPosicion.DEMORADA
+            else -> FrescuraPosicion.SIN_SENAL
+        }
     }
 }

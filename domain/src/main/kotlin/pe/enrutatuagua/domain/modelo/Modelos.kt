@@ -93,6 +93,12 @@ data class PosicionCisterna(
     val lat: Double, val lng: Double, val litrosRestantes: Int,
     val capacidadLitros: Int, val timestampMs: Long,
 )
+data class CisternaEnZona(
+    val rutaId: Long,
+    val vehiculoId: Long,
+    val capacidadLitros: Int,
+    val posicion: PosicionCisterna?,
+)
 enum class EstadoTracking { EN_VIVO, RESPALDO_REST, SIN_POSICION, ERROR }
 
 // ER §5: el tanque restante es SIEMPRE derivado (ajustes restan con su signo)

@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,6 +41,7 @@ import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
 import pe.enrutatuagua.app.ui.operador.OperacionScreen
 import pe.enrutatuagua.app.ui.ruta.RutaAsignadaGate
+import pe.enrutatuagua.app.ui.tracking.PruebaTrackingScreen
 import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.app.R
 import pe.enrutatuagua.domain.modelo.Rol
@@ -60,24 +63,38 @@ fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
             onIngresar = vm::iniciar,
             mostrarAccesosRapidos = BuildConfig.DEBUG,
         )
-        actual.rolActivo == null -> SeleccionRolScreen(
-            roles = actual.roles,
+        actual.rolActivo == null -> SelectorODiagnostico(actual, vm)
+        else -> key(actual.usuarioId, actual.rolActivo) {
+            AplicacionAutenticada(actual, vm::cerrar, vm::cambiarRol)
+        }
+    }
+}
+
+@Composable
+private fun SelectorODiagnostico(sesion: Sesion, vm: SesionViewModel) {
+    var diagnostico by rememberSaveable(sesion.usuarioId) { mutableStateOf(false) }
+    if (diagnostico && BuildConfig.DEBUG) {
+        PruebaTrackingScreen(onVolver = { diagnostico = false })
+    } else {
+        SeleccionRolScreen(
+            roles = sesion.roles,
             onRolElegido = vm::seleccionarRol,
+            mostrarDiagnosticos = BuildConfig.DEBUG,
+            onPruebaTrackingClick = { diagnostico = true },
         )
-        else -> AplicacionAutenticada(actual, vm::cerrar, vm::cambiarRol)
     }
 }
 
 @Composable
 private fun AplicacionAutenticada(sesion: Sesion, onCerrar: () -> Unit, onCambiarRol: () -> Unit) {
+    val nav = rememberNavController()
     Box(Modifier.fillMaxSize()) {
-        when (sesion.rolActivo) {
-            Rol.AGUATERO -> RutaAsignadaGate(conRutaAbierta = { NavegacionAguatero() })
-            Rol.VECINO -> MapaVivoScreen()
-            Rol.PRESIDENTE -> PresidenteNav()
-            Rol.ADMIN -> ProximamenteScreen(onVolver = onCerrar)
-            Rol.OPERADOR -> OperacionScreen()
-            null -> Unit
+        NavHost(navController = nav, startDestination = sesion.rolActivo!!.name) {
+            composable(Rol.AGUATERO.name) { RutaAsignadaGate(conRutaAbierta = { NavegacionAguatero() }) }
+            composable(Rol.VECINO.name) { MapaVivoScreen() }
+            composable(Rol.PRESIDENTE.name) { PresidenteNav() }
+            composable(Rol.ADMIN.name) { ProximamenteScreen(onVolver = onCerrar) }
+            composable(Rol.OPERADOR.name) { OperacionScreen() }
         }
         MenuSesion(sesion.roles.size > 1, onCambiarRol, onCerrar, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(6.dp))
     }

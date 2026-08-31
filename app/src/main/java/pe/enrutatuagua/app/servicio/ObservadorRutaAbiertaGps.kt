@@ -16,7 +16,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import pe.enrutatuagua.app.ubicacion.ServicioTrackingGps
 import pe.enrutatuagua.domain.modelo.EstadoRuta
 import pe.enrutatuagua.domain.modelo.Rol
@@ -52,10 +55,11 @@ class ObservadorRutaAbiertaGps @Inject constructor(
 ) {
     private var jobEspera: Job? = null
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun iniciar(alcance: CoroutineScope) {
-        combine(rutaRepository.observarRutaAbierta(), sesionRepository.rolActual) { ruta, rol ->
-            ruta?.estado == EstadoRuta.ABIERTA && rol == Rol.AGUATERO
-        }
+        sesionRepository.rolActual.flatMapLatest { rol ->
+            if (rol == Rol.AGUATERO) rutaRepository.observarRutaAbierta() else flowOf(null)
+        }.map { ruta -> ruta?.estado == EstadoRuta.ABIERTA }
             .distinctUntilChanged()
             .onEach { hayRutaAbierta -> reaccionar(hayRutaAbierta, alcance) }
             // Hallazgo real (crash sin ruta al backend): sin retry, un solo

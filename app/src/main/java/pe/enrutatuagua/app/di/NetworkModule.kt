@@ -67,8 +67,8 @@ object NetworkModule {
     @Provides @Singleton fun operacionApi(@RetrofitAutenticado r: Retrofit): OperacionApi = r.create(OperacionApi::class.java)
     @Provides @Singleton fun trackingRepositoryHttp(
         rutas: RutasApi, puntos: PuntosApi, tracking: TrackingApi,
-        cliente: OkHttpClient, sesion: SesionRepository,
+        cliente: OkHttpClient, sesion: SesionRepository, cache: pe.enrutatuagua.data.local.VecinoCacheDao,
     ): TrackingRepositoryHttp = TrackingRepositoryHttp(
-        rutas, puntos, tracking, cliente, sesion, BuildConfig.BASE_URL_DEV,
+        rutas, puntos, tracking, cliente, sesion, BuildConfig.BASE_URL_DEV, cache,
     )
 }

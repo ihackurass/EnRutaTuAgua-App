@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.first
 import pe.enrutatuagua.data.red.CambiarEstadoPuntoRequestDto
 import pe.enrutatuagua.data.red.CrearPedidoRequestDto
 import pe.enrutatuagua.data.red.PedidoDto
@@ -25,7 +27,9 @@ import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.LimitePedido
 import pe.enrutatuagua.domain.modelo.CondicionesPedido
 import pe.enrutatuagua.domain.modelo.PrioridadPedido
+import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
+import pe.enrutatuagua.domain.repositorio.SesionRepository
 
 private const val POLLING_PEDIDOS_MS = 10_000L
 
@@ -33,17 +37,18 @@ private const val POLLING_PEDIDOS_MS = 10_000L
 class PedidoRepositoryHttp @Inject constructor(
     private val pedidosApi: PedidosApi,
     private val puntosApi: PuntosApi,
+    private val sesion: SesionRepository? = null,
 ) : PedidoRepository {
     private val refrescarPedidos = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val refrescarPuntos = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     override fun observarPedidos(): Flow<List<Pedido>> =
         merge(reloj(), refrescarPedidos.onStart { emit(Unit) })
-            .map { pedidosApi.listar().map(PedidoDto::aDominio).sortedByDescending(Pedido::creadoEn) }
+            .transform { if (sesion == null || sesion.rolActual.first() == Rol.PRESIDENTE) emit(pedidosApi.listar().map(PedidoDto::aDominio).sortedByDescending(Pedido::creadoEn)) }
 
     override fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>> =
         merge(reloj(), refrescarPuntos.onStart { emit(Unit) })
-            .map { puntosApi.zona().map(PuntoDto::aDominio) }
+            .transform { if (sesion == null || sesion.rolActual.first() == Rol.PRESIDENTE) emit(puntosApi.zona().map(PuntoDto::aDominio)) }
 
     override suspend fun crearPedido(puntoId: Long, litros: Int): Pedido {
         return crearPedidoMultipunto(listOf(PedidoItem(puntoId, litros)))

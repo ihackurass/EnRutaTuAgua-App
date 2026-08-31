@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import pe.enrutatuagua.domain.modelo.Rol
+import pe.enrutatuagua.domain.repositorio.SesionRepository
 import pe.enrutatuagua.app.ui.mapa.claveDeEncuadre
 import pe.enrutatuagua.app.ui.mapa.regionDeRuta
 import pe.enrutatuagua.domain.modelo.EstadoRuta
@@ -32,9 +37,14 @@ class PrecacheRutaObservador @Inject constructor(
     private val rutaRepository: RutaRepository,
     private val conectividadRepository: ConectividadRepository,
     private val descargadorRegionMapa: DescargadorRegionMapa,
+    private val sesionRepository: SesionRepository,
 ) {
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun iniciar(alcance: CoroutineScope) {
-        combine(rutaRepository.observarRutaAbierta(), conectividadRepository.observarConectividad()) { ruta, online ->
+        val rutaDelAguatero = sesionRepository.rolActual.flatMapLatest { rol ->
+            if (rol == Rol.AGUATERO) rutaRepository.observarRutaAbierta() else flowOf(null)
+        }
+        combine(rutaDelAguatero, conectividadRepository.observarConectividad()) { ruta, online ->
             if (ruta?.estado != EstadoRuta.ABIERTA || !online) return@combine null
             val region = regionDeRuta(ruta) ?: return@combine null
             Trigger(clave = "ruta-${ruta.id}-${claveDeEncuadre(ruta)}", region = region)

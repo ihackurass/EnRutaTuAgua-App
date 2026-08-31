@@ -55,6 +55,7 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.CisternaEnZona
 
 /**
  * Mapa del vecino (plan 05 T2 S4): mismo lienzo Protomaps offline que
@@ -80,24 +81,26 @@ fun MapaZonaVecino(
     rumboCisterna: Float? = null,
     margenSuperiorCamara: Dp = 0.dp,
 ) {
+    MapaZonaVecinoPlural(
+        puntos,
+        listOfNotNull(posicion?.let { CisternaEnZona(0, 0, it.capacidadLitros, it) }),
+        modifier, oscuro, rumboCisterna, margenSuperiorCamara,
+    )
+}
+
+@Composable
+fun MapaZonaVecinoPlural(
+    puntos: List<PuntoAbastecimiento>,
+    cisternas: List<CisternaEnZona>,
+    modifier: Modifier = Modifier,
+    oscuro: Boolean = isSystemInDarkTheme(),
+    rumboCisterna: Float? = null,
+    margenSuperiorCamara: Dp = 0.dp,
+) {
     val contexto = LocalContext.current
     val paleta = LocalPaletaAgua.current
     val density = LocalDensity.current
-    var posicionMostrada by remember { mutableStateOf(posicion) }
-    LaunchedEffect(posicion?.lat, posicion?.lng) {
-        val destino = posicion
-        val origen = posicionMostrada
-        if (destino == null || origen == null) {
-            posicionMostrada = destino
-        } else {
-            Animatable(0f).animateTo(1f, tween(800, easing = FastOutSlowInEasing)) {
-                posicionMostrada = destino.copy(
-                    lat = origen.lat + (destino.lat - origen.lat) * value,
-                    lng = origen.lng + (destino.lng - origen.lng) * value,
-                )
-            }
-        }
-    }
+    val posiciones = cisternas.mapNotNull { it.posicion }
     val pulso by rememberInfiniteTransition(label = "pulso-cisterna").animateFloat(
         initialValue = 25f,
         targetValue = 33f,
@@ -117,7 +120,7 @@ fun MapaZonaVecino(
     val conectividadRepo = remember { ConectividadRepositoryAndroid(contexto) }
     val online by conectividadRepo.observarConectividad().collectAsState(initial = false)
     val modoAplicado = remember { arrayOf<Pair<Boolean, Boolean>?>(null) }
-    val claveEncuadre = remember { arrayOf<Pair<List<Long>, Boolean>?>(null) }
+    val claveEncuadre = remember { arrayOf<Pair<List<Long>, List<Long>>?>(null) }
 
     DisposableEffect(Unit) {
         onDispose { mapView.onPause(); mapView.onStop(); mapView.onDestroy() }
@@ -132,7 +135,7 @@ fun MapaZonaVecino(
                 mapa.setLatLngBoundsForCameraTarget(null)
                 mapa.setMinZoomPreference(EstiloMapa.ZOOM_MIN_ONLINE)
                 mapa.setStyle(Style.Builder().fromUri(EstiloMapa.URL_ONLINE)) { estilo ->
-                    estilo.addSource(GeoJsonSource("zona", geoJsonDeZona(puntos, posicionMostrada, rumboCisterna)))
+                    estilo.addSource(GeoJsonSource("zona", geoJsonDeZonaPlural(puntos, cisternas, rumboCisterna)))
                     estilo.addImage(
                         "cisterna-icono",
                         BitmapFactory.decodeResource(contexto.resources, pe.enrutatuagua.app.R.drawable.ic_camion_cisterna),
@@ -186,16 +189,15 @@ fun MapaZonaVecino(
                 }
             } else {
                 (mapa.style?.getSource("zona") as? GeoJsonSource)?.setGeoJson(
-                    geoJsonDeZona(puntos, posicionMostrada, rumboCisterna),
+                    geoJsonDeZonaPlural(puntos, cisternas, rumboCisterna),
                 )
                 (mapa.style?.getLayer("cisterna-halo") as? CircleLayer)?.setProperties(circleRadius(pulso))
             }
 
-            val clave = puntos.map { it.id } to (posicion != null)
+            val clave = puntos.map { it.id } to cisternas.map { it.rutaId }
             if (claveEncuadre[0] != clave) {
                 claveEncuadre[0] = clave
-                val ubicaciones = puntos.map { LatLng(it.lat, it.lng) } +
-                    listOfNotNull(posicion?.let { LatLng(it.lat, it.lng) })
+                val ubicaciones = puntos.map { LatLng(it.lat, it.lng) } + posiciones.map { LatLng(it.lat, it.lng) }
                 if (ubicaciones.size == 1) {
                     mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(ubicaciones.single(), 15.0))
                 } else if (ubicaciones.isNotEmpty()) {

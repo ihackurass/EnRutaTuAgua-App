@@ -67,6 +67,9 @@ interface RutasApi {
     @GET("api/v1/rutas/zona")
     suspend fun zona(): RutaZonaDto
 
+    @GET("api/v1/rutas/zona/activas")
+    suspend fun activasDeZona(): List<RutaZonaDto>
+
     @POST("api/v1/rutas/abrir")
     suspend fun abrir(): RutaDto
 

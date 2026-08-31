@@ -1,5 +1,10 @@
 package pe.enrutatuagua.app.ui.vecino
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
@@ -22,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,12 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 import compose.icons.TablerIcons
 import compose.icons.tablericons.MapPin
@@ -55,6 +63,7 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.designsystem.tokens.RadiosAgua
 import pe.enrutatuagua.domain.modelo.PosicionCisterna
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
+import pe.enrutatuagua.domain.modelo.CisternaEnZona
 
 /**
  * Mapa vivo del vecino (plan 05 T2): la cáscara honesta de RV-01 — última
@@ -74,13 +83,28 @@ import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 @Composable
 fun MapaVivoScreen(
     vm: MapaVivoViewModel = hiltViewModel(),
-    mapa: @Composable (List<PuntoAbastecimiento>, PosicionCisterna?) -> Unit =
-        { puntos, posicion -> MapaZonaVecino(puntos, posicion, Modifier.fillMaxSize()) },
+    mapa: @Composable (List<PuntoAbastecimiento>, List<CisternaEnZona>) -> Unit =
+        { puntos, cisternas -> MapaZonaVecinoPlural(puntos, cisternas, Modifier.fillMaxSize()) },
 ) {
     val estado by vm.estado.collectAsState()
     val mensaje by vm.mensaje.collectAsState()
     val paleta = LocalPaletaAgua.current
+    val contexto = LocalContext.current
     val estadoAviso = rememberEstadoAviso()
+    fun leerUbicacionConPermiso() {
+        val autorizado = ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!autorizado) return
+        try {
+            val manager = contexto.getSystemService(LocationManager::class.java)
+            manager.getProviders(true).mapNotNull { manager.getLastKnownLocation(it) }
+                .maxByOrNull { it.time }
+                ?.let { vm.actualizarUbicacionVecino(it.latitude, it.longitude) }
+        } catch (_: SecurityException) { Unit }
+    }
+    val permisoUbicacion = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permisos ->
+        if (permisos.values.any { it }) leerUbicacionConPermiso()
+    }
     LaunchedEffect(mensaje) {
         mensaje?.let {
             estadoAviso.mostrar(it)
@@ -117,16 +141,20 @@ fun MapaVivoScreen(
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator(color = paleta.accion) }
         } else {
-            mapa(estado.puntos, estado.posicion)
+            mapa(estado.puntos, estado.cisternas)
             Column(Modifier.align(Alignment.TopStart).fillMaxWidth()) {
                 CabeceraZona(estado.asociacionNombre)
                 BadgeSinConexion(
-                    estado.posicion, estado.minutosSinSenal, estado.estadoTracking,
+                    estado.posicion, estado.minutosSinSenal, estado.estadoTracking, estado.conectado, estado.frescura,
                     Modifier.padding(start = 14.dp, end = 14.dp),
                 )
             }
             HojaArrastrable {
-                ContenidoHojaZona(estado.posicion, estado.puntos)
+                ContenidoHojaZona(estado.posicion, estado.puntos, estado.cisternas, estado.rutaMasCercanaId) {
+                    val concedido = ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (concedido) leerUbicacionConPermiso()
+                    else permisoUbicacion.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                }
             }
         }
         AvisoSuperior(estadoAviso, Modifier.align(Alignment.TopCenter).statusBarsPadding())
@@ -168,17 +196,20 @@ private fun CabeceraZona(asociacionNombre: String, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, estadoTracking: pe.enrutatuagua.domain.modelo.EstadoTracking, modifier: Modifier = Modifier) {
+private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, estadoTracking: pe.enrutatuagua.domain.modelo.EstadoTracking, conectado: Boolean, frescura: FrescuraPosicion, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
     // Sin posición nunca "hace N min" no tiene sentido (nunca hubo señal) --
     // distinto de haber tenido una y quedar desactualizada.
     val texto = when {
+        !conectado -> if (posicion == null) "Sin conexión" else "Sin conexión · datos de hace $minutosSinSenal min"
         posicion == null -> "Esperando la primera posición"
-        estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO -> "En vivo"
+        frescura == FrescuraPosicion.EN_VIVO && estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO -> "En vivo"
+        frescura == FrescuraPosicion.DEMORADA -> "Actualización demorada · hace $minutosSinSenal min"
+        frescura == FrescuraPosicion.SIN_SENAL -> "Sin señal reciente · hace $minutosSinSenal min"
         estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.ERROR -> "Error al actualizar · hace $minutosSinSenal min"
         else -> "Respaldo REST · hace $minutosSinSenal min"
     }
-    val enVivo = posicion != null && estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO
+    val enVivo = conectado && posicion != null && frescura == FrescuraPosicion.EN_VIVO && estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO
     val colorEstado = if (enVivo) paleta.exito else paleta.alerta
     Row(
         modifier
@@ -201,7 +232,7 @@ private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, 
 }
 
 @Composable
-private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAbastecimiento>) {
+private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAbastecimiento>, cisternas: List<CisternaEnZona>, rutaMasCercanaId: Long?, onUsarUbicacion: () -> Unit) {
     val paleta = LocalPaletaAgua.current
     LazyColumn(
         Modifier.fillMaxSize()
@@ -217,6 +248,8 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAba
                     )
                     Spacer(Modifier.height(22.dp))
                 }
+                Text("${cisternas.size} cisterna${if (cisternas.size == 1) "" else "s"} activa${if (cisternas.size == 1) "" else "s"}", style = EstilosAgua.ItemSub, color = paleta.texto2)
+                Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = TablerIcons.MapPin,
@@ -241,6 +274,20 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAba
                 estado = EstadoFicha.Entregada,
                 atenuar = false,
             )
+        }
+        item(key = "cisternas") {
+            Column {
+                TextButton(onClick = onUsarUbicacion) { Text("Mostrar la más cercana") }
+                cisternas.forEach { cisterna ->
+                    Text(
+                        "Ruta #${cisterna.rutaId}${if (cisterna.rutaId == rutaMasCercanaId) " · Más cercana" else ""}",
+                        style = EstilosAgua.ItemTitulo,
+                        color = if (cisterna.rutaId == rutaMasCercanaId) paleta.exito else paleta.texto,
+                    )
+                    Text(if (cisterna.posicion == null) "Esperando posición" else "Última ubicación disponible", style = EstilosAgua.ItemSub, color = paleta.texto2)
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
         }
         item(key = "pie") { Spacer(Modifier.height(24.dp)) }
     }

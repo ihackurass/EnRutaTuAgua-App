@@ -16,6 +16,9 @@ import pe.enrutatuagua.domain.modelo.EstadoRuta
 import pe.enrutatuagua.domain.usecase.ConectividadRepoFake
 import pe.enrutatuagua.domain.usecase.DescargadorRegionMapaFake
 import pe.enrutatuagua.domain.usecase.RutaRepoFake
+import pe.enrutatuagua.data.SesionRepositoryMemoria
+import pe.enrutatuagua.domain.modelo.Rol
+import kotlinx.coroutines.runBlocking
 
 /** Dispatchers.Unconfined: mismo motivo que ObservadorRutaAbiertaGpsTest -- todo síncrono sobre StateFlow. */
 @RunWith(RobolectricTestRunner::class)
@@ -31,7 +34,9 @@ class PrecacheRutaObservadorTest {
         rutaRepo = RutaRepoFake()
         conectividadRepo = ConectividadRepoFake()
         descargador = DescargadorRegionMapaFake()
-        observador = PrecacheRutaObservador(rutaRepo, conectividadRepo, descargador)
+        val sesion = SesionRepositoryMemoria()
+        runBlocking { sesion.iniciar("", ""); sesion.seleccionarRol(Rol.AGUATERO) }
+        observador = PrecacheRutaObservador(rutaRepo, conectividadRepo, descargador, sesion)
     }
 
     @After fun limpiar() { alcance.cancel() }

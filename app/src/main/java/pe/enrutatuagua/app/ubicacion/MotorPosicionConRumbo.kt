@@ -39,8 +39,13 @@ class MotorPosicionConRumbo(private val delegado: LocationEngine) : LocationEngi
     private val envolturas =
         mutableMapOf<LocationEngineCallback<LocationEngineResult>, LocationEngineCallback<LocationEngineResult>>()
 
-    override fun getLastLocation(callback: LocationEngineCallback<LocationEngineResult>) =
-        delegado.getLastLocation(callback)
+    override fun getLastLocation(callback: LocationEngineCallback<LocationEngineResult>) {
+        try {
+            delegado.getLastLocation(callback)
+        } catch (error: SecurityException) {
+            callback.onFailure(error)
+        }
+    }
 
     override fun requestLocationUpdates(
         request: LocationEngineRequest,
@@ -57,11 +62,21 @@ class MotorPosicionConRumbo(private val delegado: LocationEngine) : LocationEngi
                 override fun onFailure(excepcion: Exception) = callback.onFailure(excepcion)
             }
         }
-        delegado.requestLocationUpdates(request, envoltura, looper)
+        try {
+            delegado.requestLocationUpdates(request, envoltura, looper)
+        } catch (error: SecurityException) {
+            callback.onFailure(error)
+        }
     }
 
-    override fun requestLocationUpdates(request: LocationEngineRequest, pendingIntent: PendingIntent?) =
-        delegado.requestLocationUpdates(request, pendingIntent)
+    override fun requestLocationUpdates(request: LocationEngineRequest, pendingIntent: PendingIntent?) {
+        try {
+            delegado.requestLocationUpdates(request, pendingIntent)
+        } catch (_: SecurityException) {
+            // PendingIntent no expone callback; el solicitante observará que no
+            // hay actualizaciones y podrá volver a solicitar tras dar permiso.
+        }
+    }
 
     override fun removeLocationUpdates(callback: LocationEngineCallback<LocationEngineResult>) {
         delegado.removeLocationUpdates(envolturas.remove(callback) ?: callback)

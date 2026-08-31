@@ -37,7 +37,7 @@ class MapaVivoScreenTest {
 
         regla.onNodeWithText("Cisterna en tu zona").assertExists()
         regla.onNodeWithText("Tu asociación").assertExists()
-        regla.onNodeWithText("Respaldo REST · hace 47 min").assertExists()
+        regla.onNodeWithText("Sin señal reciente · hace 47 min").assertExists()
         regla.onNodeWithText("8,500 L").assertExists()
         regla.onNodeWithText("DE 12,000 L").assertExists()   // TarjetaDato uppercasea el rotulo
         regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()

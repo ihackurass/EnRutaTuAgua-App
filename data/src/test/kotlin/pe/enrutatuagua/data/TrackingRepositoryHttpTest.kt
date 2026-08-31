@@ -18,6 +18,7 @@ import org.junit.Test
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
+import pe.enrutatuagua.domain.modelo.EstadoTracking
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -33,6 +34,7 @@ class TrackingRepositoryHttpTest {
     private lateinit var servidor: MockWebServer
     private lateinit var repo: TrackingRepositoryHttp
     private val colaZona = ConcurrentLinkedQueue<MockResponse>()
+    private val colaActivas = ConcurrentLinkedQueue<MockResponse>()
     private val colaPosicion = ConcurrentLinkedQueue<MockResponse>()
     private val colaPuntos = ConcurrentLinkedQueue<MockResponse>()
 
@@ -43,7 +45,9 @@ class TrackingRepositoryHttpTest {
         servidor.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
                 "/api/v1/rutas/zona" -> colaZona.poll() ?: MockResponse().setResponseCode(500)
+                "/api/v1/rutas/zona/activas" -> colaActivas.poll() ?: MockResponse().setResponseCode(500)
                 "/api/v1/tracking/rutas/29/posicion" -> colaPosicion.poll() ?: MockResponse().setResponseCode(500)
+                "/api/v1/tracking/rutas/30/posicion" -> colaPosicion.poll() ?: MockResponse().setResponseCode(500)
                 "/api/v1/puntos/zona" -> colaPuntos.poll() ?: MockResponse().setResponseCode(500)
                 else -> MockResponse().setResponseCode(404)
             }
@@ -62,6 +66,16 @@ class TrackingRepositoryHttpTest {
     }
 
     @After fun tearDown() { servidor.shutdown() }
+
+    @Test fun `observarCisternas conserva todas las rutas activas de la zona`() = runTest {
+        colaActivas += json("[$RUTA_ZONA_JSON,{\"rutaId\":30,\"vehiculoId\":2,\"vehiculoCapacidadTanqueLitros\":9000,\"fecha\":\"2026-08-02\"}]")
+        colaPosicion += json(POSICION_JSON)
+        colaPosicion += json(POSICION_JSON.replace("29", "30").replace("-12.16", "-12.17"))
+
+        val cisternas = repo.observarCisternas().first()
+
+        assertEquals(listOf(29L, 30L), cisternas.map { it.rutaId })
+    }
 
     @Test fun `observarUltimaPosicion resuelve la zona y trae la posicion viva enriquecida con la capacidad del vehiculo`() = runTest {
         colaZona += json(RUTA_ZONA_JSON)
@@ -102,15 +116,11 @@ class TrackingRepositoryHttpTest {
         assertEquals(-12.20, posiciones[1]?.lat)
     }
 
-    @Test fun `un error 500 en la resolucion de zona se propaga como HttpException`() = runTest {
+    @Test fun `un error 500 conserva el ultimo valor y marca error sin cerrar el flujo`() = runTest {
         colaZona += MockResponse().setResponseCode(500)
 
-        try {
-            repo.observarUltimaPosicion().first()
-            throw AssertionError("debía lanzar")
-        } catch (e: HttpException) {
-            assertEquals(500, e.code())
-        }
+        assertEquals(null, repo.observarUltimaPosicion().first())
+        assertEquals(EstadoTracking.ERROR, repo.observarEstadoTracking().first())
     }
 
     @Test fun `observarPuntosDeZona trae los puntos de la asociacion del actor`() = runTest {
