@@ -1,81 +1,95 @@
 package pe.enrutatuagua.app.ui.presidente
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import compose.icons.TablerIcons
+import compose.icons.tablericons.MapPin
 import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
-import pe.enrutatuagua.designsystem.component.EstadoFicha
-import pe.enrutatuagua.designsystem.component.FichaParada
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
 import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 
-/**
- * Validar puntos propuestos de la zona (RP-02, alcance estricto: solo
- * aprueba — ver "Fuera de alcance" del plan 06 para rechazar/suspender/
- * proponer).
- */
 @Composable
 fun ValidarPuntosScreen(onVolver: () -> Unit, vm: ValidarPuntosViewModel = hiltViewModel()) {
     val puntos by vm.puntos.collectAsState()
     val error by vm.error.collectAsState()
-    val paleta = LocalPaletaAgua.current
+    val p = LocalPaletaAgua.current
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .background(paleta.hoja)
-            .statusBarsPadding()
-            .navigationBarsPadding()
+        Modifier.fillMaxSize().background(p.fondo).statusBarsPadding().navigationBarsPadding()
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         BotonAtras(onClick = onVolver)
         Spacer(Modifier.height(24.dp))
-
         RotuloSeccion("Validar puntos de tu zona")
         Spacer(Modifier.height(6.dp))
         Text(
-            "Solo los puntos aprobados pueden recibir cisterna",
-            style = EstilosAgua.Cuerpo, color = paleta.texto2,
+            "Puntos de abastecimiento",
+            style = EstilosAgua.TituloParada,
+            color = p.texto,
+            modifier = Modifier.semantics { heading() },
         )
-        Spacer(Modifier.height(14.dp))
+        Text(
+            "Confirma que cada lugar sea adecuado antes de incluirlo en las rutas.",
+            style = EstilosAgua.Cuerpo,
+            color = p.texto2,
+        )
+        Spacer(Modifier.height(18.dp))
+
+        Surface(
+            Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = p.tinta,
+        ) {
+            Row(Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(TablerIcons.MapPin, null, tint = p.sobreTinta, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("PENDIENTES DE REVISIÓN", style = EstilosAgua.Rotulo, color = p.sobreTinta)
+                    Text(
+                        "${puntos.size} ${if (puntos.size == 1) "punto" else "puntos"}",
+                        style = EstilosAgua.DatoResumen,
+                        color = p.sobreTinta,
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(18.dp))
+        error?.let {
+            TarjetaError(it)
+            Spacer(Modifier.height(12.dp))
+        }
 
         if (puntos.isEmpty()) {
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    "No hay puntos pendientes de aprobación",
-                    style = EstilosAgua.TituloParada, color = paleta.texto2,
-                )
-            }
+            EstadoSinPuntos(Modifier.weight(1f))
         } else {
-            error?.let {
-                TarjetaError(it)
-                Spacer(Modifier.height(12.dp))
-            }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                Modifier.weight(1f).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 18.dp),
+            ) {
                 items(puntos, key = { it.id }) { punto ->
-                    FilaPunto(punto, onValidar = { vm.validar(punto.id) })
+                    PuntoPorValidar(punto, onValidar = { vm.validar(punto.id) })
                 }
             }
         }
@@ -83,17 +97,51 @@ fun ValidarPuntosScreen(onVolver: () -> Unit, vm: ValidarPuntosViewModel = hiltV
 }
 
 @Composable
-private fun FilaPunto(punto: PuntoAbastecimiento, onValidar: () -> Unit) {
-    Column {
-        FichaParada(
-            numero = punto.id.toInt(),
-            titulo = punto.nombre,
-            subtitulo = "${formatearLitros(punto.capacidadLitros)} L de capacidad",
-            textoDerecha = punto.estado.etiqueta,
-            estado = EstadoFicha.Proxima,
-        )
-        Spacer(Modifier.height(8.dp))
-        BotonPrimario("Validar", onClick = onValidar)
-        Spacer(Modifier.height(8.dp))
+private fun EstadoSinPuntos(modifier: Modifier = Modifier) {
+    val p = LocalPaletaAgua.current
+    Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(shape = RoundedCornerShape(12.dp), color = p.superficie2) {
+                Icon(TablerIcons.MapPin, null, tint = p.texto2, modifier = Modifier.padding(14.dp).size(26.dp))
+            }
+            Spacer(Modifier.height(14.dp))
+            Text("Todo está revisado", style = EstilosAgua.ItemTitulo, color = p.texto)
+            Text("No hay puntos pendientes de aprobación", style = EstilosAgua.Cuerpo, color = p.texto2)
+        }
+    }
+}
+
+@Composable
+private fun PuntoPorValidar(punto: PuntoAbastecimiento, onValidar: () -> Unit) {
+    val p = LocalPaletaAgua.current
+    val forma = RoundedCornerShape(12.dp)
+    Surface(
+        Modifier.fillMaxWidth().border(1.dp, p.linea, forma),
+        shape = forma,
+        color = p.hoja,
+    ) {
+        Column(Modifier.padding(17.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Surface(shape = RoundedCornerShape(8.dp), color = p.superficie2) {
+                    Text(
+                        "#${punto.id}",
+                        style = EstilosAgua.ItemTitulo,
+                        color = p.texto2,
+                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 8.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(punto.nombre, style = EstilosAgua.ItemTitulo, color = p.texto)
+                    Text(
+                        "${formatearLitros(punto.capacidadLitros)} L de capacidad",
+                        style = EstilosAgua.Cuerpo,
+                        color = p.texto2,
+                    )
+                }
+            }
+            Spacer(Modifier.height(15.dp))
+            BotonPrimario("Aprobar punto", onClick = onValidar)
+        }
     }
 }

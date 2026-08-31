@@ -32,22 +32,22 @@ class TemaAguaTest {
     }
 
     @Test
-    fun `tema claro expone tinta como primary y accion extendida`() {
+    fun `tema claro expone tinta plana como primary y acento operativo`() {
         regla.setContent { TemaAgua(oscuro = false) { Sonda() } }
-        assertEquals(Color(0xFF0E1B2A), primario)
-        assertEquals(Color(0xFF0E1B2A), tinta)
-        assertEquals(Color(0xFFE11900), error)
-        assertEquals(Color(0xFF0A7F90), accion)
-        assertEquals(Color(0xFFF0F2F4), superficie2)
+        assertEquals(Color(0xFF101820), primario)
+        assertEquals(Color(0xFF101820), tinta)
+        assertEquals(Color(0xFFC62828), error)
+        assertEquals(Color(0xFF007C91), accion)
+        assertEquals(Color(0xFFE7E9EA), superficie2)
     }
 
     @Test
     fun `tema oscuro cambia la paleta completa e invierte la tinta`() {
         regla.setContent { TemaAgua(oscuro = true) { Sonda() } }
-        assertEquals(Color(0xFFE9F2F7), primario)
-        assertEquals(Color(0xFFE9F2F7), tinta)
-        assertEquals(Color(0xFFFF5C48), error)
-        assertEquals(Color(0xFF2CC7D3), accion)
-        assertEquals(Color(0xFF1D2933), superficie2)
+        assertEquals(Color(0xFFF5F5F5), primario)
+        assertEquals(Color(0xFFF5F5F5), tinta)
+        assertEquals(Color(0xFFFF6B64), error)
+        assertEquals(Color(0xFF31B7C7), accion)
+        assertEquals(Color(0xFF2C3032), superficie2)
     }
 }

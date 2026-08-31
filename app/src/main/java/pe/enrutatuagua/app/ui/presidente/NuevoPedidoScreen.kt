@@ -25,6 +25,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pe.enrutatuagua.designsystem.component.BotonAtras
@@ -86,7 +89,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
     Column(
         Modifier
             .fillMaxSize()
-            .background(paleta.hoja)
+            .background(paleta.fondo)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -98,7 +101,12 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
 
         RotuloSeccion("Nuevo pedido")
         Spacer(Modifier.height(10.dp))
-        Text("Elige el punto de tu zona", style = EstilosAgua.ItemTitulo, color = paleta.texto)
+        Text(
+            "1 · Elige el punto de entrega",
+            style = EstilosAgua.ItemTitulo,
+            color = paleta.texto,
+            modifier = Modifier.semantics { heading() },
+        )
         Spacer(Modifier.height(6.dp))
 
         // Un solo scroll permite llegar a la confirmación también en equipos
@@ -122,7 +130,9 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
                 color = if (it.tienePedidoActivo || valor > it.maxLitrosPedido) paleta.error else paleta.texto2,
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
+        RotuloSeccion("2 · Cantidad de agua")
+        Spacer(Modifier.height(8.dp))
 
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             CifraLitros(valor)
@@ -130,15 +140,17 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         Spacer(Modifier.height(16.dp))
         TecladoLitros(valor = litros, onCambio = { litros = it })
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(22.dp))
+        RotuloSeccion("3 · Condiciones")
+        Spacer(Modifier.height(8.dp))
         Text("Horario preferido", style = EstilosAgua.ItemTitulo, color = paleta.texto)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = ventana == "sin", onClick = { ventana = "sin" }, label = { Text("Sin horario") })
-            FilterChip(selected = ventana == "4h", onClick = { ventana = "4h" }, label = { Text("Próximas 4 h") })
+            FilterChip(selected = ventana == "sin", onClick = { ventana = "sin" }, label = { Text("Sin horario") }, colors = coloresFiltroPlano(paleta))
+            FilterChip(selected = ventana == "4h", onClick = { ventana = "4h" }, label = { Text("Próximas 4 h") }, colors = coloresFiltroPlano(paleta))
         }
-        FilterChip(selected = ventana == "manana", onClick = { ventana = "manana" }, label = { Text("Mañana 8–12") })
+        FilterChip(selected = ventana == "manana", onClick = { ventana = "manana" }, label = { Text("Mañana 8–12") }, colors = coloresFiltroPlano(paleta))
         Spacer(Modifier.height(10.dp))
-        FilterChip(selected = urgente, onClick = { urgente = !urgente }, label = { Text("Necesidad urgente") })
+        FilterChip(selected = urgente, onClick = { urgente = !urgente }, label = { Text("Necesidad urgente") }, colors = coloresFiltroPlano(paleta))
         if (urgente) {
             OutlinedTextField(
                 value = motivoUrgente,
@@ -160,7 +172,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         )
         if (items.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
-            Text("Puntos incluidos", style = EstilosAgua.ItemTitulo, color = paleta.texto)
+            RotuloSeccion("Resumen del pedido", acento = "${items.size} punto${if (items.size == 1) "" else "s"}")
             items.forEach { item ->
                 val nombre = puntos.firstOrNull { it.id == item.puntoId }?.nombre ?: "Punto #${item.puntoId}"
                 FichaParada(
@@ -178,3 +190,12 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         }
     }
 }
+
+@Composable
+private fun coloresFiltroPlano(paleta: pe.enrutatuagua.designsystem.tokens.PaletaAgua) =
+    androidx.compose.material3.FilterChipDefaults.filterChipColors(
+        containerColor = paleta.hoja,
+        labelColor = paleta.texto,
+        selectedContainerColor = paleta.accion,
+        selectedLabelColor = if (paleta.esClara) Color.White else Color(0xFF101820),
+    )
