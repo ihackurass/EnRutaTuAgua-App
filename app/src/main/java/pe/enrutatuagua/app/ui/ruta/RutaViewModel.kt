@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import pe.enrutatuagua.domain.repositorio.RutaRepository
+import pe.enrutatuagua.domain.repositorio.SaldoJornada
+import java.util.UUID
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.RutaConTanque
 import javax.inject.Inject
@@ -18,6 +20,7 @@ data class RutaUiState(
     val cargando: Boolean = true,
     val rutaConTanque: RutaConTanque? = null,
     val procesandoAccion: Boolean = false,
+    val jornada: SaldoJornada? = null,
 )
 
 /** ANDROID-PLAN-02 (T5): "hoy salgo a repartir" / cerrar ruta -- sin validación propia, el backend es la única autoridad. */
@@ -33,6 +36,10 @@ class RutaViewModel @Inject constructor(
     val mensaje: StateFlow<String?> = _mensaje
 
     init {
+        viewModelScope.launch {
+            try { _estado.value = _estado.value.copy(jornada = repo.consultarJornada()) }
+            catch (e: Exception) { _mensaje.value = e.message }
+        }
         viewModelScope.launch {
             repo.sembrarSiVacio()
             try {
@@ -51,7 +58,8 @@ class RutaViewModel @Inject constructor(
                         true
                     }
                     .collect { rc ->
-                        _estado.value = _estado.value.copy(cargando = false, rutaConTanque = rc)
+                        val jornada = try { repo.consultarJornada() } catch (_: Exception) { _estado.value.jornada }
+                        _estado.value = _estado.value.copy(cargando = false, rutaConTanque = rc, jornada = jornada)
                     }
             } catch (e: CancellationException) {
                 throw e
@@ -69,8 +77,22 @@ class RutaViewModel @Inject constructor(
         }
     }
 
-    fun abrirRuta() = ejecutar { repo.abrirRuta() }
-    fun cerrarRuta() = ejecutar { repo.cerrarRuta() }
+    fun abrirRuta() = ejecutar {
+        repo.abrirRuta()
+        _estado.value = _estado.value.copy(jornada = repo.consultarJornada())
+    }
+    fun cerrarRuta() = ejecutar {
+        repo.cerrarRuta()
+        _estado.value = _estado.value.copy(jornada = repo.consultarJornada())
+    }
+    fun registrarCarga(litros: Int) = ejecutar {
+        val saldo = repo.registrarCargaInicial(UUID.randomUUID().toString(), litros)
+        _estado.value = _estado.value.copy(jornada = saldo)
+    }
+    fun recargar(litros: Int) = ejecutar {
+        val saldo = repo.registrarRecarga(UUID.randomUUID().toString(), litros)
+        _estado.value = _estado.value.copy(jornada = saldo)
+    }
     fun mensajeMostrado() { _mensaje.value = null }
 
     private fun ejecutar(accion: suspend () -> Unit) {

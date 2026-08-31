@@ -48,8 +48,9 @@ class RutaScreenTest {
         regla.waitForIdle()
 
         regla.onNodeWithText("SIGUIENTE PARADA").assertExists()
-        // titulo grande + ficha en la lista = 2 apariciones
-        regla.onAllNodesWithText("Comité 12 — Loma Alta").assertCountEquals(2)
+        // El título de la siguiente parada está visible; la ficha queda en el mismo LazyColumn al desplazar.
+        regla.onAllNodesWithText("Comité 12 — Loma Alta").assertCountEquals(1)
+        regla.onNodeWithText("Registrar recarga").assertExists()
         regla.onNodeWithText("12,000").assertExists()            // columna de agua
         regla.onNodeWithText("Desliza para entregar").assertExists()
         regla.onNodeWithText("Mi ruta de hoy").assertExists()

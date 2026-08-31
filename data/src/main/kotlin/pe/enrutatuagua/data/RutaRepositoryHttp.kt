@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import pe.enrutatuagua.data.red.OmitirParadaRequestDto
+import pe.enrutatuagua.data.red.MovimientoAguaRequestDto
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RegistrarEntregaRequestDto
 import pe.enrutatuagua.data.red.RutaDto
@@ -25,6 +26,7 @@ import pe.enrutatuagua.domain.modelo.Punto
 import pe.enrutatuagua.domain.modelo.Ruta
 import pe.enrutatuagua.domain.modelo.Vehiculo
 import pe.enrutatuagua.domain.repositorio.RutaRepository
+import pe.enrutatuagua.domain.repositorio.SaldoJornada
 import retrofit2.HttpException
 import java.time.Instant
 import javax.inject.Inject
@@ -114,6 +116,18 @@ class RutaRepositoryHttp @Inject constructor(
         cerrada
     }
 
+    override suspend fun consultarJornada(): SaldoJornada? = try {
+        rutasApi.jornada().aDominio()
+    } catch (e: HttpException) {
+        if (e.code() == 409 || e.code() == 404) null else throw e
+    }
+
+    override suspend fun registrarCargaInicial(mensajeId: String, litros: Int) =
+        rutasApi.cargaInicial(MovimientoAguaRequestDto(mensajeId, litros)).aDominio()
+
+    override suspend fun registrarRecarga(mensajeId: String, litros: Int) =
+        rutasApi.recargar(MovimientoAguaRequestDto(mensajeId, litros)).aDominio()
+
     private suspend fun cargarInicial() {
         try {
             refrescar()
@@ -160,3 +174,6 @@ class RutaRepositoryHttp @Inject constructor(
         dto.aDominio(vehiculo, puntos)
     }
 }
+
+private fun pe.enrutatuagua.data.red.SaldoJornadaDto.aDominio() =
+    SaldoJornada(id, vehiculoId, rutaId, capacidadLitros, litrosDisponibles)

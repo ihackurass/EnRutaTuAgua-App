@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Ban
@@ -100,6 +103,37 @@ fun RutaScreen(
     val permisoSegundoPlano = rememberPermisoUbicacionSegundoPlano()
     val permisoNotificaciones = rememberPermisoNotificaciones()
     var mostrarExplicacionUbicacion by remember { mutableStateOf(false) }
+    var accionAgua by remember { mutableStateOf<String?>(null) }
+    var litrosAgua by remember { mutableStateOf("") }
+    if (accionAgua != null) {
+        AlertDialog(
+            onDismissRequest = { accionAgua = null },
+            title = { Text(if (accionAgua == "carga") "Confirmar carga inicial" else "Confirmar recarga") },
+            text = {
+                Column {
+                    Text("Ingresa los litros que cargaste físicamente. El servidor registrará la hora y conservará el movimiento.")
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = litrosAgua,
+                        onValueChange = { litrosAgua = it.filter(Char::isDigit).take(6) },
+                        label = { Text("Litros") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = (litrosAgua.toIntOrNull() ?: 0) > 0,
+                    onClick = {
+                        val litros = litrosAgua.toInt()
+                        if (accionAgua == "carga") vm.registrarCarga(litros) else vm.recargar(litros)
+                        accionAgua = null; litrosAgua = ""
+                    },
+                ) { Text("Confirmar") }
+            },
+            dismissButton = { TextButton(onClick = { accionAgua = null }) { Text("Cancelar") } },
+        )
+    }
     LaunchedEffect(hayRutaAbierta, permisoSegundoPlano.concedido) {
         if (hayRutaAbierta && !permisoSegundoPlano.concedido) mostrarExplicacionUbicacion = true
     }
@@ -118,18 +152,21 @@ fun RutaScreen(
         val rc = estado.rutaConTanque
         when {
             rc != null -> {
-                mapa(rc.ruta)
-                CabeceraRuta(rc, Modifier.align(Alignment.TopStart))
+                val rcReal = rc.copy(litrosRestantes = estado.jornada?.litrosDisponibles ?: rc.litrosRestantes)
+                mapa(rcReal.ruta)
+                CabeceraRuta(rcReal, Modifier.align(Alignment.TopStart))
                 ColumnaDeAgua(
-                    litrosRestantes = rc.litrosRestantes,
-                    capacidadLitros = rc.ruta.vehiculo.capacidadTanqueLitros,
+                    litrosRestantes = rcReal.litrosRestantes,
+                    capacidadLitros = rcReal.ruta.vehiculo.capacidadTanqueLitros,
                     // Bajo la cabecera: la cifra no debe rozar el chip "En ruta".
                     modifier = Modifier.align(Alignment.TopEnd)
                         .statusBarsPadding()
                         .padding(top = 92.dp, end = 14.dp),
                 )
                 HojaArrastrable { ancla ->
-                    ContenidoHoja(rc, ancla, estado.procesandoAccion, onParadaClick, onOmitirClick, vm::cerrarRuta)
+                    ContenidoHoja(rcReal, ancla, estado.procesandoAccion, onParadaClick, onOmitirClick, vm::cerrarRuta) {
+                        accionAgua = "recarga"
+                    }
                 }
             }
             estado.cargando -> Box(
@@ -144,6 +181,17 @@ fun RutaScreen(
                     Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2)
                     Spacer(Modifier.height(8.dp))
                     Text("Espera la asignación del operador", style = EstilosAgua.Cuerpo, color = paleta.texto2)
+                    Spacer(Modifier.height(18.dp))
+                    if (estado.jornada == null) {
+                        BotonPrimario("Registrar carga inicial", onClick = { accionAgua = "carga" }, habilitado = !estado.procesandoAccion)
+                    } else {
+                        Text(
+                            "${formatearLitros(estado.jornada!!.litrosDisponibles)} de ${formatearLitros(estado.jornada!!.capacidadLitros)} L cargados",
+                            style = EstilosAgua.Cuerpo, color = paleta.texto2,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        BotonPrimario("Abrir ruta", onClick = vm::abrirRuta, habilitado = !estado.procesandoAccion)
+                    }
                 }
             }
         }
@@ -222,6 +270,7 @@ private fun ContenidoHoja(
     onParadaClick: (Long) -> Unit,
     onOmitirClick: (Long) -> Unit,
     onCerrarRuta: () -> Unit,
+    onRecargar: () -> Unit,
 ) {
     val paleta = LocalPaletaAgua.current
     val proxima = rc.ruta.paradas.firstOrNull { it.estadoEntrega == EstadoEntrega.PENDIENTE }
@@ -234,6 +283,13 @@ private fun ContenidoHoja(
             .navigationBarsPadding(),
         userScrollEnabled = ancla == AnclaHoja.Abierta,
     ) {
+        item(key = "agua-disponible") {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Agua disponible: ${formatearLitros(rc.litrosRestantes)} L", style = EstilosAgua.Cuerpo, color = paleta.texto2)
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onRecargar) { Text("Registrar recarga") }
+            }
+        }
         if (proxima != null) {
             item(key = "siguiente") {
                 Column {

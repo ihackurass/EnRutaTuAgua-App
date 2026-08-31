@@ -18,7 +18,18 @@ interface RutaRepository {
     // nada de eso, sólo propaga el error del servidor.
     suspend fun abrirRuta(): Ruta
     suspend fun cerrarRuta(): Ruta
+    suspend fun consultarJornada(): SaldoJornada? = null
+    suspend fun registrarCargaInicial(mensajeId: String, litros: Int): SaldoJornada = error("Carga no soportada")
+    suspend fun registrarRecarga(mensajeId: String, litros: Int): SaldoJornada = error("Recarga no soportada")
 }
+
+data class SaldoJornada(
+    val id: Long,
+    val vehiculoId: Long,
+    val rutaId: Long?,
+    val capacidadLitros: Int,
+    val litrosDisponibles: Int,
+)
 
 interface SesionRepository {
     val sesion: Flow<Sesion?>

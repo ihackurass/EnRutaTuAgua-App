@@ -47,8 +47,13 @@ data class RegistrarEntregaRequestDto(
 
 @Serializable
 data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val vehiculoCapacidadTanqueLitros: Int, val fecha: String)
+@Serializable data class MovimientoAguaRequestDto(val mensajeId: String, val litros: Int)
+@Serializable data class SaldoJornadaDto(val id: Long, val vehiculoId: Long, val rutaId: Long? = null, val capacidadLitros: Int, val litrosDisponibles: Int)
 
 interface RutasApi {
+    @GET("api/v1/rutas/jornada") suspend fun jornada(): SaldoJornadaDto
+    @POST("api/v1/rutas/jornada/carga-inicial") suspend fun cargaInicial(@Body solicitud: MovimientoAguaRequestDto): SaldoJornadaDto
+    @POST("api/v1/rutas/jornada/recargas") suspend fun recargar(@Body solicitud: MovimientoAguaRequestDto): SaldoJornadaDto
     @GET("api/v1/rutas/abierta")
     suspend fun abierta(): RutaDto
 
