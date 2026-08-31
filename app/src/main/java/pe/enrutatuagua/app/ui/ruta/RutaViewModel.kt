@@ -14,6 +14,7 @@ import pe.enrutatuagua.domain.repositorio.SaldoJornada
 import java.util.UUID
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.RutaConTanque
+import pe.enrutatuagua.domain.modelo.EstadoSyncOperativo
 import javax.inject.Inject
 
 data class RutaUiState(
@@ -21,6 +22,7 @@ data class RutaUiState(
     val rutaConTanque: RutaConTanque? = null,
     val procesandoAccion: Boolean = false,
     val jornada: SaldoJornada? = null,
+    val sync: EstadoSyncOperativo = EstadoSyncOperativo(),
 )
 
 /** ANDROID-PLAN-02 (T5): "hoy salgo a repartir" / cerrar ruta -- sin validación propia, el backend es la única autoridad. */
@@ -36,6 +38,7 @@ class RutaViewModel @Inject constructor(
     val mensaje: StateFlow<String?> = _mensaje
 
     init {
+        viewModelScope.launch { repo.observarEstadoSync().collect { _estado.value=_estado.value.copy(sync=it) } }
         viewModelScope.launch {
             try { _estado.value = _estado.value.copy(jornada = repo.consultarJornada()) }
             catch (e: Exception) { _mensaje.value = e.message }
@@ -94,6 +97,7 @@ class RutaViewModel @Inject constructor(
         _estado.value = _estado.value.copy(jornada = saldo)
     }
     fun mensajeMostrado() { _mensaje.value = null }
+    fun reintentarSync() = ejecutar { repo.reintentarSync() }
 
     private fun ejecutar(accion: suspend () -> Unit) {
         viewModelScope.launch {

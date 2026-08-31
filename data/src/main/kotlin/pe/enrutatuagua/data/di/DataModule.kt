@@ -2,6 +2,8 @@ package pe.enrutatuagua.data.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -33,10 +35,15 @@ import javax.inject.Singleton
 object DbModule {
     @Provides @Singleton
     fun db(@ApplicationContext ctx: Context): EnRutaTuAguaDb =
-        // fallbackToDestructiveMigration: sin usuarios reales todavía, no hay
-        // migraciones escritas -- el buffer de GPS (v2, ANDROID-PLAN-04) es
-        // desechable de por sí, no justifica una migración real.
+        // La migración 4 -> 5 preserva tanto el buffer GPS como las acciones
+        // operativas pendientes. El fallback sólo cubre versiones históricas
+        // de desarrollo para las que nunca se publicó una migración incremental.
         Room.databaseBuilder(ctx, EnRutaTuAguaDb::class.java, "enrutatuagua.db")
+            .addMigrations(object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("""CREATE TABLE IF NOT EXISTS `accion_operativa_pendiente` (`id` TEXT NOT NULL, `tipo` TEXT NOT NULL, `rutaId` INTEGER NOT NULL, `paradaId` INTEGER NOT NULL, `tipoEntrega` TEXT, `ajustaA` TEXT, `litros` INTEGER, `gpsLat` REAL, `gpsLng` REAL, `registradaEnMillis` INTEGER, `motivoOmision` TEXT, `comentario` TEXT, `estado` TEXT NOT NULL, `error` TEXT, `intentos` INTEGER NOT NULL, `creadaEnMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))""")
+                }
+            })
             .fallbackToDestructiveMigration()
             .build()
 }

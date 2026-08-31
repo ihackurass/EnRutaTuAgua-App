@@ -12,6 +12,7 @@ class RutaRepoFake : RutaRepository {
     override fun invalidarCache() = Unit
     val rutaFlow = MutableStateFlow<Ruta?>(rutaDePrueba())
     val entregasFlow = MutableStateFlow<List<Entrega>>(emptyList())
+    val syncFlow = MutableStateFlow(EstadoSyncOperativo())
     val registradas = mutableListOf<Entrega>()
     var omitida: Triple<Long, MotivoOmision, String?>? = null
     var lanzarEnObservarRutaAbierta: Exception? = null
@@ -21,6 +22,7 @@ class RutaRepoFake : RutaRepository {
         emitAll(rutaFlow)
     }
     override fun observarEntregas(rutaId: Long): Flow<List<Entrega>> = entregasFlow
+    override fun observarEstadoSync(): Flow<EstadoSyncOperativo> = syncFlow
     override suspend fun registrarEntrega(entrega: Entrega) {
         lanzarEnRegistrarEntrega?.let { throw it }
         registradas += entrega; entregasFlow.value += entrega

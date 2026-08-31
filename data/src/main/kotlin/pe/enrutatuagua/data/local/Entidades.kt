@@ -12,3 +12,23 @@ data class PosicionGpsPendienteEntity(
     val mensajeId: String,
     val rutaId: Long, val lat: Double, val lng: Double, val registradaEnMillis: Long,
 )
+
+@Entity(tableName = "accion_operativa_pendiente")
+data class AccionOperativaEntity(
+    @PrimaryKey val id: String,
+    val tipo: String,
+    val rutaId: Long,
+    val paradaId: Long,
+    val tipoEntrega: String? = null,
+    val ajustaA: String? = null,
+    val litros: Int? = null,
+    val gpsLat: Double? = null,
+    val gpsLng: Double? = null,
+    val registradaEnMillis: Long? = null,
+    val motivoOmision: String? = null,
+    val comentario: String? = null,
+    val estado: String = "PENDIENTE",
+    val error: String? = null,
+    val intentos: Int = 0,
+    val creadaEnMillis: Long = System.currentTimeMillis(),
+)

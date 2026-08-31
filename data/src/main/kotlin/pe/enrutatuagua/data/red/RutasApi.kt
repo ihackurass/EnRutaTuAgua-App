@@ -44,6 +44,11 @@ data class RegistrarEntregaRequestDto(
     val gpsLng: Double? = null,
     val registradaEn: String,
 )
+@Serializable data class OmisionSyncDto(val rutaId: Long, val rutaPuntoId: Long, val motivo: String, val comentario: String? = null)
+@Serializable data class SyncRequestDto(val entregas: List<RegistrarEntregaRequestDto>, val omisiones: List<OmisionSyncDto>)
+@Serializable data class ResultadoEntregaSyncDto(val id: String, val ok: Boolean, val resultado: String? = null, val error: String? = null)
+@Serializable data class ResultadoOmisionSyncDto(val rutaPuntoId: Long, val ok: Boolean, val error: String? = null)
+@Serializable data class SyncResponseDto(val entregas: List<ResultadoEntregaSyncDto>, val omisiones: List<ResultadoOmisionSyncDto>)
 
 @Serializable
 data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val vehiculoCapacidadTanqueLitros: Int, val fecha: String)
@@ -51,6 +56,7 @@ data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val vehiculoCapac
 @Serializable data class SaldoJornadaDto(val id: Long, val vehiculoId: Long, val rutaId: Long? = null, val capacidadLitros: Int, val litrosDisponibles: Int)
 
 interface RutasApi {
+    @POST("api/v1/sync") suspend fun sincronizar(@Body solicitud: SyncRequestDto): SyncResponseDto
     @GET("api/v1/rutas/jornada") suspend fun jornada(): SaldoJornadaDto
     @POST("api/v1/rutas/jornada/carga-inicial") suspend fun cargaInicial(@Body solicitud: MovimientoAguaRequestDto): SaldoJornadaDto
     @POST("api/v1/rutas/jornada/recargas") suspend fun recargar(@Body solicitud: MovimientoAguaRequestDto): SaldoJornadaDto

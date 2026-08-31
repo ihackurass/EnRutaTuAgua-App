@@ -10,6 +10,19 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import java.io.IOException
+import java.util.UUID
+import pe.enrutatuagua.data.local.AccionOperativaEntity
+import pe.enrutatuagua.data.local.EnRutaTuAguaDb
+import pe.enrutatuagua.data.red.SyncRequestDto
+import pe.enrutatuagua.data.red.OmisionSyncDto
+import pe.enrutatuagua.domain.modelo.EstadoSyncOperativo
+import pe.enrutatuagua.domain.repositorio.ConectividadRepository
 import pe.enrutatuagua.data.red.OmitirParadaRequestDto
 import pe.enrutatuagua.data.red.MovimientoAguaRequestDto
 import pe.enrutatuagua.data.red.PuntosApi
@@ -33,9 +46,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * ANDROID-PLAN-02 (T5): reemplaza a `RutaRepositoryRoom` -- sin cola
- * offline (llamadas directas, best-effort, ver "Fuera de alcance" del
- * plan). `Ruta.vehiculoId`/`Parada.puntoId` viajan planos desde el backend
+ * Repositorio HTTP de la ruta con outbox Room para entregas y omisiones.
+ * Primero registra la intención local y luego la envía mediante `/sync`,
+ * conservando la misma identidad durante todos los reintentos.
+ * `Ruta.vehiculoId`/`Parada.puntoId` viajan planos desde el backend
  * (sin puerto que resuelva objetos anidados, ver `RutaController` del
  * backend) -- este repo los enriquece en paralelo con `PuntosApi`/
  * `VehiculosApi` antes de exponer el `Ruta` de dominio.
@@ -45,11 +59,30 @@ class RutaRepositoryHttp @Inject constructor(
     private val rutasApi: RutasApi,
     private val puntosApi: PuntosApi,
     private val vehiculosApi: VehiculosApi,
+    private val db: EnRutaTuAguaDb? = null,
+    private val conectividad: ConectividadRepository? = null,
 ) : RutaRepository {
 
     private val estado = MutableStateFlow<Ruta?>(null)
     private val mutex = Mutex()
+    private val mutexSync = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile private var cargada = false
+
+    init {
+        if (db != null && conectividad != null) scope.launch {
+            conectividad.observarConectividad().collectLatest { if (it) runCatching { sincronizarPendientes() } }
+        }
+    }
+
+    override fun observarEstadoSync(): Flow<EstadoSyncOperativo> = db?.accionOperativaDao()?.observar()?.map { acciones ->
+        EstadoSyncOperativo(acciones.count { it.estado == "PENDIENTE" }, acciones.count { it.estado == "RECHAZADA" },
+            acciones.lastOrNull { it.error != null }?.error)
+    } ?: kotlinx.coroutines.flow.flowOf(EstadoSyncOperativo())
+
+    override suspend fun reintentarSync() {
+        sincronizarPendientes()
+    }
 
     override fun observarRutaAbierta(): Flow<Ruta?> = flow {
         if (!cargada) {
@@ -72,6 +105,14 @@ class RutaRepositoryHttp @Inject constructor(
     // de arriesgar esa carrera, se parchea el caché local con lo que el
     // propio POST ya confirmó (2xx = éxito), sin una vuelta de red extra.
     override suspend fun registrarEntrega(entrega: Entrega) {
+        val dao = db?.accionOperativaDao()
+        if (dao != null) {
+            dao.insertar(AccionOperativaEntity(entrega.id,"ENTREGA",estado.value?.id ?: 0,entrega.paradaId,
+                entrega.tipo.name,entrega.ajustaA,entrega.litros,entrega.gpsLat,entrega.gpsLng,entrega.registradaEn))
+            aplicarEntregaLocal(entrega.paradaId, entrega.litros)
+            procesarNueva(entrega.id)
+            return
+        }
         rutasApi.registrarEntrega(
             RegistrarEntregaRequestDto(
                 id = entrega.id,
@@ -89,6 +130,23 @@ class RutaRepositoryHttp @Inject constructor(
 
     override suspend fun omitirParada(paradaId: Long, motivo: MotivoOmision, comentario: String?) {
         val rutaId = checkNotNull(estado.value) { "omitirParada sin ruta cargada" }.id
+        val dao = db?.accionOperativaDao()
+        if (dao != null) {
+            val id = "omision:$rutaId:$paradaId"
+            dao.insertar(
+                AccionOperativaEntity(
+                    id = id,
+                    tipo = "OMISION",
+                    rutaId = rutaId,
+                    paradaId = paradaId,
+                    motivoOmision = motivo.name,
+                    comentario = comentario,
+                ),
+            )
+            marcarParadaLocalmente(paradaId, EstadoEntrega.OMITIDO, motivo, comentario)
+            procesarNueva(id)
+            return
+        }
         rutasApi.omitir(rutaId, paradaId, OmitirParadaRequestDto(motivo.name, comentario))
         marcarParadaLocalmente(paradaId, EstadoEntrega.OMITIDO, motivo, comentario)
     }
@@ -129,10 +187,50 @@ class RutaRepositoryHttp @Inject constructor(
         rutasApi.recargar(MovimientoAguaRequestDto(mensajeId, litros)).aDominio()
 
     private suspend fun cargarInicial() {
+        runCatching { sincronizarPendientes() }
         try {
             refrescar()
         } catch (e: HttpException) {
             if (e.code() == 404) estado.value = null else throw e
+        }
+    }
+
+    private suspend fun procesarNueva(id: String) {
+        sincronizarPendientes()
+        val accion = db?.accionOperativaDao()?.porId(id)
+        if (accion?.estado == "RECHAZADA") {
+            runCatching { refrescar() }
+            throw IllegalStateException(accion.error ?: "La operación fue rechazada por el servidor")
+        }
+    }
+
+    private suspend fun sincronizarPendientes() = mutexSync.withLock {
+        val dao = db?.accionOperativaDao() ?: return@withLock
+        val acciones = dao.pendientes(50)
+        if (acciones.isEmpty()) return@withLock
+        val entregas = acciones.filter { it.tipo == "ENTREGA" }.map {
+            RegistrarEntregaRequestDto(
+                it.id, it.paradaId, checkNotNull(it.tipoEntrega), it.ajustaA,
+                checkNotNull(it.litros), it.gpsLat, it.gpsLng,
+                Instant.ofEpochMilli(checkNotNull(it.registradaEnMillis)).toString(),
+            )
+        }
+        val omisiones = acciones.filter { it.tipo == "OMISION" }.map {
+            OmisionSyncDto(it.rutaId, it.paradaId, checkNotNull(it.motivoOmision), it.comentario)
+        }
+        try {
+            val respuesta = rutasApi.sincronizar(SyncRequestDto(entregas, omisiones))
+            val aceptadas = mutableListOf<String>()
+            respuesta.entregas.forEach { resultado ->
+                if (resultado.ok) aceptadas += resultado.id else dao.rechazar(resultado.id, resultado.error)
+            }
+            respuesta.omisiones.forEach { resultado ->
+                val accion = acciones.first { it.tipo == "OMISION" && it.paradaId == resultado.rutaPuntoId }
+                if (resultado.ok) aceptadas += accion.id else dao.rechazar(accion.id, resultado.error)
+            }
+            if (aceptadas.isNotEmpty()) dao.eliminar(aceptadas)
+        } catch (e: IOException) {
+            dao.registrarFallo(acciones.map { it.id }, e.message)
         }
     }
 

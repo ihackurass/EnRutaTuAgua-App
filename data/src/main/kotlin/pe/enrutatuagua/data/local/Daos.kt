@@ -22,3 +22,18 @@ interface PosicionGpsDao {
     )
     suspend fun recortarA(maxFilas: Int)
 }
+
+@Dao
+interface AccionOperativaDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertar(accion: AccionOperativaEntity)
+    @Query("SELECT * FROM accion_operativa_pendiente WHERE estado='PENDIENTE' ORDER BY creadaEnMillis,id LIMIT :limite")
+    suspend fun pendientes(limite: Int): List<AccionOperativaEntity>
+    @Query("SELECT * FROM accion_operativa_pendiente WHERE id=:id") suspend fun porId(id: String): AccionOperativaEntity?
+    @Query("SELECT * FROM accion_operativa_pendiente ORDER BY creadaEnMillis,id")
+    fun observar(): Flow<List<AccionOperativaEntity>>
+    @Query("DELETE FROM accion_operativa_pendiente WHERE id IN (:ids)") suspend fun eliminar(ids: List<String>)
+    @Query("UPDATE accion_operativa_pendiente SET estado='RECHAZADA',error=:error,intentos=intentos+1 WHERE id=:id")
+    suspend fun rechazar(id: String, error: String?)
+    @Query("UPDATE accion_operativa_pendiente SET intentos=intentos+1,error=:error WHERE id IN (:ids)")
+    suspend fun registrarFallo(ids: List<String>, error: String?)
+}

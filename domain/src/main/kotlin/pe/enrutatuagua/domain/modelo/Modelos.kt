@@ -69,6 +69,7 @@ data class Entrega(
     val id: String, val paradaId: Long, val tipo: TipoEntrega, val ajustaA: String?,
     val litros: Int, val gpsLat: Double?, val gpsLng: Double?, val registradaEn: Long,
 )
+data class EstadoSyncOperativo(val pendientes: Int = 0, val rechazadas: Int = 0, val ultimoError: String? = null)
 
 data class PuntoAbastecimiento(
     val id: Long, val nombre: String, val lat: Double, val lng: Double,

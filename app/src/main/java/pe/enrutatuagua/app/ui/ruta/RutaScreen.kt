@@ -199,6 +199,32 @@ fun RutaScreen(
             estadoAviso,
             Modifier.align(Alignment.TopCenter).statusBarsPadding(),
         )
+        if (estado.sync.pendientes > 0 || estado.sync.rechazadas > 0) {
+            val resumenSync = buildList {
+                if (estado.sync.pendientes > 0) add(
+                    "${estado.sync.pendientes} ${if (estado.sync.pendientes == 1) "acción pendiente" else "acciones pendientes"} de sincronizar",
+                )
+                if (estado.sync.rechazadas > 0) add(
+                    "${estado.sync.rechazadas} ${if (estado.sync.rechazadas == 1) "acción rechazada" else "acciones rechazadas"}",
+                )
+            }.joinToString(" · ")
+            Surface(
+                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(horizontal = 14.dp).padding(top = 58.dp),
+                shape=RoundedCornerShape(RadiosAgua.Aviso), color=paleta.tenue,
+            ) {
+                Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        resumenSync,
+                        style = EstilosAgua.ItemSub,
+                        color = if (estado.sync.rechazadas > 0) paleta.error else paleta.texto2,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (estado.sync.pendientes > 0) {
+                        TextButton(onClick = vm::reintentarSync) { Text("Reintentar") }
+                    }
+                }
+            }
+        }
     }
 }
 

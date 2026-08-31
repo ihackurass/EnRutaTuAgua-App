@@ -24,12 +24,35 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.util.ReflectionHelpers
 import pe.enrutatuagua.designsystem.theme.TemaAgua
 import pe.enrutatuagua.domain.modelo.EstadoEntrega
+import pe.enrutatuagua.domain.modelo.EstadoSyncOperativo
 import pe.enrutatuagua.domain.usecase.ObtenerRutaAbiertaUseCase
 import pe.enrutatuagua.domain.usecase.RutaRepoFake
 
 @RunWith(RobolectricTestRunner::class)
 class RutaScreenTest {
     @get:Rule val regla = createComposeRule()
+
+    @Test
+    fun `muestra acciones pendientes de sincronizar`() {
+        val repo = RutaRepoFake().apply {
+            syncFlow.value = EstadoSyncOperativo(pendientes = 2)
+        }
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        regla.setContent {
+            TemaAgua {
+                RutaScreen(
+                    onParadaClick = {},
+                    onOmitirClick = {},
+                    vm = vm,
+                    mapa = { Box(Modifier.fillMaxSize()) },
+                )
+            }
+        }
+        regla.waitForIdle()
+
+        regla.onNodeWithText("2 acciones pendientes de sincronizar").assertExists()
+        regla.onNodeWithText("Reintentar").assertExists().assertHasClickAction()
+    }
 
     @Test
     fun `muestra siguiente parada columna y fichas sobre el mapa stub`() {

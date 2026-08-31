@@ -21,6 +21,8 @@ interface RutaRepository {
     suspend fun consultarJornada(): SaldoJornada? = null
     suspend fun registrarCargaInicial(mensajeId: String, litros: Int): SaldoJornada = error("Carga no soportada")
     suspend fun registrarRecarga(mensajeId: String, litros: Int): SaldoJornada = error("Recarga no soportada")
+    fun observarEstadoSync(): Flow<EstadoSyncOperativo> = flowOf(EstadoSyncOperativo())
+    suspend fun reintentarSync() = Unit
 }
 
 data class SaldoJornada(
