@@ -137,6 +137,10 @@ fun MapaZonaVecino(
                         "cisterna-icono",
                         BitmapFactory.decodeResource(contexto.resources, pe.enrutatuagua.app.R.drawable.ic_camion_cisterna),
                     )
+                    estilo.addImage(
+                        "punto-icono",
+                        BitmapFactory.decodeResource(contexto.resources, pe.enrutatuagua.app.R.drawable.ic_vecino_punto),
+                    )
 
                     val puntosCapa = CircleLayer("puntos-zona", "zona")
                     puntosCapa.setFilter(eq(get("tipo"), literal("punto")))
@@ -153,6 +157,13 @@ fun MapaZonaVecino(
                         circleStrokeColor(cTrazo),
                     )
                     estilo.addLayer(puntosCapa)
+
+                    val puntosIcono = SymbolLayer("puntos-zona-icono", "zona")
+                    puntosIcono.setFilter(eq(get("tipo"), literal("punto")))
+                    puntosIcono.setProperties(
+                        iconImage("punto-icono"), iconSize(0.16f), iconAllowOverlap(true),
+                    )
+                    estilo.addLayer(puntosIcono)
 
                     val cisternaHalo = CircleLayer("cisterna-halo", "zona")
                     cisternaHalo.setFilter(eq(get("tipo"), literal("cisterna")))
