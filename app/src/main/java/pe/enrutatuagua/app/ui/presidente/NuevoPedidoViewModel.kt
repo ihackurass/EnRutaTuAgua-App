@@ -14,6 +14,8 @@ import pe.enrutatuagua.domain.modelo.EstadoValidacionPunto
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.LimitePedido
 import pe.enrutatuagua.domain.modelo.PedidoItem
+import pe.enrutatuagua.domain.modelo.CondicionesPedido
+import pe.enrutatuagua.domain.modelo.PrioridadPedido
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.usecase.CrearPedidoUseCase
 import javax.inject.Inject
@@ -35,6 +37,8 @@ class NuevoPedidoViewModel @Inject constructor(
     val limite: StateFlow<LimitePedido?> = _limite
     private val _items = MutableStateFlow<List<PedidoItem>>(emptyList())
     val items: StateFlow<List<PedidoItem>> = _items
+    private val _condiciones = MutableStateFlow(CondicionesPedido())
+    val condiciones: StateFlow<CondicionesPedido> = _condiciones
 
     init {
         viewModelScope.launch {
@@ -74,9 +78,11 @@ class NuevoPedidoViewModel @Inject constructor(
 
     fun quitar(puntoId: Long) { _items.value = _items.value.filterNot { it.puntoId == puntoId } }
 
+    fun configurarCondiciones(condiciones: CondicionesPedido) { _condiciones.value = condiciones }
+
     fun crearMultipunto() {
         viewModelScope.launch {
-            try { _error.value = null; crearPedido(_items.value); _hecho.value = true }
+            try { _error.value = null; crearPedido(_items.value, _condiciones.value); _hecho.value = true }
             catch (e: Exception) { _error.value = e.mensajeParaUsuario() }
         }
     }

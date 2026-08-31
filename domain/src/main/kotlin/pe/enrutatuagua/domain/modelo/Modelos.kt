@@ -70,9 +70,16 @@ data class PuntoAbastecimiento(
     val capacidadLitros: Int, val estado: EstadoValidacionPunto,
 )
 data class PedidoItem(val puntoId: Long, val litros: Int)
+enum class PrioridadPedido { NORMAL, URGENTE }
+data class CondicionesPedido(
+    val prioridad: PrioridadPedido = PrioridadPedido.NORMAL,
+    val motivoPrioridad: String? = null,
+    val ventanaDesde: Long? = null,
+    val ventanaHasta: Long? = null,
+)
 data class Pedido(
     val id: Long, val items: List<PedidoItem>, val estado: EstadoPedido,
-    val creadoEn: Long,
+    val creadoEn: Long, val condiciones: CondicionesPedido = CondicionesPedido(),
 )
 // Vecino (plan 05): no existe tabla — en el backend real vive en Redis.
 // Aquí es un value object puro para la UI, siempre en estado "última conocida".

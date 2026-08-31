@@ -7,12 +7,19 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 @Serializable data class PedidoItemDto(val puntoId: Long, val litros: Int)
-@Serializable data class CrearPedidoRequestDto(val items: List<PedidoItemDto>)
+@Serializable data class CrearPedidoRequestDto(
+    val items: List<PedidoItemDto>, val prioridad: String = "NORMAL", val motivoPrioridad: String? = null,
+    val ventanaDesde: String? = null, val ventanaHasta: String? = null,
+)
 @Serializable data class PedidoDto(
     val id: Long,
     val items: List<PedidoItemDto>,
     val estado: String,
     val creadoEn: String,
+    val prioridad: String = "NORMAL",
+    val motivoPrioridad: String? = null,
+    val ventanaDesde: String? = null,
+    val ventanaHasta: String? = null,
 )
 @Serializable data class LimitePedidoDto(val capacidadMaximaCisternaLitros: Int, val maxLitrosPedido: Int, val tienePedidoActivo: Boolean)
 

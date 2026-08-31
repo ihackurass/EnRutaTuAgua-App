@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Text
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +37,10 @@ import pe.enrutatuagua.designsystem.component.TecladoLitros
 import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
+import pe.enrutatuagua.domain.modelo.CondicionesPedido
+import pe.enrutatuagua.domain.modelo.PrioridadPedido
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * Nuevo pedido (RP-01). Selector de punto validado + cifra/teclado de litros,
@@ -50,6 +58,25 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
 
     var puntoId by rememberSaveable { mutableStateOf<Long?>(null) }
     var litros by rememberSaveable { mutableStateOf("") }
+    var urgente by rememberSaveable { mutableStateOf(false) }
+    var motivoUrgente by rememberSaveable { mutableStateOf("") }
+    var ventana by rememberSaveable { mutableStateOf("sin") }
+
+    LaunchedEffect(urgente, motivoUrgente, ventana) {
+        val ahora = ZonedDateTime.now()
+        val rango = when (ventana) {
+            "4h" -> ahora.toInstant().toEpochMilli() to ahora.plusHours(4).toInstant().toEpochMilli()
+            "manana" -> {
+                val inicio = ahora.plusDays(1).toLocalDate().atTime(8, 0).atZone(ZoneId.systemDefault())
+                inicio.toInstant().toEpochMilli() to inicio.plusHours(4).toInstant().toEpochMilli()
+            }
+            else -> null
+        }
+        vm.configurarCondiciones(CondicionesPedido(
+            if (urgente) PrioridadPedido.URGENTE else PrioridadPedido.NORMAL,
+            motivoUrgente.takeIf { urgente }, rango?.first, rango?.second,
+        ))
+    }
 
     val paleta = LocalPaletaAgua.current
     val valor = litros.toIntOrNull() ?: 0
@@ -103,6 +130,24 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         Spacer(Modifier.height(16.dp))
         TecladoLitros(valor = litros, onCambio = { litros = it })
 
+        Spacer(Modifier.height(18.dp))
+        Text("Horario preferido", style = EstilosAgua.ItemTitulo, color = paleta.texto)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = ventana == "sin", onClick = { ventana = "sin" }, label = { Text("Sin horario") })
+            FilterChip(selected = ventana == "4h", onClick = { ventana = "4h" }, label = { Text("Próximas 4 h") })
+        }
+        FilterChip(selected = ventana == "manana", onClick = { ventana = "manana" }, label = { Text("Mañana 8–12") })
+        Spacer(Modifier.height(10.dp))
+        FilterChip(selected = urgente, onClick = { urgente = !urgente }, label = { Text("Necesidad urgente") })
+        if (urgente) {
+            OutlinedTextField(
+                value = motivoUrgente,
+                onValueChange = { motivoUrgente = it.take(250) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Motivo (mínimo 10 caracteres)") },
+            )
+        }
+
         error?.let {
             Spacer(Modifier.height(12.dp))
             TarjetaError(it)
@@ -127,6 +172,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
             Spacer(Modifier.height(12.dp))
             BotonPrimario(
                 texto = "Enviar pedido · ${items.size} punto${if (items.size == 1) "" else "s"}",
+                habilitado = !urgente || motivoUrgente.trim().length >= 10,
                 onClick = vm::crearMultipunto,
             )
         }

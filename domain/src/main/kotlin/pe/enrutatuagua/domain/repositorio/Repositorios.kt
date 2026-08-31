@@ -49,6 +49,8 @@ interface PedidoRepository {
         require(items.size == 1)
         return crearPedido(items.single().puntoId, items.single().litros)
     }
+    suspend fun crearPedidoMultipunto(items: List<PedidoItem>, condiciones: CondicionesPedido): Pedido =
+        crearPedidoMultipunto(items)
     suspend fun cancelarPedido(pedidoId: Long)
     suspend fun validarPunto(puntoId: Long)
     suspend fun consultarLimite(puntoId: Long): LimitePedido

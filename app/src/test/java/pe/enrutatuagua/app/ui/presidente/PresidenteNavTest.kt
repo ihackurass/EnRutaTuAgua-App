@@ -109,7 +109,7 @@ class PresidenteNavTest {
         regla.onNodeWithText("2,000").assertExists()
 
         regla.onNodeWithText("Agregar punto").assertIsEnabled()
-        regla.onNodeWithText("Agregar punto").performClick()
+        regla.onNodeWithText("Agregar punto").performScrollTo().performClick()
         regla.waitForIdle()
         regla.onNodeWithText("Enviar pedido · 1 punto").performScrollTo().performClick()
         regla.waitForIdle()

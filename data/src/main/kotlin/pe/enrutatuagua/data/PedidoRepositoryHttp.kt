@@ -23,6 +23,8 @@ import pe.enrutatuagua.domain.modelo.Pedido
 import pe.enrutatuagua.domain.modelo.PedidoItem
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 import pe.enrutatuagua.domain.modelo.LimitePedido
+import pe.enrutatuagua.domain.modelo.CondicionesPedido
+import pe.enrutatuagua.domain.modelo.PrioridadPedido
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 
 private const val POLLING_PEDIDOS_MS = 10_000L
@@ -48,7 +50,15 @@ class PedidoRepositoryHttp @Inject constructor(
     }
 
     override suspend fun crearPedidoMultipunto(items: List<PedidoItem>): Pedido {
-        val creado = pedidosApi.crear(CrearPedidoRequestDto(items.map { PedidoItemDto(it.puntoId, it.litros) })).aDominio()
+        return crearPedidoMultipunto(items, CondicionesPedido())
+    }
+
+    override suspend fun crearPedidoMultipunto(items: List<PedidoItem>, condiciones: CondicionesPedido): Pedido {
+        val creado = pedidosApi.crear(CrearPedidoRequestDto(
+            items.map { PedidoItemDto(it.puntoId, it.litros) }, condiciones.prioridad.name, condiciones.motivoPrioridad,
+            condiciones.ventanaDesde?.let { Instant.ofEpochMilli(it).toString() },
+            condiciones.ventanaHasta?.let { Instant.ofEpochMilli(it).toString() },
+        )).aDominio()
         refrescarPedidos.tryEmit(Unit)
         return creado
     }
@@ -76,6 +86,10 @@ private fun PedidoDto.aDominio() = Pedido(
     items = items.map { PedidoItem(it.puntoId, it.litros) },
     estado = EstadoPedido.valueOf(estado),
     creadoEn = Instant.parse(creadoEn).toEpochMilli(),
+    condiciones = CondicionesPedido(
+        PrioridadPedido.valueOf(prioridad), motivoPrioridad,
+        ventanaDesde?.let { Instant.parse(it).toEpochMilli() }, ventanaHasta?.let { Instant.parse(it).toEpochMilli() },
+    ),
 )
 
 private fun PuntoDto.aDominio() = PuntoAbastecimiento(
