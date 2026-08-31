@@ -51,6 +51,8 @@ data class RutaPlanificada(val id: Long, val fecha: LocalDate, val asociacionId:
 data class RutaOperacion(val id: Long, val fecha: LocalDate, val estado: EstadoRuta,
     val asociacion: AsociacionOperacion, val vehiculo: VehiculoOperacion,
     val aguatero: AguateroOperacion, val litros: Int, val paradas: Int)
+data class EventoOperacion(val id: Long, val categoria: String, val referencia: String,
+    val accion: String, val detalle: String, val ocurridoEn: Long, val actorNombre: String?)
 
 data class Vehiculo(val id: Long, val placa: String, val capacidadTanqueLitros: Int)
 data class Punto(val id: Long, val nombre: String, val lat: Double, val lng: Double, val capacidadLitros: Int)

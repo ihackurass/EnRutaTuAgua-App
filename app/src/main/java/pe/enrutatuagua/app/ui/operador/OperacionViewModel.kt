@@ -17,7 +17,7 @@ data class OperacionUiState(
     val vehiculoId:Long?=null,val aguateroId:Long?=null,val fecha:LocalDate=LocalDate.now(),
     val disponibles:List<PedidoOperacion> = emptyList(),val seleccionados:Set<Long> = emptySet(),
     val capacidad:Int=0,val guardando:Boolean=false,val mensaje:String?=null,
-    val rutas:List<RutaOperacion> = emptyList(), val confirmar:Boolean=false,
+    val rutas:List<RutaOperacion> = emptyList(), val eventos:List<EventoOperacion> = emptyList(), val confirmar:Boolean=false,
 )
 
 @HiltViewModel
@@ -34,6 +34,7 @@ class OperacionViewModel @Inject constructor(private val repo:OperacionRepositor
     fun cerrarConfirmacion(){_estado.value=_estado.value.copy(confirmar=false)}
     fun planificar()=viewModelScope.launch{val e=_estado.value;val a=e.asociacionId?:return@launch;val v=e.vehiculoId?:return@launch;val u=e.aguateroId?:return@launch;if(litrosSeleccionados()>e.capacidad){_estado.value=e.copy(mensaje="La selección supera la capacidad",confirmar=false);return@launch};_estado.value=e.copy(guardando=true,confirmar=false);ejecutar{val ruta=repo.planificar(a,v,u,e.fecha,e.seleccionados.toList());cargarRecursos(e.fecha,false);_estado.value=_estado.value.copy(guardando=false,mensaje="Ruta #${ruta.id} planificada",rutas=repo.listar())}}
     fun refrescarRutas()=viewModelScope.launch{ejecutar{_estado.value=_estado.value.copy(rutas=repo.listar())}}
+    fun cargarAuditoria()=viewModelScope.launch{ejecutar{_estado.value=_estado.value.copy(eventos=repo.auditoria())}}
     fun cancelar(id:Long)=viewModelScope.launch{ejecutar{repo.cancelar(id);val fecha=_estado.value.fecha;cargarRecursos(fecha,false);_estado.value=_estado.value.copy(mensaje="Ruta #$id cancelada",rutas=repo.listar())}}
     fun litrosSeleccionados()=_estado.value.disponibles.filter{it.id in _estado.value.seleccionados}.sumOf{it.litros}
     private fun sugerirAsync(){viewModelScope.launch{ejecutar{sugerir()}}}

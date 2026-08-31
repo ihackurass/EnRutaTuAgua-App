@@ -14,6 +14,7 @@ class OperacionRepositoryHttp @Inject constructor(private val api:OperacionApi):
     override suspend fun cancelar(rutaId:Long)=ruta(api.cancelar(rutaId))
     override suspend fun asignada()=ruta(api.asignada())
     override suspend fun iniciar(rutaId:Long)=ruta(api.iniciar(rutaId))
+    override suspend fun auditoria(limite:Int)=api.auditoria(limite).map { EventoOperacion(it.id,it.categoria,it.referencia,it.accion,it.detalle,java.time.Instant.parse(it.ocurridoEn).toEpochMilli(),it.actorNombre) }
     private fun pedido(d:PedidoOperacionDto)=PedidoOperacion(d.id,d.pedidoItemId,d.puntoId,d.puntoNombre,d.litros)
     private fun ruta(d:RutaPlanificadaDto)=RutaPlanificada(d.id,LocalDate.parse(d.fecha),d.asociacionId,d.vehiculoId,d.aguateroId,d.litros,EstadoRuta.entries.first{it.codigo==d.estado})
     private fun rutaOperacion(d:RutaOperacionDto)=RutaOperacion(d.id,LocalDate.parse(d.fecha),EstadoRuta.entries.first{it.codigo==d.estado},AsociacionOperacion(d.asociacion.id,d.asociacion.nombre),VehiculoOperacion(d.vehiculo.id,d.vehiculo.placa,d.vehiculo.capacidadLitros),AguateroOperacion(d.aguatero.id,d.aguatero.nombre),d.litros,d.paradas)

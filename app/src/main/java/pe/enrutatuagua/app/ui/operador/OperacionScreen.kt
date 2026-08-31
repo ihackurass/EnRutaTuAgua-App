@@ -20,7 +20,7 @@ import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.*
 import pe.enrutatuagua.domain.modelo.*
 
-private enum class VistaOperacion { PLANIFICAR, RUTAS }
+private enum class VistaOperacion { PLANIFICAR, RUTAS, AUDITORIA }
 
 @Composable fun OperacionScreen(vm: OperacionViewModel = hiltViewModel()) {
     val e by vm.estado.collectAsState(); val p = LocalPaletaAgua.current
@@ -34,9 +34,9 @@ private enum class VistaOperacion { PLANIFICAR, RUTAS }
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { Text("OPERACIÓN · ${LocalDate.now()}", style = EstilosAgua.Rotulo, color = p.texto2); Spacer(Modifier.height(5.dp)); Text(if (vista == VistaOperacion.PLANIFICAR) "Planificar reparto" else "Rutas de la empresa", style = EstilosAgua.TituloParada, color = p.texto); Text(if (vista == VistaOperacion.PLANIFICAR) "Asigna la demanda a una cisterna" else "Consulta el estado de cada reparto", style = EstilosAgua.Cuerpo, color = p.texto2) }
-        item { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(RadiosAgua.Aviso)).background(p.tenue).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) { TabOperacion("Planificar", vista == VistaOperacion.PLANIFICAR, Modifier.weight(1f)) { vista = VistaOperacion.PLANIFICAR }; TabOperacion("Rutas", vista == VistaOperacion.RUTAS, Modifier.weight(1f)) { vista = VistaOperacion.RUTAS; vm.refrescarRutas() } } }
-        if (vista == VistaOperacion.PLANIFICAR) contenidoPlanificar(e, vm) else contenidoRutas(e, vm, onCancelar = { cancelarRuta = it })
+        item { Text("OPERACIÓN · ${LocalDate.now()}", style = EstilosAgua.Rotulo, color = p.texto2); Spacer(Modifier.height(5.dp)); Text(when(vista){VistaOperacion.PLANIFICAR->"Planificar reparto";VistaOperacion.RUTAS->"Rutas de la empresa";VistaOperacion.AUDITORIA->"Bitácora operativa"}, style = EstilosAgua.TituloParada, color = p.texto); Text(when(vista){VistaOperacion.PLANIFICAR->"Asigna la demanda a una cisterna";VistaOperacion.RUTAS->"Consulta el estado de cada reparto";VistaOperacion.AUDITORIA->"Rastrea quién hizo qué y cuándo"}, style = EstilosAgua.Cuerpo, color = p.texto2) }
+        item { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(RadiosAgua.Aviso)).background(p.tenue).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) { TabOperacion("Planificar", vista == VistaOperacion.PLANIFICAR, Modifier.weight(1f)) { vista = VistaOperacion.PLANIFICAR }; TabOperacion("Rutas", vista == VistaOperacion.RUTAS, Modifier.weight(1f)) { vista = VistaOperacion.RUTAS; vm.refrescarRutas() }; TabOperacion("Bitácora", vista == VistaOperacion.AUDITORIA, Modifier.weight(1f)) { vista = VistaOperacion.AUDITORIA; vm.cargarAuditoria() } } }
+        when(vista){VistaOperacion.PLANIFICAR->contenidoPlanificar(e,vm);VistaOperacion.RUTAS->contenidoRutas(e,vm,onCancelar={cancelarRuta=it});VistaOperacion.AUDITORIA->contenidoAuditoria(e,vm)}
     }
 }
 
@@ -61,6 +61,15 @@ private fun androidx.compose.foundation.lazy.LazyListScope.contenidoRutas(e: Ope
     items(e.rutas, key = { it.id }) { ruta -> RutaOperacionCard(ruta, onCancelar) }
     e.mensaje?.let { item { MensajeOperacion(it) } }
 }
+
+private fun androidx.compose.foundation.lazy.LazyListScope.contenidoAuditoria(e: OperacionUiState, vm: OperacionViewModel) {
+    item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { val p=LocalPaletaAgua.current; Text("ÚLTIMOS MOVIMIENTOS",style=EstilosAgua.Rotulo,color=p.texto2,modifier=Modifier.weight(1f));TextButton(onClick=vm::cargarAuditoria){Text("Actualizar",color=p.accion)} } }
+    if(e.eventos.isEmpty()) item { val p=LocalPaletaAgua.current; Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(RadiosAgua.Aviso),color=p.tenue){Text("Todavía no hay movimientos registrados.",Modifier.padding(18.dp),color=p.texto2)} }
+    items(e.eventos,key={"audit-${it.id}"}) { EventoOperacionCard(it) }
+    e.mensaje?.let { item { MensajeOperacion(it) } }
+}
+
+@Composable private fun EventoOperacionCard(evento:EventoOperacion){val p=LocalPaletaAgua.current;val fecha=java.time.Instant.ofEpochMilli(evento.ocurridoEn).atZone(java.time.ZoneId.systemDefault());Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(RadiosAgua.Aviso),color=p.tenue){Column(Modifier.padding(14.dp)){Row{Text(evento.categoria,style=EstilosAgua.Rotulo,color=p.accion,modifier=Modifier.weight(1f));Text("${fecha.toLocalDate()} ${fecha.toLocalTime().withSecond(0).withNano(0)}",style=EstilosAgua.ItemSub,color=p.texto2)};Text(evento.accion.replace('_',' '),style=EstilosAgua.ItemTitulo,color=p.texto);Text("${evento.actorNombre ?: "Sistema"} · ref. ${evento.referencia}",style=EstilosAgua.ItemSub,color=p.texto2)}}}
 
 @Composable private fun TabOperacion(texto: String, elegido: Boolean, modifier: Modifier, onClick: () -> Unit) { val p = LocalPaletaAgua.current; Surface(modifier.heightIn(min = 46.dp).clickable(onClick = onClick), shape = RoundedCornerShape(12.dp), color = if (elegido) p.tinta else p.tenue, contentColor = if (elegido) p.sobreTinta else p.texto2) { Box(contentAlignment = Alignment.Center) { Text(texto, style = EstilosAgua.ItemTitulo) } } }
 

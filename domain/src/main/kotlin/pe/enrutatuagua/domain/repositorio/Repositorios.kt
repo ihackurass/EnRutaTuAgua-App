@@ -64,6 +64,7 @@ interface OperacionRepository {
     suspend fun cancelar(rutaId: Long): RutaPlanificada
     suspend fun asignada(): RutaPlanificada
     suspend fun iniciar(rutaId: Long): RutaPlanificada
+    suspend fun auditoria(limite: Int = 100): List<EventoOperacion>
 }
 
 interface TrackingRepository {

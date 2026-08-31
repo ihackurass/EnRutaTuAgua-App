@@ -40,4 +40,16 @@ class OperacionRepositoryHttpTest {
         assertFalse(resumen.vehiculos.single().disponible)
         assertEquals("Ya tiene una ruta ese día", resumen.vehiculos.single().motivoNoDisponible)
     }
+
+    @Test fun `auditoria convierte fecha y conserva actor`() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody("""
+            [{"id":7,"categoria":"AGUA","referencia":"abc","accion":"RECARGA","detalle":"{\"litros\": 500}","ocurridoEn":"2026-09-01T15:30:00Z","actorId":3,"actorNombre":"Aguatero Uno"}]
+        """.trimIndent()))
+
+        val evento = repo.auditoria().single()
+
+        assertEquals("/api/v1/operacion/auditoria?limite=100", servidor.takeRequest().path)
+        assertEquals("RECARGA", evento.accion)
+        assertEquals("Aguatero Uno", evento.actorNombre)
+    }
 }

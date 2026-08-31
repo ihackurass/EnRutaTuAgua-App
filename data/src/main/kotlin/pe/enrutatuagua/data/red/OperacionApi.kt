@@ -12,6 +12,7 @@ import retrofit2.http.*
 @Serializable data class PlanificarRutaRequestDto(val asociacionId:Long,val vehiculoId:Long,val aguateroId:Long,val fecha:String,val pedidoIds:List<Long>)
 @Serializable data class RutaPlanificadaDto(val id:Long,val fecha:String,val asociacionId:Long,val vehiculoId:Long,val aguateroId:Long,val litros:Int,val estado:Int)
 @Serializable data class RutaOperacionDto(val id:Long,val fecha:String,val estado:Int,val asociacion:AsociacionOperacionDto,val vehiculo:VehiculoOperacionDto,val aguatero:AguateroOperacionDto,val litros:Int,val paradas:Int)
+@Serializable data class EventoOperacionDto(val id:Long,val categoria:String,val referencia:String,val accion:String,val detalle:String,val ocurridoEn:String,val actorId:Long?=null,val actorNombre:String?=null)
 
 interface OperacionApi {
     @GET("api/v1/operacion/resumen") suspend fun resumen(@Query("fecha") fecha:String):ResumenOperacionDto
@@ -21,4 +22,5 @@ interface OperacionApi {
     @POST("api/v1/operacion/rutas/{id}/cancelar") suspend fun cancelar(@Path("id") id:Long):RutaPlanificadaDto
     @GET("api/v1/operacion/rutas/asignada") suspend fun asignada():RutaPlanificadaDto
     @POST("api/v1/operacion/rutas/{id}/iniciar") suspend fun iniciar(@Path("id") id:Long):RutaPlanificadaDto
+    @GET("api/v1/operacion/auditoria") suspend fun auditoria(@Query("limite") limite:Int=100):List<EventoOperacionDto>
 }
