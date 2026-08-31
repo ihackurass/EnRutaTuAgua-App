@@ -63,6 +63,7 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.designsystem.tokens.RadiosAgua
 import pe.enrutatuagua.domain.modelo.EstadoEntrega
 import pe.enrutatuagua.domain.modelo.Ruta
+import pe.enrutatuagua.domain.repositorio.SaldoJornada
 import pe.enrutatuagua.domain.usecase.RutaConTanque
 
 /**
@@ -173,27 +174,12 @@ fun RutaScreen(
                 Modifier.fillMaxSize().background(paleta.fondo),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator(color = paleta.accion) }
-            else -> Box(
-                Modifier.fillMaxSize().background(paleta.fondo).padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Sin ruta abierta", style = EstilosAgua.TituloParada, color = paleta.texto2)
-                    Spacer(Modifier.height(8.dp))
-                    Text("Espera la asignación del operador", style = EstilosAgua.Cuerpo, color = paleta.texto2)
-                    Spacer(Modifier.height(18.dp))
-                    if (estado.jornada == null) {
-                        BotonPrimario("Registrar carga inicial", onClick = { accionAgua = "carga" }, habilitado = !estado.procesandoAccion)
-                    } else {
-                        Text(
-                            "${formatearLitros(estado.jornada!!.litrosDisponibles)} de ${formatearLitros(estado.jornada!!.capacidadLitros)} L cargados",
-                            style = EstilosAgua.Cuerpo, color = paleta.texto2,
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        BotonPrimario("Abrir ruta", onClick = vm::abrirRuta, habilitado = !estado.procesandoAccion)
-                    }
-                }
-            }
+            else -> JornadaSinRuta(
+                jornada = estado.jornada,
+                procesando = estado.procesandoAccion,
+                onCargar = { accionAgua = "carga" },
+                onAbrirRuta = vm::abrirRuta,
+            )
         }
         AvisoSuperior(
             estadoAviso,
@@ -223,6 +209,118 @@ fun RutaScreen(
                         TextButton(onClick = vm::reintentarSync) { Text("Reintentar") }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun JornadaSinRuta(
+    jornada: SaldoJornada?,
+    procesando: Boolean,
+    onCargar: () -> Unit,
+    onAbrirRuta: () -> Unit,
+) {
+    val p = LocalPaletaAgua.current
+    Column(
+        Modifier.fillMaxSize().background(p.fondo).statusBarsPadding()
+            .navigationBarsPadding().padding(horizontal = 20.dp, vertical = 22.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = RoundedCornerShape(16.dp), color = p.accion.copy(alpha = .14f)) {
+                Icon(
+                    TablerIcons.Truck,
+                    contentDescription = null,
+                    tint = p.accion,
+                    modifier = Modifier.padding(13.dp).size(26.dp),
+                )
+            }
+            Spacer(Modifier.width(13.dp))
+            Column {
+                Text("OPERACIÓN DE HOY", style = EstilosAgua.Rotulo, color = p.texto2)
+                Text("Tu jornada de reparto", style = EstilosAgua.TituloParada, color = p.texto)
+            }
+        }
+        Spacer(Modifier.height(26.dp))
+        Text("Sin ruta abierta", style = EstilosAgua.Rotulo, color = p.texto2)
+        Text("Espera la asignación del operador", style = EstilosAgua.ItemSub, color = p.texto2)
+        Spacer(Modifier.height(10.dp))
+        Surface(
+            Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = p.tinta,
+            shadowElevation = 5.dp,
+        ) {
+            Column(Modifier.padding(22.dp)) {
+                Text("ESTADO ACTUAL", style = EstilosAgua.Rotulo, color = p.sobreTinta.copy(alpha = .7f))
+                Spacer(Modifier.height(13.dp))
+                Text(
+                    if (jornada == null) "Carga requerida" else "Listo para salir",
+                    style = EstilosAgua.TituloParada,
+                    color = p.sobreTinta,
+                )
+                Spacer(Modifier.height(7.dp))
+                Text(
+                    jornada?.let {
+                        "${formatearLitros(it.litrosDisponibles)} de ${formatearLitros(it.capacidadLitros)} litros disponibles"
+                    } ?: "Registra el agua cargada físicamente antes de iniciar la ruta.",
+                    style = EstilosAgua.Cuerpo,
+                    color = p.sobreTinta.copy(alpha = .78f),
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        RotuloSeccion("Pasos para comenzar")
+        Spacer(Modifier.height(10.dp))
+        PasoJornada(
+            numero = "1",
+            titulo = "Cargar la cisterna",
+            detalle = if (jornada == null) "Pendiente" else "Carga registrada",
+            completado = jornada != null,
+        )
+        Spacer(Modifier.height(10.dp))
+        PasoJornada(
+            numero = "2",
+            titulo = "Abrir la ruta asignada",
+            detalle = if (jornada == null) "Disponible después de la carga" else "Siguiente paso",
+            completado = false,
+        )
+        Spacer(Modifier.weight(1f))
+        Text(
+            if (jornada == null) "La carga queda registrada con hora y cantidad."
+            else "Al abrir la ruta comenzará el seguimiento GPS para los vecinos.",
+            style = EstilosAgua.ItemSub,
+            color = p.texto2,
+        )
+        Spacer(Modifier.height(12.dp))
+        BotonPrimario(
+            texto = if (jornada == null) "Registrar carga inicial" else "Abrir ruta",
+            onClick = if (jornada == null) onCargar else onAbrirRuta,
+            habilitado = !procesando,
+        )
+    }
+}
+
+@Composable
+private fun PasoJornada(numero: String, titulo: String, detalle: String, completado: Boolean) {
+    val p = LocalPaletaAgua.current
+    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = p.hoja) {
+        Row(Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (completado) p.exito.copy(alpha = .14f) else p.tenue,
+            ) {
+                Text(
+                    if (completado) "✓" else numero,
+                    style = EstilosAgua.ItemTitulo,
+                    color = if (completado) p.exito else p.texto2,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                )
+            }
+            Spacer(Modifier.width(13.dp))
+            Column {
+                Text(titulo, style = EstilosAgua.ItemTitulo, color = p.texto)
+                Text(detalle, style = EstilosAgua.ItemSub, color = p.texto2)
             }
         }
     }
