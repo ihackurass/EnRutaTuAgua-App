@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.layout.size
@@ -86,7 +88,7 @@ fun ParadaScreen(onHecho: (mensajeAviso: String?) -> Unit, vm: ParadaViewModel =
     Column(
         Modifier
             .fillMaxSize()
-            .background(paleta.hoja)
+            .background(paleta.fondo)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 18.dp, vertical = 10.dp),
@@ -145,7 +147,8 @@ private fun TarjetaError(mensaje: String) {
         Modifier
             .fillMaxWidth()
             .clip(forma)
-            .background(paleta.error.copy(alpha = 0.08f))
+            .background(paleta.hoja)
+            .border(1.dp, paleta.error, forma)
             .padding(12.dp),
     ) {
         Text(mensaje, style = EstilosAgua.Error, color = paleta.error)
@@ -176,7 +179,10 @@ private fun VistaEntrega(
         RotuloSeccion("Entrega en", acento = titulo)
         Spacer(Modifier.height(10.dp))
 
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            Modifier.fillMaxWidth().semantics { heading() },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             CifraLitros(valor, enAlerta = excede)
             Spacer(Modifier.height(4.dp))
             Text(
@@ -203,8 +209,8 @@ private fun VistaEntrega(
                         .weight(1f)
                         .heightIn(min = 48.dp)
                         .clip(forma)
-                        .background(paleta.superficie2)
-                        .let { if (elegido) it.border(1.5.dp, paleta.tinta, forma) else it }
+                        .background(if (elegido) paleta.accion else paleta.hoja)
+                        .border(1.dp, if (elegido) paleta.accion else paleta.linea, forma)
                         .clickable { onLitros(preset.toString()) }
                         .padding(vertical = 13.dp),
                     horizontalArrangement = Arrangement.Center,
@@ -213,14 +219,14 @@ private fun VistaEntrega(
                     Icon(
                         TablerIcons.Droplet,
                         contentDescription = null,
-                        tint = if (elegido) paleta.tinta else paleta.texto2,
+                        tint = if (elegido) paleta.sobreTinta else paleta.texto2,
                         modifier = Modifier.size(14.dp),
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(
                         "${formatearLitros(preset)} L",
                         style = EstilosAgua.Preset,
-                        color = if (elegido) paleta.tinta else paleta.texto,
+                        color = if (elegido) paleta.sobreTinta else paleta.texto,
                     )
                 }
             }
@@ -270,7 +276,12 @@ private fun VistaOmision(
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
         RotuloSeccion("Omitir", acento = titulo)
         Spacer(Modifier.height(6.dp))
-        Text("¿Qué pasó?", style = EstilosAgua.TituloParada, color = paleta.texto)
+        Text(
+            "¿Qué pasó?",
+            style = EstilosAgua.TituloParada,
+            color = paleta.texto,
+            modifier = Modifier.semantics { heading() },
+        )
         Spacer(Modifier.height(4.dp))
         Text(
             "La parada queda registrada como no entregada, con su motivo.",
@@ -298,7 +309,8 @@ private fun VistaOmision(
                             .fillMaxWidth()
                             .heightIn(min = 84.dp)
                             .clip(forma)
-                            .background(paleta.superficie2)
+                            .background(paleta.hoja)
+                            .border(1.dp, paleta.linea, forma)
                             .padding(12.dp),
                     ) {
                         if (comentario.isEmpty()) {

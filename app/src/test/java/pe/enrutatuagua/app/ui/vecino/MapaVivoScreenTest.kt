@@ -35,7 +35,7 @@ class MapaVivoScreenTest {
         }
         regla.waitForIdle()
 
-        regla.onNodeWithText("Tu zona").assertExists()
+        regla.onNodeWithText("Cisterna en tu zona").assertExists()
         regla.onNodeWithText("Tu asociación").assertExists()
         regla.onNodeWithText("Respaldo REST · hace 47 min").assertExists()
         regla.onNodeWithText("8,500 L").assertExists()
@@ -64,7 +64,7 @@ class MapaVivoScreenTest {
         }
         regla.waitForIdle()
 
-        regla.onNodeWithText("Tu zona").assertExists()
+        regla.onNodeWithText("Cisterna en tu zona").assertExists()
         regla.onNodeWithText("Esperando la primera posición").assertExists()
         regla.onNodeWithText("PUNTOS DE TU ZONA").assertExists()
         regla.onNodeWithText("Comité 12 — Loma Alta").assertExists()

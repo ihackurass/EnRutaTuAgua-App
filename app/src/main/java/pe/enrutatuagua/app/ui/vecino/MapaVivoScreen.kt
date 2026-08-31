@@ -1,6 +1,7 @@
 package pe.enrutatuagua.app.ui.vecino
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,13 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import compose.icons.TablerIcons
 import compose.icons.tablericons.WifiOff
+import compose.icons.tablericons.Wifi
 import pe.enrutatuagua.designsystem.component.AvisoSuperior
 import pe.enrutatuagua.designsystem.component.EstadoFicha
 import pe.enrutatuagua.designsystem.component.FichaParada
@@ -131,21 +134,23 @@ fun MapaVivoScreen(
 @Composable
 private fun CabeceraZona(asociacionNombre: String, modifier: Modifier = Modifier) {
     val paleta = LocalPaletaAgua.current
-    Column(
+    Surface(
         modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    0f to paleta.mapaBase.copy(alpha = 0.92f),
-                    0.4f to paleta.mapaBase.copy(alpha = 0.92f),
-                    1f to Color.Transparent,
-                ),
-            )
             .statusBarsPadding()
-            .padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(RadiosAgua.Tarjeta),
+        color = paleta.hoja,
+        shadowElevation = 8.dp,
     ) {
-        Text("Tu zona", style = EstilosAgua.Zona, color = paleta.texto)
-        Text(asociacionNombre, style = EstilosAgua.Placa, color = paleta.texto2)
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
+            Text(
+                "Cisterna en tu zona",
+                style = EstilosAgua.Zona,
+                color = paleta.texto,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(asociacionNombre, style = EstilosAgua.Placa, color = paleta.texto2)
+        }
     }
 }
 
@@ -160,19 +165,23 @@ private fun BadgeSinConexion(posicion: PosicionCisterna?, minutosSinSenal: Int, 
         estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.ERROR -> "Error al actualizar · hace $minutosSinSenal min"
         else -> "Respaldo REST · hace $minutosSinSenal min"
     }
+    val enVivo = posicion != null && estadoTracking == pe.enrutatuagua.domain.modelo.EstadoTracking.EN_VIVO
+    val colorEstado = if (enVivo) paleta.exito else paleta.alerta
     Row(
         modifier
             .clip(RoundedCornerShape(RadiosAgua.Aviso))
-            .background(paleta.alerta.copy(alpha = 0.12f))
+            .background(paleta.hoja)
+            .border(1.dp, colorEstado, RoundedCornerShape(RadiosAgua.Aviso))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Icon(
-            TablerIcons.WifiOff, contentDescription = null,
-            tint = paleta.alerta, modifier = Modifier.size(16.dp),
+            if (enVivo) TablerIcons.Wifi else TablerIcons.WifiOff,
+            contentDescription = null,
+            tint = colorEstado, modifier = Modifier.size(16.dp),
         )
-        Text(texto, style = EstilosAgua.ItemSub, color = paleta.alerta)
+        Text(texto, style = EstilosAgua.ItemSub, color = colorEstado)
     }
 }
 
