@@ -211,7 +211,15 @@ fun RutaScreen(
                         modifier = Modifier.weight(1f),
                     )
                     if (estado.sync.pendientes > 0) {
-                        TextButton(onClick = vm::reintentarSync) { Text("Reintentar") }
+                        TextButton(onClick = vm::reintentarSync) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_accion_reintentar),
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("Reintentar")
+                        }
                     }
                 }
             }

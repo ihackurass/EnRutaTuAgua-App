@@ -1,6 +1,7 @@
 package pe.enrutatuagua.app.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -38,6 +40,7 @@ import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
 import pe.enrutatuagua.app.ui.operador.OperacionScreen
 import pe.enrutatuagua.app.ui.ruta.RutaAsignadaGate
 import pe.enrutatuagua.app.BuildConfig
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.modelo.Sesion
 import compose.icons.TablerIcons
@@ -107,8 +110,28 @@ private fun MenuSesion(multirrol: Boolean, onCambiarRol: () -> Unit, onCerrar: (
             onDismissRequest = { abierto = false },
             containerColor = paleta.hoja,
         ) {
-            if (multirrol) DropdownMenuItem(text = { Text("Cambiar rol") }, onClick = { abierto = false; onCambiarRol() })
-            DropdownMenuItem(text = { Text("Cerrar sesión") }, onClick = { abierto = false; onCerrar() })
+            if (multirrol) DropdownMenuItem(
+                text = { Text("Cambiar rol") },
+                leadingIcon = {
+                    Image(
+                        painterResource(R.drawable.ic_sesion_cambiar_rol),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp),
+                    )
+                },
+                onClick = { abierto = false; onCambiarRol() },
+            )
+            DropdownMenuItem(
+                text = { Text("Cerrar sesión") },
+                leadingIcon = {
+                    Image(
+                        painterResource(R.drawable.ic_sesion_cerrar),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp),
+                    )
+                },
+                onClick = { abierto = false; onCerrar() },
+            )
         }
     }
 }

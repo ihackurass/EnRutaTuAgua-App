@@ -17,8 +17,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.app.ui.vecino.MapaZonaVecino
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.BotonSecundario
@@ -77,6 +79,7 @@ fun PruebaTrackingScreen(
             }
             BotonPrimario(
                 if (estado.activa) "Detener simulación" else "Iniciar cerca de mí",
+                iconoPainter = if (estado.activa) null else painterResource(R.drawable.ic_ubicacion_centrar),
                 onClick = {
                     if (estado.activa) vm.detener()
                     else if (permiso.concedido) vm.alternar()

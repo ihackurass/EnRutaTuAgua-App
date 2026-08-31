@@ -235,10 +235,10 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAba
                 numero = indice + 1,
                 titulo = p.nombre,
                 subtitulo = "Capacidad: ${formatearLitros(p.capacidadLitros)} L",
-                textoDerecha = "Validado",
+                textoDerecha = p.estado.etiqueta,
                 // El ViewModel ya filtra a sólo VALIDADO (auditoría rol
                 // Vecino) -- ningún otro estado llega hasta acá.
-                estado = EstadoFicha.Pendiente,
+                estado = EstadoFicha.Entregada,
                 atenuar = false,
             )
         }

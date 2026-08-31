@@ -63,7 +63,7 @@ fun FichaParada(
                     .background(
                         when (estado) {
                             EstadoFicha.Proxima -> paleta.accion
-                            EstadoFicha.Entregada -> paleta.exito.copy(alpha = 0.16f)
+                            EstadoFicha.Entregada -> paleta.exito
                             EstadoFicha.Omitida -> paleta.alerta.copy(alpha = 0.16f)
                             EstadoFicha.Pendiente -> paleta.tenue
                         },
@@ -72,7 +72,12 @@ fun FichaParada(
             ) {
                 when (estado) {
                     EstadoFicha.Entregada ->
-                        Icon(TablerIcons.Check, null, tint = paleta.exito, modifier = Modifier.size(16.dp))
+                        Icon(
+                            TablerIcons.Check,
+                            null,
+                            tint = if (paleta.esClara) Color.White else Color(0xFF101820),
+                            modifier = Modifier.size(16.dp),
+                        )
                     EstadoFicha.Omitida ->
                         Icon(TablerIcons.X, null, tint = paleta.alerta, modifier = Modifier.size(16.dp))
                     else -> Text(
