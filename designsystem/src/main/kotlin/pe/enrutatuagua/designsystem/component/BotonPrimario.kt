@@ -1,5 +1,6 @@
 package pe.enrutatuagua.designsystem.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import pe.enrutatuagua.designsystem.tokens.DimensionesAgua
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
@@ -28,6 +30,7 @@ fun BotonPrimario(
     habilitado: Boolean = true,
     peligro: Boolean = false,
     icono: ImageVector? = null,
+    iconoPainter: Painter? = null,
 ) {
     val esquema = MaterialTheme.colorScheme
     val paleta = LocalPaletaAgua.current
@@ -47,6 +50,13 @@ fun BotonPrimario(
     ) {
         if (icono != null) {
             Icon(icono, contentDescription = null, modifier = Modifier.size(DimensionesAgua.IconoLinea))
+            Spacer(Modifier.width(8.dp))
+        } else if (iconoPainter != null) {
+            Image(
+                painter = iconoPainter,
+                contentDescription = null,
+                modifier = Modifier.size(DimensionesAgua.IconoLinea),
+            )
             Spacer(Modifier.width(8.dp))
         }
         Text(texto, style = EstilosAgua.BotonPrimario)
