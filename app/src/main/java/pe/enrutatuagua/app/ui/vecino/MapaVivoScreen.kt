@@ -217,9 +217,9 @@ private fun ContenidoHojaZona(posicion: PosicionCisterna?, puntos: List<PuntoAba
                     Image(
                         painter = painterResource(R.drawable.ic_vecino_punto),
                         contentDescription = null,
-                        modifier = Modifier.size(38.dp),
+                        modifier = Modifier.size(26.dp),
                     )
-                    Spacer(Modifier.size(8.dp))
+                    Spacer(Modifier.size(6.dp))
                     RotuloSeccion("Puntos de tu zona")
                 }
                 Spacer(Modifier.height(4.dp))
