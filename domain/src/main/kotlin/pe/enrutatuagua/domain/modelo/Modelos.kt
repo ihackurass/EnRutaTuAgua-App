@@ -39,10 +39,13 @@ enum class EstadoPedido(val codigo: Int, val etiqueta: String) {
 
 data class LimitePedido(val capacidadMaximaCisternaLitros: Int, val maxLitrosPedido: Int, val tienePedidoActivo: Boolean)
 data class AsociacionOperacion(val id: Long, val nombre: String)
-data class VehiculoOperacion(val id: Long, val placa: String, val capacidadLitros: Int)
-data class AguateroOperacion(val id: Long, val nombre: String)
+data class VehiculoOperacion(val id: Long, val placa: String, val capacidadLitros: Int,
+    val disponible: Boolean = true, val motivoNoDisponible: String? = null)
+data class AguateroOperacion(val id: Long, val nombre: String,
+    val disponible: Boolean = true, val motivoNoDisponible: String? = null)
 data class PedidoOperacion(val id: Long, val pedidoItemId: Long, val puntoId: Long, val puntoNombre: String, val litros: Int)
-data class ResumenOperacion(val asociaciones: List<AsociacionOperacion>, val vehiculos: List<VehiculoOperacion>, val aguateros: List<AguateroOperacion>)
+data class ResumenOperacion(val asociaciones: List<AsociacionOperacion>, val vehiculos: List<VehiculoOperacion>,
+    val aguateros: List<AguateroOperacion>, val fecha: LocalDate = LocalDate.now())
 data class SugerenciaRuta(val capacidadLitros: Int, val litrosSugeridos: Int, val sugeridos: List<PedidoOperacion>, val disponibles: List<PedidoOperacion>)
 data class RutaPlanificada(val id: Long, val fecha: LocalDate, val asociacionId: Long, val vehiculoId: Long, val aguateroId: Long, val litros: Int, val estado: EstadoRuta)
 data class RutaOperacion(val id: Long, val fecha: LocalDate, val estado: EstadoRuta,

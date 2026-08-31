@@ -57,7 +57,7 @@ interface PedidoRepository {
 }
 
 interface OperacionRepository {
-    suspend fun resumen(): ResumenOperacion
+    suspend fun resumen(fecha: java.time.LocalDate = java.time.LocalDate.now()): ResumenOperacion
     suspend fun sugerencia(asociacionId: Long, vehiculoId: Long): SugerenciaRuta
     suspend fun planificar(asociacionId: Long, vehiculoId: Long, aguateroId: Long, fecha: java.time.LocalDate, pedidoIds: List<Long>): RutaPlanificada
     suspend fun listar(fecha: java.time.LocalDate? = null, estado: EstadoRuta? = null): List<RutaOperacion>

@@ -7,7 +7,7 @@ import pe.enrutatuagua.domain.modelo.*
 import pe.enrutatuagua.domain.repositorio.OperacionRepository
 
 class OperacionRepositoryHttp @Inject constructor(private val api:OperacionApi):OperacionRepository {
-    override suspend fun resumen()=api.resumen().let { r->ResumenOperacion(r.asociaciones.map{AsociacionOperacion(it.id,it.nombre)},r.vehiculos.map{VehiculoOperacion(it.id,it.placa,it.capacidadLitros)},r.aguateros.map{AguateroOperacion(it.id,it.nombre)}) }
+    override suspend fun resumen(fecha:LocalDate)=api.resumen(fecha.toString()).let { r->ResumenOperacion(r.asociaciones.map{AsociacionOperacion(it.id,it.nombre)},r.vehiculos.map{VehiculoOperacion(it.id,it.placa,it.capacidadLitros,it.disponible,it.motivoNoDisponible)},r.aguateros.map{AguateroOperacion(it.id,it.nombre,it.disponible,it.motivoNoDisponible)},LocalDate.parse(r.fecha)) }
     override suspend fun sugerencia(asociacionId:Long,vehiculoId:Long)=api.sugerencia(asociacionId,vehiculoId).let { SugerenciaRuta(it.capacidadLitros,it.litrosSugeridos,it.sugeridos.map(::pedido),it.disponibles.map(::pedido)) }
     override suspend fun planificar(asociacionId:Long,vehiculoId:Long,aguateroId:Long,fecha:LocalDate,pedidoIds:List<Long>)=ruta(api.planificar(PlanificarRutaRequestDto(asociacionId,vehiculoId,aguateroId,fecha.toString(),pedidoIds)))
     override suspend fun listar(fecha:LocalDate?,estado:EstadoRuta?)=api.listar(fecha?.toString(),estado?.codigo).map(::rutaOperacion)
