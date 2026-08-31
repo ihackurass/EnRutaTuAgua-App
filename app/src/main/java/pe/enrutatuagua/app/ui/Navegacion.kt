@@ -3,7 +3,11 @@ package pe.enrutatuagua.app.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,6 +40,9 @@ import pe.enrutatuagua.app.ui.ruta.RutaAsignadaGate
 import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.domain.modelo.Rol
 import pe.enrutatuagua.domain.modelo.Sesion
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Dots
+import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 
 @Composable
 fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
@@ -76,9 +83,28 @@ private fun AplicacionAutenticada(sesion: Sesion, onCerrar: () -> Unit, onCambia
 @Composable
 private fun MenuSesion(multirrol: Boolean, onCambiarRol: () -> Unit, onCerrar: () -> Unit, modifier: Modifier = Modifier) {
     var abierto by remember { mutableStateOf(false) }
+    val paleta = LocalPaletaAgua.current
     Box(modifier) {
-        IconButton(onClick = { abierto = true }) { Text("•••") }
-        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
+        Surface(
+            modifier = Modifier.size(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            color = paleta.hoja,
+            shadowElevation = 6.dp,
+        ) {
+            IconButton(onClick = { abierto = true }) {
+                Icon(
+                    TablerIcons.Dots,
+                    contentDescription = "Abrir menú de sesión",
+                    tint = paleta.texto,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        }
+        DropdownMenu(
+            expanded = abierto,
+            onDismissRequest = { abierto = false },
+            containerColor = paleta.hoja,
+        ) {
             if (multirrol) DropdownMenuItem(text = { Text("Cambiar rol") }, onClick = { abierto = false; onCambiarRol() })
             DropdownMenuItem(text = { Text("Cerrar sesión") }, onClick = { abierto = false; onCerrar() })
         }

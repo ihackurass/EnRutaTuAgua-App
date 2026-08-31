@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -359,7 +362,7 @@ private fun CabeceraRuta(rc: RutaConTanque, modifier: Modifier = Modifier) {
         modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(14.dp),
+            .padding(start = 14.dp, top = 14.dp, end = 70.dp, bottom = 14.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Surface(
@@ -414,11 +417,36 @@ private fun ContenidoHoja(
         userScrollEnabled = ancla == AnclaHoja.Abierta,
     ) {
         item(key = "agua-disponible") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Agua disponible: ${formatearLitros(rc.litrosRestantes)} L", style = EstilosAgua.Cuerpo, color = paleta.texto2)
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = onRecargar) { Text("Registrar recarga") }
+            val forma = RoundedCornerShape(RadiosAgua.Aviso)
+            Surface(
+                Modifier.fillMaxWidth().border(1.dp, paleta.linea, forma),
+                shape = forma,
+                color = paleta.hoja,
+            ) {
+                Row(
+                    Modifier.padding(start = 14.dp, top = 10.dp, end = 8.dp, bottom = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("AGUA DISPONIBLE", style = EstilosAgua.Rotulo, color = paleta.texto2)
+                        Text(
+                            "${formatearLitros(rc.litrosRestantes)} L",
+                            style = EstilosAgua.ItemTitulo,
+                            color = paleta.texto,
+                        )
+                    }
+                    Button(
+                        onClick = onRecargar,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        shape = RoundedCornerShape(RadiosAgua.Secundario),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = paleta.superficie2,
+                            contentColor = paleta.texto,
+                        ),
+                    ) { Text("Registrar recarga", style = EstilosAgua.BotonPrimario) }
+                }
             }
+            Spacer(Modifier.height(12.dp))
         }
         if (proxima != null) {
             item(key = "siguiente") {
