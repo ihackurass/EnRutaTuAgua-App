@@ -1,6 +1,7 @@
 package pe.enrutatuagua.app.ui.presidente
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
@@ -26,10 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.CifraLitros
@@ -99,7 +104,15 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
         BotonAtras(onClick = onHecho)
         Spacer(Modifier.height(24.dp))
 
-        RotuloSeccion("Nuevo pedido")
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.ic_presidente_agregar_agua),
+                contentDescription = null,
+                modifier = Modifier.size(52.dp),
+            )
+            Spacer(Modifier.width(12.dp))
+            RotuloSeccion("Nuevo pedido")
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             "1 · Elige el punto de entrega",
@@ -169,6 +182,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
             texto = "Agregar punto",
             habilitado = !invalido,
             onClick = { puntoId?.let { id -> vm.agregar(id, valor) } },
+            iconoPainter = painterResource(R.drawable.ic_presidente_agregar_agua),
         )
         if (items.isNotEmpty()) {
             Spacer(Modifier.height(18.dp))
@@ -186,6 +200,7 @@ fun NuevoPedidoScreen(onHecho: () -> Unit, vm: NuevoPedidoViewModel = hiltViewMo
                 texto = "Enviar pedido · ${items.size} punto${if (items.size == 1) "" else "s"}",
                 habilitado = !urgente || motivoUrgente.trim().length >= 10,
                 onClick = vm::crearMultipunto,
+                iconoPainter = painterResource(R.drawable.ill_presidente_pedido),
             )
         }
     }

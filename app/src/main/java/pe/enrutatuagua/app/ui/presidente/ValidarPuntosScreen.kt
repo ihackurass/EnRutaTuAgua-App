@@ -2,11 +2,11 @@ package pe.enrutatuagua.app.ui.presidente
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,12 +14,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import compose.icons.TablerIcons
-import compose.icons.tablericons.MapPin
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.designsystem.component.BotonAtras
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.RotuloSeccion
@@ -62,7 +62,11 @@ fun ValidarPuntosScreen(onVolver: () -> Unit, vm: ValidarPuntosViewModel = hiltV
             color = p.tinta,
         ) {
             Row(Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(TablerIcons.MapPin, null, tint = p.sobreTinta, modifier = Modifier.size(24.dp))
+                Image(
+                    painter = painterResource(R.drawable.ill_presidente_puntos),
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                )
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("PENDIENTES DE REVISIÓN", style = EstilosAgua.Rotulo, color = p.sobreTinta)
@@ -101,9 +105,11 @@ private fun EstadoSinPuntos(modifier: Modifier = Modifier) {
     val p = LocalPaletaAgua.current
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Surface(shape = RoundedCornerShape(12.dp), color = p.superficie2) {
-                Icon(TablerIcons.MapPin, null, tint = p.texto2, modifier = Modifier.padding(14.dp).size(26.dp))
-            }
+            Image(
+                painter = painterResource(R.drawable.ic_presidente_validado),
+                contentDescription = null,
+                modifier = Modifier.size(72.dp),
+            )
             Spacer(Modifier.height(14.dp))
             Text("Todo está revisado", style = EstilosAgua.ItemTitulo, color = p.texto)
             Text("No hay puntos pendientes de aprobación", style = EstilosAgua.Cuerpo, color = p.texto2)
@@ -141,7 +147,11 @@ private fun PuntoPorValidar(punto: PuntoAbastecimiento, onValidar: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(15.dp))
-            BotonPrimario("Aprobar punto", onClick = onValidar)
+            BotonPrimario(
+                texto = "Aprobar punto",
+                onClick = onValidar,
+                iconoPainter = painterResource(R.drawable.ic_presidente_validado),
+            )
         }
     }
 }

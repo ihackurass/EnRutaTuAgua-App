@@ -2,11 +2,11 @@ package pe.enrutatuagua.app.ui.presidente
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,13 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronRight
-import compose.icons.tablericons.Droplet
+import pe.enrutatuagua.app.R
 import pe.enrutatuagua.designsystem.component.BotonPrimario
 import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.*
@@ -60,7 +61,13 @@ fun MisPedidosScreen(
     ) {
         item { CabeceraPresidente() }
         item { ResumenPresidente(activo) }
-        item { BotonPrimario("Nuevo pedido", onClick = onNuevoPedido) }
+        item {
+            BotonPrimario(
+                texto = "Nuevo pedido",
+                onClick = onNuevoPedido,
+                iconoPainter = painterResource(R.drawable.ic_presidente_agregar_agua),
+            )
+        }
         item { RotuloPedidos() }
         when {
             estado.cargando -> item {
@@ -82,12 +89,11 @@ fun MisPedidosScreen(
 private fun CabeceraPresidente() {
     val p = LocalPaletaAgua.current
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(52.dp).clip(CircleShape).background(p.superficie2),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(TablerIcons.Droplet, null, tint = p.accion, modifier = Modifier.size(26.dp))
-        }
+        Image(
+            painter = painterResource(R.drawable.ill_rol_presidente),
+            contentDescription = null,
+            modifier = Modifier.size(58.dp),
+        )
         Spacer(Modifier.width(13.dp))
         Column {
             Text("PRESIDENCIA DE LA ZONA", style = EstilosAgua.Rotulo, color = p.texto2)
@@ -165,10 +171,18 @@ private fun EstadoVacioPresidente() {
     val p = LocalPaletaAgua.current
     val forma = RoundedCornerShape(12.dp)
     Surface(Modifier.fillMaxWidth().border(1.dp, p.linea, forma), shape = forma, color = p.hoja) {
-        Column(Modifier.padding(20.dp)) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.ill_presidente_pedido),
+                contentDescription = null,
+                modifier = Modifier.size(58.dp),
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
             Text("Todavía no hay solicitudes", style = EstilosAgua.ItemTitulo, color = p.texto)
             Spacer(Modifier.height(4.dp))
             Text("La primera solicitud aparecerá aquí con su estado.", style = EstilosAgua.Cuerpo, color = p.texto2)
+            }
         }
     }
 }
@@ -185,6 +199,12 @@ private fun PedidoPresidente(pedido: Pedido, onCancelar: () -> Unit) {
     ) {
         Column(Modifier.padding(17.dp)) {
             Row(verticalAlignment = Alignment.Top) {
+                Image(
+                    painter = painterResource(iconoEstado(pedido.estado)),
+                    contentDescription = null,
+                    modifier = Modifier.size(42.dp),
+                )
+                Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("Pedido #${pedido.id}", style = EstilosAgua.ItemSub, color = p.texto2)
                     Text(
@@ -204,6 +224,13 @@ private fun PedidoPresidente(pedido: Pedido, onCancelar: () -> Unit) {
             }
         }
     }
+}
+
+private fun iconoEstado(estado: EstadoPedido) = when (estado) {
+    EstadoPedido.PENDIENTE, EstadoPedido.RETENIDO -> R.drawable.ic_presidente_pendiente
+    EstadoPedido.PROGRAMADO, EstadoPedido.EN_RUTA, EstadoPedido.PARCIAL -> R.drawable.ill_presidente_asignado
+    EstadoPedido.ATENDIDO -> R.drawable.ic_presidente_atendido
+    EstadoPedido.CANCELADO -> R.drawable.ic_presidente_cancelado
 }
 
 @Composable
@@ -246,12 +273,11 @@ private fun GestionZona(onClick: () -> Unit) {
                 .padding(horizontal = 17.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(p.superficie2),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(TablerIcons.Droplet, null, tint = p.accion, modifier = Modifier.size(22.dp))
-            }
+            Image(
+                painter = painterResource(R.drawable.ill_presidente_puntos),
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+            )
             Spacer(Modifier.width(13.dp))
             Column(Modifier.weight(1f)) {
                 Text("Puntos de abastecimiento", style = EstilosAgua.ItemTitulo, color = p.texto)
