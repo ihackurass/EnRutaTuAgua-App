@@ -44,4 +44,12 @@ class GeoJsonZonaVecinoTest {
         assertEquals(posicion.lng, coords.getDouble(0), 0.0001)
         assertEquals(posicion.lat, coords.getDouble(1), 0.0001)
     }
+
+    @Test
+    fun `elige la vista 3d correspondiente al rumbo gps`() {
+        assertEquals("cisterna-180", nombreSpriteCisterna(0f))
+        assertEquals("cisterna-090", nombreSpriteCisterna(90f))
+        assertEquals("cisterna-000", nombreSpriteCisterna(180f))
+        assertEquals("cisterna-270", nombreSpriteCisterna(270f))
+    }
 }

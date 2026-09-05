@@ -29,7 +29,7 @@ import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.PuntoAbastecimiento
 
 @Composable
-fun ValidarPuntosScreen(onVolver: () -> Unit, vm: ValidarPuntosViewModel = hiltViewModel()) {
+fun ValidarPuntosScreen(onVolver: () -> Unit = {}, mostrarAtras: Boolean = true, vm: ValidarPuntosViewModel = hiltViewModel()) {
     val puntos by vm.puntos.collectAsState()
     val error by vm.error.collectAsState()
     val p = LocalPaletaAgua.current
@@ -38,9 +38,11 @@ fun ValidarPuntosScreen(onVolver: () -> Unit, vm: ValidarPuntosViewModel = hiltV
         Modifier.fillMaxSize().background(p.fondo).statusBarsPadding().navigationBarsPadding()
             .padding(horizontal = 18.dp, vertical = 10.dp),
     ) {
-        Spacer(Modifier.height(8.dp))
-        BotonAtras(onClick = onVolver)
-        Spacer(Modifier.height(24.dp))
+        if (mostrarAtras) {
+            Spacer(Modifier.height(8.dp))
+            BotonAtras(onClick = onVolver)
+            Spacer(Modifier.height(24.dp))
+        } else Spacer(Modifier.height(8.dp))
         RotuloSeccion("Validar puntos de tu zona")
         Spacer(Modifier.height(6.dp))
         Text(

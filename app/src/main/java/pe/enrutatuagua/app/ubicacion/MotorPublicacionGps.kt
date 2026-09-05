@@ -35,6 +35,7 @@ class MotorPublicacionGps @Inject constructor(
 ) {
     private var capturador: CapturadorPosicionGps? = null
     private var jobDrenaje: Job? = null
+    private var ultimoFixEstable: Location? = null
 
     fun iniciar(contexto: Context, alcance: CoroutineScope) {
         val cap = capturador ?: CapturadorPosicionGps(contexto).also { capturador = it }
@@ -46,6 +47,7 @@ class MotorPublicacionGps @Inject constructor(
         capturador?.detener()
         jobDrenaje?.cancel()
         jobDrenaje = null
+        ultimoFixEstable = null
     }
 
     fun iniciarDrenajePeriodico(alcance: CoroutineScope) {
@@ -70,16 +72,28 @@ class MotorPublicacionGps @Inject constructor(
 
     suspend fun procesarFix(ubicacion: Location) {
         val contexto = contextoTracking.actual() ?: return
+        val estable = estabilizar(ubicacion)
         val posicion = PosicionGps(
             rutaId = contexto.rutaId,
-            lat = ubicacion.latitude,
-            lng = ubicacion.longitude,
+            lat = estable.latitude,
+            lng = estable.longitude,
             registradaEnMillis = System.currentTimeMillis(),
         )
         val guardada = posicionGpsRepository.guardar(posicion) // SIEMPRE, sin importar si el publish sigue
         if (publicadorPosicionMqtt.publicar(contexto.aguateroId, guardada)) {
             posicionGpsRepository.marcarPublicadas(listOf(guardada.id))
         }
+    }
+
+    /** Congela el ruido normal del GPS cuando el dispositivo reporta estar detenido. */
+    private fun estabilizar(nuevo:Location):Location {
+        val anterior=ultimoFixEstable
+        if(anterior==null){return Location(nuevo).also{ultimoFixEstable=it}}
+        val enMovimiento=nuevo.hasSpeed() && nuevo.speed>0.5f
+        val precision=if(nuevo.hasAccuracy())nuevo.accuracy.toDouble().coerceIn(8.0,30.0) else 15.0
+        return if(!enMovimiento && anterior.distanceTo(nuevo)<precision) Location(nuevo).apply{
+            latitude=anterior.latitude;longitude=anterior.longitude
+        } else Location(nuevo).also{ultimoFixEstable=it}
     }
 
     suspend fun drenar() {

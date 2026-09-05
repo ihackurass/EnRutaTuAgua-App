@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -41,7 +40,6 @@ import pe.enrutatuagua.app.ui.ruta.RutaScreen
 import pe.enrutatuagua.app.ui.vecino.MapaVivoScreen
 import pe.enrutatuagua.app.ui.operador.OperacionScreen
 import pe.enrutatuagua.app.ui.ruta.RutaAsignadaGate
-import pe.enrutatuagua.app.ui.tracking.PruebaTrackingScreen
 import pe.enrutatuagua.app.BuildConfig
 import pe.enrutatuagua.app.R
 import pe.enrutatuagua.domain.modelo.Rol
@@ -63,25 +61,10 @@ fun Navegacion(vm: SesionViewModel = hiltViewModel()) {
             onIngresar = vm::iniciar,
             mostrarAccesosRapidos = BuildConfig.DEBUG,
         )
-        actual.rolActivo == null -> SelectorODiagnostico(actual, vm)
+        actual.rolActivo == null -> SeleccionRolScreen(roles = actual.roles, onRolElegido = vm::seleccionarRol)
         else -> key(actual.usuarioId, actual.rolActivo) {
             AplicacionAutenticada(actual, vm::cerrar, vm::cambiarRol)
         }
-    }
-}
-
-@Composable
-private fun SelectorODiagnostico(sesion: Sesion, vm: SesionViewModel) {
-    var diagnostico by rememberSaveable(sesion.usuarioId) { mutableStateOf(false) }
-    if (diagnostico && BuildConfig.DEBUG) {
-        PruebaTrackingScreen(onVolver = { diagnostico = false })
-    } else {
-        SeleccionRolScreen(
-            roles = sesion.roles,
-            onRolElegido = vm::seleccionarRol,
-            mostrarDiagnosticos = BuildConfig.DEBUG,
-            onPruebaTrackingClick = { diagnostico = true },
-        )
     }
 }
 

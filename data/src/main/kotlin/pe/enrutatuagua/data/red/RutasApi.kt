@@ -53,6 +53,7 @@ data class RegistrarEntregaRequestDto(
 @Serializable
 data class RutaZonaDto(val rutaId: Long, val vehiculoId: Long, val vehiculoCapacidadTanqueLitros: Int, val fecha: String)
 @Serializable data class MovimientoAguaRequestDto(val mensajeId: String, val litros: Int)
+@Serializable data class CerrarRutaRequestDto(val mensajeId: String, val litrosFisicosFinales: Int)
 @Serializable data class SaldoJornadaDto(val id: Long, val vehiculoId: Long, val rutaId: Long? = null, val capacidadLitros: Int, val litrosDisponibles: Int)
 
 interface RutasApi {
@@ -74,7 +75,7 @@ interface RutasApi {
     suspend fun abrir(): RutaDto
 
     @POST("api/v1/rutas/{id}/cerrar")
-    suspend fun cerrar(@Path("id") id: Long): RutaDto
+    suspend fun cerrar(@Path("id") id: Long, @Body solicitud: CerrarRutaRequestDto): RutaDto
 
     @POST("api/v1/rutas/{rutaId}/paradas/{rutaPuntoId}/omitir")
     suspend fun omitir(

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import retrofit2.http.*
 
 @Serializable data class AsociacionOperacionDto(val id:Long,val nombre:String)
-@Serializable data class VehiculoOperacionDto(val id:Long,val placa:String,val capacidadLitros:Int,val disponible:Boolean=true,val motivoNoDisponible:String?=null)
+@Serializable data class VehiculoOperacionDto(val id:Long,val placa:String,val capacidadLitros:Int,val conductorId:Long?=null,val disponible:Boolean=true,val motivoNoDisponible:String?=null)
 @Serializable data class AguateroOperacionDto(val id:Long,val nombre:String,val disponible:Boolean=true,val motivoNoDisponible:String?=null)
 @Serializable data class ResumenOperacionDto(val fecha:String,val asociaciones:List<AsociacionOperacionDto>,val vehiculos:List<VehiculoOperacionDto>,val aguateros:List<AguateroOperacionDto>)
 @Serializable data class PedidoOperacionDto(val id:Long,val pedidoItemId:Long,val puntoId:Long,val puntoNombre:String,val litros:Int)
@@ -13,6 +13,10 @@ import retrofit2.http.*
 @Serializable data class RutaPlanificadaDto(val id:Long,val fecha:String,val asociacionId:Long,val vehiculoId:Long,val aguateroId:Long,val litros:Int,val estado:Int)
 @Serializable data class RutaOperacionDto(val id:Long,val fecha:String,val estado:Int,val asociacion:AsociacionOperacionDto,val vehiculo:VehiculoOperacionDto,val aguatero:AguateroOperacionDto,val litros:Int,val paradas:Int)
 @Serializable data class EventoOperacionDto(val id:Long,val categoria:String,val referencia:String,val accion:String,val detalle:String,val ocurridoEn:String,val actorId:Long?=null,val actorNombre:String?=null)
+@Serializable data class RutaAguateroDto(val ruta:RutaPlanificadaDto,val placa:String,val capacidadLitros:Int)
+@Serializable data class JornadaOperacionDto(val id:Long,val vehiculoId:Long,val rutaId:Long?=null,val capacidadLitros:Int,val litrosDisponibles:Int)
+@Serializable data class OperacionAguateroDto(val estado:String,val ruta:RutaAguateroDto?=null,val jornada:JornadaOperacionDto?=null)
+@Serializable data class CargaRutaRequestDto(val mensajeId:String,val litros:Int)
 
 interface OperacionApi {
     @GET("api/v1/operacion/resumen") suspend fun resumen(@Query("fecha") fecha:String):ResumenOperacionDto
@@ -22,5 +26,7 @@ interface OperacionApi {
     @POST("api/v1/operacion/rutas/{id}/cancelar") suspend fun cancelar(@Path("id") id:Long):RutaPlanificadaDto
     @GET("api/v1/operacion/rutas/asignada") suspend fun asignada():RutaPlanificadaDto
     @POST("api/v1/operacion/rutas/{id}/iniciar") suspend fun iniciar(@Path("id") id:Long):RutaPlanificadaDto
+    @GET("api/v1/operacion/aguatero/actual") suspend fun operacionAguatero():OperacionAguateroDto
+    @POST("api/v1/operacion/rutas/{id}/carga-inicial") suspend fun cargarRuta(@Path("id") id:Long,@Body req:CargaRutaRequestDto):JornadaOperacionDto
     @GET("api/v1/operacion/auditoria") suspend fun auditoria(@Query("limite") limite:Int=100):List<EventoOperacionDto>
 }

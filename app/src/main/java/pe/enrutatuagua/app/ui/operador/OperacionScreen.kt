@@ -20,23 +20,30 @@ import pe.enrutatuagua.designsystem.component.formatearLitros
 import pe.enrutatuagua.designsystem.tokens.*
 import pe.enrutatuagua.domain.modelo.*
 
-private enum class VistaOperacion { PLANIFICAR, RUTAS, AUDITORIA }
+private enum class VistaOperacion { PLANIFICAR, RUTAS, CONTROL, AUDITORIA }
 
 @Composable fun OperacionScreen(vm: OperacionViewModel = hiltViewModel()) {
     val e by vm.estado.collectAsState(); val p = LocalPaletaAgua.current
     var vista by rememberSaveable { mutableStateOf(VistaOperacion.PLANIFICAR) }
     var cancelarRuta by remember { mutableStateOf<Long?>(null) }
+    var accionRecarga by remember { mutableStateOf<Pair<SolicitudRecarga,String>?>(null) }
+    var resolverIncidencia by remember { mutableStateOf<IncidenciaOperativa?>(null) }
     if (e.confirmar) ConfirmarPlanificacion(e, vm)
     cancelarRuta?.let { id -> AlertDialog(onDismissRequest = { cancelarRuta = null }, title = { Text("Cancelar ruta #$id") }, text = { Text("Los pedidos volverán a quedar disponibles para otra planificación.") }, confirmButton = { TextButton(onClick = { vm.cancelar(id); cancelarRuta = null }) { Text("Sí, cancelar", color = p.error) } }, dismissButton = { TextButton(onClick = { cancelarRuta = null }) { Text("Conservar ruta") } }) }
+    accionRecarga?.let { (recarga,accion) -> DialogoControlRecarga(recarga,accion,{accionRecarga=null}) { contacto,valor ->
+        when(accion){"autorizar"->vm.autorizarRecarga(recarga.id,contacto);"confirmar"->vm.confirmarRecarga(recarga.id,valor.toInt(),contacto);else->vm.rechazarRecarga(recarga.id,valor)}
+        accionRecarga=null
+    } }
+    resolverIncidencia?.let { incidencia -> DialogoResolverIncidencia(incidencia,{resolverIncidencia=null}) { vm.resolverIncidencia(incidencia.id,it);resolverIncidencia=null } }
 
     LazyColumn(
         Modifier.fillMaxSize().background(p.hoja).statusBarsPadding().navigationBarsPadding(),
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { Text("OPERACIÓN · ${LocalDate.now()}", style = EstilosAgua.Rotulo, color = p.texto2); Spacer(Modifier.height(5.dp)); Text(when(vista){VistaOperacion.PLANIFICAR->"Planificar reparto";VistaOperacion.RUTAS->"Rutas de la empresa";VistaOperacion.AUDITORIA->"Bitácora operativa"}, style = EstilosAgua.TituloParada, color = p.texto); Text(when(vista){VistaOperacion.PLANIFICAR->"Asigna la demanda a una cisterna";VistaOperacion.RUTAS->"Consulta el estado de cada reparto";VistaOperacion.AUDITORIA->"Rastrea quién hizo qué y cuándo"}, style = EstilosAgua.Cuerpo, color = p.texto2) }
-        item { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(RadiosAgua.Aviso)).background(p.tenue).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) { TabOperacion("Planificar", vista == VistaOperacion.PLANIFICAR, Modifier.weight(1f)) { vista = VistaOperacion.PLANIFICAR }; TabOperacion("Rutas", vista == VistaOperacion.RUTAS, Modifier.weight(1f)) { vista = VistaOperacion.RUTAS; vm.refrescarRutas() }; TabOperacion("Bitácora", vista == VistaOperacion.AUDITORIA, Modifier.weight(1f)) { vista = VistaOperacion.AUDITORIA; vm.cargarAuditoria() } } }
-        when(vista){VistaOperacion.PLANIFICAR->contenidoPlanificar(e,vm);VistaOperacion.RUTAS->contenidoRutas(e,vm,onCancelar={cancelarRuta=it});VistaOperacion.AUDITORIA->contenidoAuditoria(e,vm)}
+        item { Text("OPERACIÓN · ${LocalDate.now()}", style = EstilosAgua.Rotulo, color = p.texto2); Spacer(Modifier.height(5.dp)); Text(when(vista){VistaOperacion.PLANIFICAR->"Planificar reparto";VistaOperacion.RUTAS->"Rutas de la empresa";VistaOperacion.CONTROL->"Control del agua";VistaOperacion.AUDITORIA->"Bitácora operativa"}, style = EstilosAgua.TituloParada, color = p.texto); Text(when(vista){VistaOperacion.PLANIFICAR->"Asigna la demanda a una cisterna";VistaOperacion.RUTAS->"Consulta el estado de cada reparto";VistaOperacion.CONTROL->"Autoriza recargas y resuelve diferencias";VistaOperacion.AUDITORIA->"Rastrea quién hizo qué y cuándo"}, style = EstilosAgua.Cuerpo, color = p.texto2) }
+        item { Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(RadiosAgua.Aviso)).background(p.tenue).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) { TabOperacion("Plan", vista == VistaOperacion.PLANIFICAR, Modifier.weight(1f)) { vista = VistaOperacion.PLANIFICAR }; TabOperacion("Rutas", vista == VistaOperacion.RUTAS, Modifier.weight(1f)) { vista = VistaOperacion.RUTAS; vm.refrescarRutas() }; TabOperacion("Control", vista == VistaOperacion.CONTROL, Modifier.weight(1f)) { vista = VistaOperacion.CONTROL; vm.cargarCustodia() }; TabOperacion("Bitácora", vista == VistaOperacion.AUDITORIA, Modifier.weight(1f)) { vista = VistaOperacion.AUDITORIA; vm.cargarAuditoria() } } }
+        when(vista){VistaOperacion.PLANIFICAR->contenidoPlanificar(e,vm);VistaOperacion.RUTAS->contenidoRutas(e,vm,onCancelar={cancelarRuta=it});VistaOperacion.CONTROL->contenidoControl(e,{r,a->accionRecarga=r to a},{resolverIncidencia=it},vm::filtrarRecepciones);VistaOperacion.AUDITORIA->contenidoAuditoria(e,vm)}
     }
 }
 
@@ -61,6 +68,61 @@ private fun androidx.compose.foundation.lazy.LazyListScope.contenidoRutas(e: Ope
     items(e.rutas, key = { it.id }) { ruta -> RutaOperacionCard(ruta, onCancelar) }
     e.mensaje?.let { item { MensajeOperacion(it) } }
 }
+
+private fun androidx.compose.foundation.lazy.LazyListScope.contenidoControl(
+    e:OperacionUiState,onAccion:(SolicitudRecarga,String)->Unit,onResolver:(IncidenciaOperativa)->Unit,
+    onFiltroRecepcion:(Int?)->Unit,
+) {
+    item { val p=LocalPaletaAgua.current;Text("SOLICITUDES DE RECARGA",style=EstilosAgua.Rotulo,color=p.texto2) }
+    if(e.recargas.isEmpty()) item { MensajeOperacion("No hay solicitudes de recarga") }
+    items(e.recargas,key={"recarga-${it.id}"}) { r -> TarjetaRecargaOperador(r,onAccion) }
+    item { val p=LocalPaletaAgua.current;Spacer(Modifier.height(8.dp));Text("INCIDENCIAS ABIERTAS",style=EstilosAgua.Rotulo,color=p.texto2) }
+    val abiertas=e.incidencias.filter{it.estado in 1..2}
+    if(abiertas.isEmpty()) item { MensajeOperacion("No hay diferencias pendientes") }
+    items(abiertas,key={"inc-${it.id}"}) { i -> TarjetaIncidencia(i){onResolver(i)} }
+    item { val p=LocalPaletaAgua.current;Spacer(Modifier.height(8.dp));Text("RECEPCIONES REGISTRADAS",style=EstilosAgua.Rotulo,color=p.texto2);
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){FilterChip(selected=e.filtroRecepcion==null,onClick={onFiltroRecepcion(null)},label={Text("Todas")});FilterChip(selected=e.filtroRecepcion==2,onClick={onFiltroRecepcion(2)},label={Text("Conformes")});FilterChip(selected=e.filtroRecepcion==3,onClick={onFiltroRecepcion(3)},label={Text("Con diferencia")})}}
+    if(e.recepciones.isEmpty()) item { MensajeOperacion("No hay recepciones registradas") }
+    items(e.recepciones,key={"recepcion-${it.id}"}) { r -> TarjetaRecepcionOperador(r) }
+    e.mensaje?.let { item { MensajeOperacion(it) } }
+}
+
+@Composable private fun TarjetaRecepcionOperador(r:RecepcionAgua){val p=LocalPaletaAgua.current;val diferencia=r.estado==3
+    Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(RadiosAgua.Aviso),color=if(diferencia)p.error.copy(alpha=.08f) else p.tenue){Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
+        Row{Text(if(diferencia)"CON DIFERENCIA" else "CONFORME",style=EstilosAgua.Rotulo,color=if(diferencia)p.error else p.exito,modifier=Modifier.weight(1f));Text("Ruta #${r.rutaId}",style=EstilosAgua.ItemSub,color=p.texto2)}
+        Text(r.puntoNombre,style=EstilosAgua.ItemTitulo,color=p.texto);Text("${r.aguateroNombre} · declaró ${formatearLitros(r.litrosDeclarados)} L",style=EstilosAgua.ItemSub,color=p.texto2);Text("Presidente recibió ${formatearLitros(r.litrosRecibidos)} L",style=EstilosAgua.Cuerpo,color=p.texto)
+    }}}
+
+@Composable private fun TarjetaRecargaOperador(r:SolicitudRecarga,onAccion:(SolicitudRecarga,String)->Unit){
+    val p=LocalPaletaAgua.current
+    Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(RadiosAgua.Aviso),color=p.tenue){Column(Modifier.padding(15.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+        Row{Text(r.estado.name.replace('_',' '),style=EstilosAgua.Rotulo,color=p.accion,modifier=Modifier.weight(1f));Text("${formatearLitros(r.litrosSolicitados)} L",style=EstilosAgua.ItemTitulo,color=p.texto)}
+        Text(r.aguateroNombre,style=EstilosAgua.ItemTitulo,color=p.texto);Text(r.fuenteNombre,style=EstilosAgua.ItemSub,color=p.texto2)
+        r.distanciaFuenteMetros?.let{Text("Ubicación registrada a ${it.toInt()} m de la fuente",style=EstilosAgua.ItemSub,color=if(it>250)p.alerta else p.texto2)}
+        Text(r.motivo,style=EstilosAgua.Cuerpo,color=p.texto2)
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
+            when(r.estado){
+                EstadoSolicitudRecarga.SOLICITADA->{TextButton(onClick={onAccion(r,"autorizar")}){Text("Autorizar")};TextButton(onClick={onAccion(r,"rechazar")}){Text("Rechazar",color=p.error)}}
+                EstadoSolicitudRecarga.CARGA_REPORTADA->{TextButton(onClick={onAccion(r,"confirmar")}){Text("Confirmar despacho")}}
+                EstadoSolicitudRecarga.AUTORIZADA->Text("Esperando que el aguatero reporte la carga",style=EstilosAgua.ItemSub,color=p.alerta)
+                else->Unit
+            }
+        }
+    }}
+}
+
+@Composable private fun TarjetaIncidencia(i:IncidenciaOperativa,onResolver:()->Unit){val p=LocalPaletaAgua.current;Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(RadiosAgua.Aviso),color=p.error.copy(alpha=.08f)){Column(Modifier.padding(15.dp)){Text(i.tipo.replace('_',' '),style=EstilosAgua.ItemTitulo,color=p.error);Text(i.detalle,style=EstilosAgua.ItemSub,color=p.texto2);TextButton(onClick=onResolver,modifier=Modifier.align(Alignment.End)){Text("Resolver")}}}}
+
+@Composable private fun DialogoControlRecarga(r:SolicitudRecarga,accion:String,onDismiss:()->Unit,onConfirm:(String,String)->Unit){
+    var contacto by remember{mutableStateOf(r.contactoAutorizacion.orEmpty())};var valor by remember{mutableStateOf(if(accion=="confirmar")(r.litrosReportados?:r.litrosSolicitados).toString() else "")}
+    val titulo=when(accion){"autorizar"->"Registrar primera llamada";"confirmar"->"Confirmar segunda llamada";else->"Rechazar recarga"}
+    AlertDialog(onDismissRequest=onDismiss,title={Text(titulo)},text={Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
+        if(accion!="rechazar") OutlinedTextField(value=contacto,onValueChange={contacto=it.take(100)},label={Text("Persona contactada en la fuente")})
+        OutlinedTextField(value=valor,onValueChange={valor=if(accion=="confirmar")it.filter(Char::isDigit).take(6) else it.take(250)},label={Text(if(accion=="confirmar")"Litros confirmados" else if(accion=="rechazar")"Motivo" else "Nota opcional")})
+    }},confirmButton={TextButton(enabled=(accion=="rechazar"&&valor.trim().length>=5)||(accion!="rechazar"&&contacto.isNotBlank()&&(accion!="confirmar"||(valor.toIntOrNull()?:0)>0)),onClick={onConfirm(contacto,valor)}){Text("Confirmar")}},dismissButton={TextButton(onClick=onDismiss){Text("Cancelar")}})
+}
+
+@Composable private fun DialogoResolverIncidencia(i:IncidenciaOperativa,onDismiss:()->Unit,onConfirm:(String)->Unit){var texto by remember{mutableStateOf("")};AlertDialog(onDismissRequest=onDismiss,title={Text("Resolver ${i.tipo.replace('_',' ')}")},text={OutlinedTextField(value=texto,onValueChange={texto=it.take(500)},label={Text("Resultado de la investigación")},minLines=3)},confirmButton={TextButton(enabled=texto.trim().length>=10,onClick={onConfirm(texto.trim())}){Text("Cerrar incidencia")}},dismissButton={TextButton(onClick=onDismiss){Text("Cancelar")}})}
 
 private fun androidx.compose.foundation.lazy.LazyListScope.contenidoAuditoria(e: OperacionUiState, vm: OperacionViewModel) {
     item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { val p=LocalPaletaAgua.current; Text("ÚLTIMOS MOVIMIENTOS",style=EstilosAgua.Rotulo,color=p.texto2,modifier=Modifier.weight(1f));TextButton(onClick=vm::cargarAuditoria){Text("Actualizar",color=p.accion)} } }

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,12 +53,12 @@ fun GridMotivos(
                     Row(
                         Modifier
                             .weight(1f)
-                            .heightIn(min = DimensionesAgua.AltoTactilMinimo)
+                            .height(72.dp)
                             .clip(forma)
                             .background(paleta.superficie2)
                             .let { if (sel) it.border(2.dp, paleta.tinta, forma) else it }
                             .clickable { onSeleccionar(indice) }
-                            .padding(horizontal = 12.dp, vertical = 18.dp)
+                            .padding(horizontal = 12.dp)
                             .testTag("motivo-$indice"),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronRight
 import pe.enrutatuagua.app.R
-import pe.enrutatuagua.designsystem.component.BotonSecundario
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
 import pe.enrutatuagua.designsystem.tokens.LocalPaletaAgua
 import pe.enrutatuagua.domain.modelo.Rol
@@ -46,9 +45,6 @@ import pe.enrutatuagua.domain.modelo.Rol
 fun SeleccionRolScreen(
     onRolElegido: (Rol) -> Unit,
     roles: Set<Rol> = Rol.entries.toSet(),
-    onDiagnosticoMapaClick: () -> Unit = {},
-    onPruebaTrackingClick: () -> Unit = {},
-    mostrarDiagnosticos: Boolean = false,
 ) {
     val paleta = LocalPaletaAgua.current
     val rolesDisponibles = Rol.entries.filter { it in roles }
@@ -88,15 +84,6 @@ fun SeleccionRolScreen(
             TarjetaRol(rol = rol, onClick = { onRolElegido(rol) })
         }
 
-        if (mostrarDiagnosticos) {
-            item {
-                Spacer(Modifier.height(4.dp))
-                BotonSecundario("Diagnóstico: mapa pelado", onClick = onDiagnosticoMapaClick)
-            }
-            item {
-                BotonSecundario("Prueba tracking en vivo", onClick = onPruebaTrackingClick)
-            }
-        }
     }
 }
 

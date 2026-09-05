@@ -14,6 +14,7 @@ import java.time.Instant
 object PayloadGpsMqtt {
 
     fun topico(aguateroId: Long): String = "gps/$aguateroId/posicion"
+    fun topicoAck(aguateroId: Long): String = "gps/$aguateroId/ack"
 
     fun json(posicion: PosicionGps): String {
         val registradoEn = Instant.ofEpochMilli(posicion.registradaEnMillis)

@@ -107,7 +107,7 @@ fun MapaVivoScreen(
     }
     LaunchedEffect(mensaje) {
         mensaje?.let {
-            estadoAviso.mostrar(it)
+            estadoAviso.mostrar(it, error = true)
             vm.mensajeMostrado()
         }
     }
@@ -157,7 +157,7 @@ fun MapaVivoScreen(
                 }
             }
         }
-        AvisoSuperior(estadoAviso, Modifier.align(Alignment.TopCenter).statusBarsPadding())
+        AvisoSuperior(estadoAviso, Modifier.align(Alignment.Center))
     }
 }
 

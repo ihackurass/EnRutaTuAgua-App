@@ -19,11 +19,13 @@ interface RutaRepository {
     // nada de eso, sólo propaga el error del servidor.
     suspend fun abrirRuta(): Ruta
     suspend fun cerrarRuta(): Ruta
+    suspend fun cerrarRuta(litrosFisicosFinales: Int, mensajeId: String = java.util.UUID.randomUUID().toString()): Ruta = cerrarRuta()
     suspend fun consultarJornada(): SaldoJornada? = null
     suspend fun registrarCargaInicial(mensajeId: String, litros: Int): SaldoJornada = error("Carga no soportada")
     suspend fun registrarRecarga(mensajeId: String, litros: Int): SaldoJornada = error("Recarga no soportada")
     fun observarEstadoSync(): Flow<EstadoSyncOperativo> = flowOf(EstadoSyncOperativo())
     suspend fun reintentarSync() = Unit
+    suspend fun reconocerRechazadas() = Unit
 }
 
 data class SaldoJornada(
@@ -67,8 +69,35 @@ interface OperacionRepository {
     suspend fun cancelar(rutaId: Long): RutaPlanificada
     suspend fun asignada(): RutaPlanificada
     suspend fun iniciar(rutaId: Long): RutaPlanificada
+    suspend fun operacionAguatero(): OperacionAguatero
+    suspend fun cargarRuta(rutaId: Long, mensajeId: String, litros: Int): SaldoJornada
     suspend fun auditoria(limite: Int = 100): List<EventoOperacion>
 }
+
+interface CustodiaAguaRepository {
+    suspend fun fuentes(): List<FuenteCarga>
+    suspend fun solicitarRecarga(mensajeId: String, fuenteId: Long, litros: Int, motivo: String,
+                                 lat: Double?, lng: Double?, precisionMetros: Float?): SolicitudRecarga
+    suspend fun solicitudActiva(): SolicitudRecarga?
+    suspend fun reportarCarga(id: String, litros: Int, lat: Double?, lng: Double?, precisionMetros: Float?): SolicitudRecarga
+    suspend fun solicitudes(estado: Int? = null): List<SolicitudRecarga>
+    suspend fun autorizar(id: String, contacto: String, nota: String?): SolicitudRecarga
+    suspend fun confirmarDespacho(id: String, litros: Int, contacto: String, nota: String?): SolicitudRecarga
+    suspend fun rechazar(id: String, motivo: String): SolicitudRecarga
+    suspend fun recepcionesPendientes(): List<RecepcionPendiente>
+    suspend fun recepcionesPendientes(pagina: Int, tamanio: Int): pe.enrutatuagua.domain.modelo.PaginaRecepciones<RecepcionPendiente>
+    suspend fun historialRecepciones(pagina: Int, tamanio: Int): pe.enrutatuagua.domain.modelo.PaginaRecepciones<pe.enrutatuagua.domain.modelo.RecepcionAgua>
+    suspend fun recepcionesOperador(estado: Int?, pagina: Int, tamanio: Int): pe.enrutatuagua.domain.modelo.PaginaRecepciones<pe.enrutatuagua.domain.modelo.RecepcionAgua>
+    suspend fun confirmarRecepcion(mensajeId: String, rutaPuntoId: Long, litrosRecibidos: Int, comentario: String?)
+    suspend fun incidencias(estado: Int? = null): List<IncidenciaOperativa>
+    suspend fun resolverIncidencia(id: String, estado: Int, resolucion: String): IncidenciaOperativa
+}
+
+data class OperacionAguatero(
+    val estado: pe.enrutatuagua.domain.modelo.EstadoOperacionAguatero,
+    val asignacion: pe.enrutatuagua.domain.modelo.RutaAsignadaAguatero?,
+    val jornada: SaldoJornada?,
+)
 
 interface TrackingRepository {
     fun observarUltimaPosicion(): Flow<PosicionCisterna?>
@@ -78,6 +107,7 @@ interface TrackingRepository {
     fun observarPuntosDeZona(): Flow<List<PuntoAbastecimiento>>  // RV-02, solo lectura
     suspend fun asociacionActual(): String = "Tu asociación"
     fun observarEstadoTracking(): Flow<EstadoTracking> = flowOf(EstadoTracking.RESPALDO_REST)
+    suspend fun verificarPosicion(rutaId:Long): PosicionCisterna? = null
 }
 
 // ANDROID-PLAN-04 (alcance acotado): borde GPS del aguatero, ADR-2. Puerto
@@ -103,6 +133,13 @@ interface PosicionGpsRepository {
 interface PublicadorPosicionMqtt {
     /** true si el broker confirmó el publish (QoS1) -- no garantiza que el backend lo haya aceptado. */
     suspend fun publicar(aguateroId: Long, posicion: PosicionGps): Boolean
+    suspend fun publicarYEsperarAck(aguateroId: Long, posicion: PosicionGps): ResultadoAckGps =
+        if (publicar(aguateroId, posicion)) ResultadoAckGps.Aceptada else ResultadoAckGps.SinRespuesta
+}
+sealed interface ResultadoAckGps {
+    data object Aceptada : ResultadoAckGps
+    data class Rechazada(val motivo: String?) : ResultadoAckGps
+    data object SinRespuesta : ResultadoAckGps
 }
 
 /** Valores de configuración de desarrollo (BuildConfig) -- sin login real, ver ANDROID-PLAN-04. */

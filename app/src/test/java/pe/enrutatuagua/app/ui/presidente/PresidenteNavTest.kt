@@ -56,7 +56,6 @@ class PresidenteNavTest {
             composable("mis-pedidos") {
                 MisPedidosScreen(
                     onNuevoPedido = { nav.navigate("nuevo-pedido") },
-                    onValidarPuntos = { nav.navigate("validar-puntos") },
                     vm = misPedidosVm,
                 )
             }

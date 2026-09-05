@@ -4,18 +4,16 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,13 +24,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import compose.icons.TablerIcons
 import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.AlertTriangle
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import pe.enrutatuagua.designsystem.tokens.EstilosAgua
@@ -46,9 +45,12 @@ class EstadoAviso internal constructor() {
         private set
     internal var generacion by mutableIntStateOf(0)
         private set
+    var esError by mutableStateOf(false)
+        private set
 
-    fun mostrar(texto: String) {
+    fun mostrar(texto: String, error: Boolean = false) {
         mensaje = texto
+        esError = error
         generacion++
     }
 
@@ -74,30 +76,42 @@ fun AvisoSuperior(estado: EstadoAviso, modifier: Modifier = Modifier) {
     AnimatedVisibility(
         visible = estado.mensaje != null,
         modifier = modifier,
-        enter = slideInVertically(tween(MovimientoAgua.Aviso, easing = MovimientoAgua.EasingSalida)) { -it * 2 } + fadeIn(tween(MovimientoAgua.Aviso)),
-        exit = slideOutVertically(tween(MovimientoAgua.Aviso)) { -it * 2 } + fadeOut(tween(MovimientoAgua.Aviso)),
+        enter = scaleIn(tween(MovimientoAgua.Aviso, easing = MovimientoAgua.EasingSalida), initialScale = .82f) +
+            fadeIn(tween(MovimientoAgua.Aviso)),
+        exit = scaleOut(tween(MovimientoAgua.Aviso), targetScale = .9f) + fadeOut(tween(MovimientoAgua.Aviso)),
     ) {
         var textoMostrado by remember { mutableStateOf("") }
         estado.mensaje?.let { textoMostrado = it }
-        Box(Modifier.fillMaxWidth().padding(16.dp)) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(RadiosAgua.Aviso))
-                    .background(paleta.texto)
-                    .padding(horizontal = 15.dp, vertical = 13.dp)
+        Surface(
+            modifier = Modifier.widthIn(min = 176.dp, max = 280.dp),
+            shape = RoundedCornerShape(RadiosAgua.Tarjeta),
+            color = paleta.hoja,
+            shadowElevation = 12.dp,
+        ) {
+            Column(
+                Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
                     .semantics { liveRegion = LiveRegionMode.Polite }
                     .testTag("aviso"),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Icon(
-                    TablerIcons.CircleCheck,
-                    contentDescription = null,
-                    tint = paleta.exito,
-                    modifier = Modifier.size(18.dp),
+                Surface(shape = RoundedCornerShape(18.dp), color = if (estado.esError) paleta.error else paleta.exito) {
+                    Box(Modifier.size(52.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            if (estado.esError) TablerIcons.AlertTriangle else TablerIcons.CircleCheck,
+                            contentDescription = null,
+                            tint = paleta.hoja,
+                            modifier = Modifier.size(30.dp),
+                        )
+                    }
+                }
+                Text(
+                    textoMostrado,
+                    modifier = Modifier.padding(top = 11.dp),
+                    style = EstilosAgua.ItemTitulo,
+                    color = paleta.texto,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
                 )
-                Spacer(Modifier.width(9.dp))
-                Text(textoMostrado, style = EstilosAgua.ItemTitulo, color = paleta.hoja)
             }
         }
     }

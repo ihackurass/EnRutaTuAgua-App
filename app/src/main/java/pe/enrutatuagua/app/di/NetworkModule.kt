@@ -19,6 +19,7 @@ import pe.enrutatuagua.data.red.RutasApi
 import pe.enrutatuagua.data.red.TrackingApi
 import pe.enrutatuagua.data.red.OperacionApi
 import pe.enrutatuagua.data.red.VehiculosApi
+import pe.enrutatuagua.data.red.CustodiaAguaApi
 import pe.enrutatuagua.data.TrackingRepositoryHttp
 import pe.enrutatuagua.domain.repositorio.SesionRepository
 import retrofit2.Retrofit
@@ -65,6 +66,7 @@ object NetworkModule {
     @Provides @Singleton fun vehiculosApi(@RetrofitAutenticado r: Retrofit): VehiculosApi = r.create(VehiculosApi::class.java)
     @Provides @Singleton fun trackingApi(@RetrofitAutenticado r: Retrofit): TrackingApi = r.create(TrackingApi::class.java)
     @Provides @Singleton fun operacionApi(@RetrofitAutenticado r: Retrofit): OperacionApi = r.create(OperacionApi::class.java)
+    @Provides @Singleton fun custodiaAguaApi(@RetrofitAutenticado r: Retrofit): CustodiaAguaApi = r.create(CustodiaAguaApi::class.java)
     @Provides @Singleton fun trackingRepositoryHttp(
         rutas: RutasApi, puntos: PuntosApi, tracking: TrackingApi,
         cliente: OkHttpClient, sesion: SesionRepository, cache: pe.enrutatuagua.data.local.VecinoCacheDao,

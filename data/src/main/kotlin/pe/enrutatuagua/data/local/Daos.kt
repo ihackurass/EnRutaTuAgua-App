@@ -36,6 +36,8 @@ interface AccionOperativaDao {
     suspend fun rechazar(id: String, error: String?)
     @Query("UPDATE accion_operativa_pendiente SET intentos=intentos+1,error=:error WHERE id IN (:ids)")
     suspend fun registrarFallo(ids: List<String>, error: String?)
+    @Query("DELETE FROM accion_operativa_pendiente WHERE estado='RECHAZADA'")
+    suspend fun eliminarRechazadas()
 }
 
 @Dao

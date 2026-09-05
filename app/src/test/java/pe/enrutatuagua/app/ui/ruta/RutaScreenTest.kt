@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -37,7 +38,7 @@ class RutaScreenTest {
         val repo = RutaRepoFake().apply {
             syncFlow.value = EstadoSyncOperativo(pendientes = 2)
         }
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(
@@ -50,14 +51,15 @@ class RutaScreenTest {
         }
         regla.waitForIdle()
 
-        regla.onNodeWithText("2 acciones pendientes de sincronizar").assertExists()
-        regla.onNodeWithText("Reintentar").assertExists().assertHasClickAction()
+        regla.onNodeWithContentDescription("2 acciones pendientes; tocar para reintentar")
+            .assertExists()
+            .assertHasClickAction()
     }
 
     @Test
     fun `muestra siguiente parada columna y fichas sobre el mapa stub`() {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(
@@ -73,7 +75,7 @@ class RutaScreenTest {
         regla.onNodeWithText("SIGUIENTE PARADA").assertExists()
         // El título de la siguiente parada está visible; la ficha queda en el mismo LazyColumn al desplazar.
         regla.onAllNodesWithText("Comité 12 — Loma Alta").assertCountEquals(1)
-        regla.onNodeWithText("Recargar").assertExists()
+        regla.onNodeWithText("Recarga").assertExists()
         regla.onNodeWithText("12,000").assertExists()            // columna de agua
         regla.onNodeWithText("Desliza para entregar").assertExists()
         regla.onNodeWithText("Mi ruta de hoy").assertExists()
@@ -83,7 +85,7 @@ class RutaScreenTest {
     @Test
     fun `un aviso entrante se muestra en el aviso superior`() {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(
@@ -104,7 +106,7 @@ class RutaScreenTest {
     @Test
     fun `con ruta abierta y sin permiso de segundo plano aparece el dialogo de explicacion`() {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })
@@ -123,7 +125,7 @@ class RutaScreenTest {
         // programática de pedirlo, así que sólo se cierra el diálogo.
         ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 30)
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         val contexto = ApplicationProvider.getApplicationContext<Application>()
         regla.setContent {
             TemaAgua {
@@ -143,7 +145,7 @@ class RutaScreenTest {
     fun `sin ruta abierta espera la asignacion del operador`() {
         val repo = RutaRepoFake()
         repo.rutaFlow.value = null
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })
@@ -165,7 +167,7 @@ class RutaScreenTest {
         val paradaEntregada = RutaRepoFake.rutaDePrueba().paradas[0]
             .copy(estadoEntrega = EstadoEntrega.ENTREGADO)
         repo.rutaFlow.value = RutaRepoFake.rutaDePrueba().copy(paradas = listOf(paradaEntregada))
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })
@@ -186,7 +188,7 @@ class RutaScreenTest {
     @Test
     fun `descartar el dialogo lo cierra sin pedir el permiso`() {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         regla.setContent {
             TemaAgua {
                 RutaScreen(onParadaClick = {}, onOmitirClick = {}, vm = vm, mapa = { Box(Modifier.fillMaxSize()) })

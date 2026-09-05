@@ -22,7 +22,7 @@ class RutaViewModelTest {
 
     @Test fun `expone ruta con tanque calculado y siembra al iniciar`() = runTest {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         vm.estado.test {
             assertEquals(true, awaitItem().cargando)
             val estado = awaitItem()
@@ -34,7 +34,7 @@ class RutaViewModelTest {
 
     @Test fun `abrirRuta llama al repositorio y prende y apaga procesandoAccion`() = runTest {
         val repo = RutaRepoFake()
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         vm.estado.test {
             awaitItem() // cargando=true
             awaitItem() // carga inicial resuelta
@@ -50,12 +50,12 @@ class RutaViewModelTest {
     @Test fun `cerrarRuta con error del repo publica un mensaje y no lo deja tildado`() = runTest {
         val repo = RutaRepoFake()
         repo.lanzarEnCerrar = IllegalStateException("Quedan paradas pendientes")
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
         vm.estado.test { awaitItem(); awaitItem(); cancelAndIgnoreRemainingEvents() }
 
         vm.mensaje.test {
             assertEquals(null, awaitItem())
-            vm.cerrarRuta()
+            vm.cerrarRuta(0)
             assertEquals("Quedan paradas pendientes", awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -67,7 +67,7 @@ class RutaViewModelTest {
     @Test fun `un error transitorio en la carga inicial se reintenta y termina mostrando la ruta`() = runTest {
         val repo = RutaRepoFake()
         repo.lanzarEnObservarRutaAbierta = IllegalStateException("Sin conexión")
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
 
         vm.estado.test {
             awaitItem() // cargando=true (estado inicial)
@@ -85,7 +85,7 @@ class RutaViewModelTest {
     @Test fun `mientras reintenta la carga inicial expone un mensaje de reintento`() = runTest {
         val repo = RutaRepoFake()
         repo.lanzarEnObservarRutaAbierta = IllegalStateException("Sin conexión")
-        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo)
+        val vm = RutaViewModel(ObtenerRutaAbiertaUseCase(repo), repo, pe.enrutatuagua.app.CustodiaAguaRepoFake, pe.enrutatuagua.app.UbicacionFake)
 
         vm.mensaje.test {
             assertEquals(null, awaitItem())

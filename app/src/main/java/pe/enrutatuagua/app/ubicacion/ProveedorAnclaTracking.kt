@@ -15,7 +15,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
-data class AnclaTracking(val lat: Double, val lng: Double, val obtenidaEnMs: Long)
+data class AnclaTracking(val lat: Double, val lng: Double, val obtenidaEnMs: Long, val precisionMetros: Float? = null)
 
 sealed interface ResultadoAnclaTracking {
     data class Disponible(val ancla: AnclaTracking) : ResultadoAnclaTracking
@@ -51,7 +51,7 @@ class ProveedorAnclaTrackingAndroid @Inject constructor(
         val elegida = actual ?: ultimaConocidaReciente(proveedores)
             ?: return ResultadoAnclaTracking.SinFixReciente
         return ResultadoAnclaTracking.Disponible(
-            AnclaTracking(elegida.latitude, elegida.longitude, elegida.time),
+            AnclaTracking(elegida.latitude, elegida.longitude, elegida.time, elegida.accuracy),
         )
     }
 

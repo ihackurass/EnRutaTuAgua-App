@@ -40,7 +40,7 @@ enum class EstadoPedido(val codigo: Int, val etiqueta: String) {
 data class LimitePedido(val capacidadMaximaCisternaLitros: Int, val maxLitrosPedido: Int, val tienePedidoActivo: Boolean)
 data class AsociacionOperacion(val id: Long, val nombre: String)
 data class VehiculoOperacion(val id: Long, val placa: String, val capacidadLitros: Int,
-    val disponible: Boolean = true, val motivoNoDisponible: String? = null)
+    val conductorId: Long? = null, val disponible: Boolean = true, val motivoNoDisponible: String? = null)
 data class AguateroOperacion(val id: Long, val nombre: String,
     val disponible: Boolean = true, val motivoNoDisponible: String? = null)
 data class PedidoOperacion(val id: Long, val pedidoItemId: Long, val puntoId: Long, val puntoNombre: String, val litros: Int)
@@ -48,6 +48,8 @@ data class ResumenOperacion(val asociaciones: List<AsociacionOperacion>, val veh
     val aguateros: List<AguateroOperacion>, val fecha: LocalDate = LocalDate.now())
 data class SugerenciaRuta(val capacidadLitros: Int, val litrosSugeridos: Int, val sugeridos: List<PedidoOperacion>, val disponibles: List<PedidoOperacion>)
 data class RutaPlanificada(val id: Long, val fecha: LocalDate, val asociacionId: Long, val vehiculoId: Long, val aguateroId: Long, val litros: Int, val estado: EstadoRuta)
+enum class EstadoOperacionAguatero { SIN_ASIGNACION, ASIGNADA, CARGA_CONFIRMADA, EN_RUTA }
+data class RutaAsignadaAguatero(val ruta: RutaPlanificada, val placa: String, val capacidadLitros: Int)
 data class RutaOperacion(val id: Long, val fecha: LocalDate, val estado: EstadoRuta,
     val asociacion: AsociacionOperacion, val vehiculo: VehiculoOperacion,
     val aguatero: AguateroOperacion, val litros: Int, val paradas: Int)
@@ -60,6 +62,86 @@ data class Parada(
     val id: Long, val punto: Punto, val orden: Int, val capacidadEsperadaLitros: Int,
     val estadoEntrega: EstadoEntrega, val motivoOmision: MotivoOmision?, val comentarioOmision: String?,
     val litrosEntregados: Int = 0,
+)
+
+enum class EstadoSolicitudRecarga {
+    SOLICITADA, AUTORIZADA, CARGA_REPORTADA, CONFIRMADA, RECHAZADA, CANCELADA, VENCIDA;
+    companion object { fun desdeCodigo(codigo: Int) = entries[codigo - 1] }
+}
+
+data class FuenteCarga(
+    val id: Long,
+    val nombre: String,
+    val lat: Double,
+    val lng: Double,
+    val radioPermitidoMetros: Int,
+    val contactoNombre: String? = null,
+    val contactoTelefono: String? = null,
+)
+
+data class SolicitudRecarga(
+    val id: String,
+    val jornadaId: Long,
+    val rutaId: Long,
+    val fuenteId: Long,
+    val fuenteNombre: String,
+    val aguateroNombre: String,
+    val estado: EstadoSolicitudRecarga,
+    val litrosSolicitados: Int,
+    val litrosReportados: Int? = null,
+    val litrosConfirmados: Int? = null,
+    val motivo: String,
+    val contactoAutorizacion: String? = null,
+    val contactoConfirmacion: String? = null,
+    val notaOperador: String? = null,
+    val distanciaFuenteMetros: Double? = null,
+    val solicitadaEn: String,
+    val autorizacionExpiraEn: String? = null,
+)
+
+data class RecepcionPendiente(
+    val rutaPuntoId: Long,
+    val rutaId: Long,
+    val puntoNombre: String,
+    val litrosEsperados: Int,
+    val litrosDeclarados: Int,
+    val entregadaEn: String,
+    val venceEn: String,
+)
+
+data class RecepcionAgua(
+    val id: String,
+    val rutaPuntoId: Long,
+    val rutaId: Long,
+    val puntoNombre: String,
+    val aguateroNombre: String,
+    val litrosDeclarados: Int,
+    val litrosRecibidos: Int,
+    val estado: Int,
+    val confirmadoPorNombre: String,
+    val comentario: String?,
+    val confirmadaEn: String,
+)
+
+data class PaginaRecepciones<T>(
+    val elementos: List<T>,
+    val pagina: Int,
+    val tamanio: Int,
+    val totalElementos: Long,
+    val totalPaginas: Int,
+)
+
+data class IncidenciaOperativa(
+    val id: String,
+    val jornadaId: Long?,
+    val rutaId: Long?,
+    val tipo: String,
+    val severidad: Int,
+    val estado: Int,
+    val referencia: String,
+    val detalle: String,
+    val creadaEn: String,
+    val resolucion: String? = null,
 )
 data class Ruta(
     val id: Long, val fecha: LocalDate, val estado: EstadoRuta,

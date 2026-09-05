@@ -21,6 +21,8 @@ import pe.enrutatuagua.data.local.EnRutaTuAguaDb
 import pe.enrutatuagua.data.mqtt.PublicadorPosicionMqttPaho
 import pe.enrutatuagua.domain.repositorio.ConectividadRepository
 import pe.enrutatuagua.domain.repositorio.ContextoTrackingRepository
+import pe.enrutatuagua.domain.repositorio.CustodiaAguaRepository
+import pe.enrutatuagua.data.CustodiaAguaRepositoryHttp
 import pe.enrutatuagua.domain.repositorio.PedidoRepository
 import pe.enrutatuagua.domain.repositorio.OperacionRepository
 import pe.enrutatuagua.data.OperacionRepositoryHttp
@@ -67,6 +69,7 @@ abstract class RepositoriosModule {
     @Binds abstract fun sesionRepository(impl: SesionRepositorySegura): SesionRepository
     @Binds abstract fun pedidoRepository(impl: PedidoRepositoryHttp): PedidoRepository
     @Binds abstract fun operacionRepository(impl: OperacionRepositoryHttp): OperacionRepository
+    @Binds abstract fun custodiaAguaRepository(impl: CustodiaAguaRepositoryHttp): CustodiaAguaRepository
     @Binds abstract fun trackingRepository(impl: TrackingRepositoryHttp): TrackingRepository
     @Binds abstract fun posicionGpsRepository(impl: PosicionGpsRepositoryRoom): PosicionGpsRepository
     @Binds abstract fun publicadorPosicionMqtt(impl: PublicadorPosicionMqttPaho): PublicadorPosicionMqtt

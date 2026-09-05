@@ -67,6 +67,10 @@ class TrackingRepositoryHttp(
     private val cacheLocal: VecinoCacheDao? = null,
 ) : TrackingRepository {
 
+    override suspend fun verificarPosicion(rutaId:Long):PosicionCisterna? = try {
+        trackingApi.posicionViva(rutaId).aPosicionCisterna(0)
+    } catch(e:HttpException) { if(e.code()==404)null else throw e }
+
     override suspend fun asociacionActual(): String = trackingApi.asociacionActual().nombre
 
     // Hallazgo real (verificación manual end-to-end): GET /vehiculos/{id}

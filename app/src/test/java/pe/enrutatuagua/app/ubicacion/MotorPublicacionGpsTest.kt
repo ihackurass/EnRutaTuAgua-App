@@ -57,6 +57,15 @@ class MotorPublicacionGpsTest {
         assertEquals(9L, publicador.publicadas[0].first)
     }
 
+    @Test fun `telefono detenido no transmite el ruido gps como movimiento`() = runTest {
+        publicador.proximoResultado=true
+        motor.procesarFix(fix(-12.160000,-76.940000))
+        motor.procesarFix(fix(-12.160030,-76.940025))
+        assertEquals(2,publicador.publicadas.size)
+        assertEquals(publicador.publicadas[0].second.lat,publicador.publicadas[1].second.lat,0.0)
+        assertEquals(publicador.publicadas[0].second.lng,publicador.publicadas[1].second.lng,0.0)
+    }
+
     @Test fun `drenar reintenta las pendientes y las marca publicadas si tienen exito`() = runTest {
         publicador.proximoResultado = false
         motor.procesarFix(fix(-12.16, -76.94))

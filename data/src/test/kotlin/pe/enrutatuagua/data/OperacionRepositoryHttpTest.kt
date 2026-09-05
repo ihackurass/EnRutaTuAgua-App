@@ -13,6 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import pe.enrutatuagua.data.red.OperacionApi
+import pe.enrutatuagua.domain.modelo.EstadoOperacionAguatero
 import retrofit2.Retrofit
 
 class OperacionRepositoryHttpTest {
@@ -39,6 +40,7 @@ class OperacionRepositoryHttpTest {
         assertEquals("/api/v1/operacion/resumen?fecha=2026-09-01", servidor.takeRequest().path)
         assertFalse(resumen.vehiculos.single().disponible)
         assertEquals("Ya tiene una ruta ese día", resumen.vehiculos.single().motivoNoDisponible)
+        assertEquals(null, resumen.vehiculos.single().conductorId)
     }
 
     @Test fun `auditoria convierte fecha y conserva actor`() = runTest {
@@ -51,5 +53,34 @@ class OperacionRepositoryHttpTest {
         assertEquals("/api/v1/operacion/auditoria?limite=100", servidor.takeRequest().path)
         assertEquals("RECARGA", evento.accion)
         assertEquals("Aguatero Uno", evento.actorNombre)
+    }
+
+    @Test fun `estado actual conserva asignacion y saldo ligados a la misma ruta`() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody("""
+            {"estado":"CARGA_CONFIRMADA","ruta":{"ruta":{"id":5,"fecha":"2026-08-31","asociacionId":1,"vehiculoId":2,"aguateroId":3,"litros":1000,"estado":3},"placa":"ABC-123","capacidadLitros":12000},"jornada":{"id":4,"vehiculoId":2,"rutaId":5,"capacidadLitros":12000,"litrosDisponibles":3000}}
+        """.trimIndent()))
+
+        val operacion = repo.operacionAguatero()
+
+        assertEquals("/api/v1/operacion/aguatero/actual", servidor.takeRequest().path)
+        assertEquals(EstadoOperacionAguatero.CARGA_CONFIRMADA, operacion.estado)
+        assertEquals(5L, operacion.asignacion?.ruta?.id)
+        assertEquals(5L, operacion.jornada?.rutaId)
+        assertEquals(3000, operacion.jornada?.litrosDisponibles)
+    }
+
+    @Test fun `carga inicial envia idempotencia y litros a la ruta asignada`() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody("""
+            {"id":4,"vehiculoId":2,"rutaId":5,"capacidadLitros":12000,"litrosDisponibles":1000}
+        """.trimIndent()))
+
+        val saldo = repo.cargarRuta(5, "123e4567-e89b-12d3-a456-426614174000", 1000)
+        val peticion = servidor.takeRequest()
+
+        assertEquals("/api/v1/operacion/rutas/5/carga-inicial", peticion.path)
+        assertEquals("POST", peticion.method)
+        assertEquals("""{"mensajeId":"123e4567-e89b-12d3-a456-426614174000","litros":1000}""", peticion.body.readUtf8())
+        assertEquals(5L, saldo.rutaId)
+        assertEquals(1000, saldo.litrosDisponibles)
     }
 }

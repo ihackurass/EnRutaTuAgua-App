@@ -42,7 +42,7 @@ class MisPedidosViewModel @Inject constructor(
                 }
                 .collect {
                     _error.value = null
-                    _estado.value = MisPedidosUiState(cargando = false, pedidos = it)
+                    _estado.value = _estado.value.copy(cargando = false, pedidos = it)
                 }
         }
     }
@@ -53,4 +53,5 @@ class MisPedidosViewModel @Inject constructor(
             catch (e: Exception) { _error.value = e.mensajeParaUsuario() }
         }
     }
+
 }

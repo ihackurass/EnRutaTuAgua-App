@@ -31,7 +31,6 @@ import pe.enrutatuagua.domain.modelo.Pedido
 @Composable
 fun MisPedidosScreen(
     onNuevoPedido: () -> Unit,
-    onValidarPuntos: () -> Unit,
     vm: MisPedidosViewModel = hiltViewModel(),
 ) {
     val estado by vm.estado.collectAsState()
@@ -53,7 +52,6 @@ fun MisPedidosScreen(
             dismissButton = { TextButton(onClick = { cancelar = null }) { Text("Conservar pedido") } },
         )
     }
-
     LazyColumn(
         Modifier.fillMaxSize().background(paleta.fondo).statusBarsPadding().navigationBarsPadding(),
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 28.dp),
@@ -81,7 +79,6 @@ fun MisPedidosScreen(
             }
         }
         error?.let { item { TarjetaError(it) } }
-        item { GestionZona(onValidarPuntos) }
     }
 }
 

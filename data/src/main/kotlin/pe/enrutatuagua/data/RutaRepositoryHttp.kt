@@ -25,6 +25,7 @@ import pe.enrutatuagua.domain.modelo.EstadoSyncOperativo
 import pe.enrutatuagua.domain.repositorio.ConectividadRepository
 import pe.enrutatuagua.data.red.OmitirParadaRequestDto
 import pe.enrutatuagua.data.red.MovimientoAguaRequestDto
+import pe.enrutatuagua.data.red.CerrarRutaRequestDto
 import pe.enrutatuagua.data.red.PuntosApi
 import pe.enrutatuagua.data.red.RegistrarEntregaRequestDto
 import pe.enrutatuagua.data.red.RutaDto
@@ -82,6 +83,11 @@ class RutaRepositoryHttp @Inject constructor(
 
     override suspend fun reintentarSync() {
         sincronizarPendientes()
+    }
+
+    override suspend fun reconocerRechazadas() {
+        db?.accionOperativaDao()?.eliminarRechazadas()
+        runCatching { refrescar() }
     }
 
     override fun observarRutaAbierta(): Flow<Ruta?> = flow {
@@ -167,9 +173,11 @@ class RutaRepositoryHttp @Inject constructor(
     // mostrando "ruta en curso" (nada filtra por estado). `estado` sólo
     // representa la ruta ABIERTA (mismo contrato que `RutaDao` en Room:
     // `WHERE estadoCodigo = 1`), así que tras cerrar pasa a null.
-    override suspend fun cerrarRuta(): Ruta = mutex.withLock {
+    override suspend fun cerrarRuta(): Ruta = cerrarRuta(0, UUID.randomUUID().toString())
+
+    override suspend fun cerrarRuta(litrosFisicosFinales: Int, mensajeId: String): Ruta = mutex.withLock {
         val rutaId = checkNotNull(estado.value) { "cerrarRuta sin ruta cargada" }.id
-        val cerrada = enriquecer(rutasApi.cerrar(rutaId))
+        val cerrada = enriquecer(rutasApi.cerrar(rutaId, CerrarRutaRequestDto(mensajeId, litrosFisicosFinales)))
         estado.value = null
         cerrada
     }
